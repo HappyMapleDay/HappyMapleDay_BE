@@ -20,10 +20,10 @@ public class UserSettings {
     private Long userId;
     
     @Column(name = "weekly_reset_enabled", nullable = false)
-    private Boolean weeklyResetEnabled = true; // 일주일 초기화 토글
+    private Boolean weeklyResetEnabled; // 일주일 초기화 토글
     
     @Column(name = "data_collection_agreed", nullable = false)
-    private Boolean dataCollectionAgreed = false; // 데이터 수집 동의
+    private Boolean dataCollectionAgreed; // 데이터 수집 동의
     
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -41,6 +41,13 @@ public class UserSettings {
         this.userId = userId;
         this.dataCollectionAgreed = dataCollectionAgreed;
         this.weeklyResetEnabled = true; // 기본값
+    }
+    
+    // 테스트용 생성자
+    public UserSettings(Long userId, Boolean dataCollectionAgreed, Boolean weeklyResetEnabled) {
+        this.userId = userId;
+        this.dataCollectionAgreed = dataCollectionAgreed;
+        this.weeklyResetEnabled = weeklyResetEnabled;
     }
     
     // Getter 메서드들

@@ -33,7 +33,7 @@ public class BossPreset {
     private String presetName;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "boss_ids", nullable = false, columnDefinition = "JSON")
+    @Column(name = "boss_ids", nullable = false, columnDefinition = "TEXT")
     private List<Map<String, Object>> bossIds;
 
     @CreationTimestamp

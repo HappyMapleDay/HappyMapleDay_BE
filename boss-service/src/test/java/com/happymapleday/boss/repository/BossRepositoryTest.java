@@ -150,9 +150,10 @@ public class BossRepositoryTest {
         // when - 레벨 250, 아케인포스 800인 캐릭터가 갈 수 있는 보스
         List<Boss> accessibleBosses = bossRepository.findBossesForCharacterLevel(250);
 
-        // then
-        assertThat(accessibleBosses).hasSize(4); // 모든 보스가 레벨 250 이하 입장 레벨
-        assertThat(accessibleBosses).contains(zakum, lucid, will, seren);
+        // then - 세렌은 입장 레벨이 260이므로 레벨 250으로는 입장 불가
+        assertThat(accessibleBosses).hasSize(3); // 자쿰(90), 루시드(220), 윌(235)
+        assertThat(accessibleBosses).contains(zakum, lucid, will);
+        assertThat(accessibleBosses).doesNotContain(seren); // 세렌은 입장 레벨 260
     }
 
     @Test

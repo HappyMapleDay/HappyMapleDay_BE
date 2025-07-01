@@ -29,10 +29,6 @@ public class RandomBoxItem {
     @Column(name = "drop_item_level")
     private Integer dropItemLevel;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public RandomBoxItem(DesireItem desireItem, String dropItemName, Integer dropItemLevel) {
         this.desireItem = desireItem;

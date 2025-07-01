@@ -40,7 +40,7 @@ public class Boss {
     private String difficulty;
 
     @Column(name = "crystal_price", nullable = false)
-    private Integer crystalPrice;
+    private Long crystalPrice;
 
     @Column(name = "max_party_size")
     private Integer maxPartySize = 6;
@@ -64,20 +64,12 @@ public class Boss {
     @Column(name = "required_force_amount")
     private Integer requiredForceAmount;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     // 물욕템과의 연관관계 (일대다)
     @OneToMany(mappedBy = "boss", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DesireItem> desireItems = new ArrayList<>();
 
     @Builder
-    public Boss(String bossName, String difficulty, Integer crystalPrice, 
+    public Boss(String bossName, String difficulty, Long crystalPrice, 
                 Integer maxPartySize, Boolean isMonthly, Boolean isActive,
                 Integer minEntryLevel, Integer bossLevel, ForceType requiredForceType, Integer requiredForceAmount) {
         this.bossName = bossName;
@@ -101,7 +93,7 @@ public class Boss {
         return !isMonthly;
     }
 
-    public void updateCrystalPrice(Integer newPrice) {
+    public void updateCrystalPrice(Long newPrice) {
         this.crystalPrice = newPrice;
     }
 

@@ -100,44 +100,162 @@ INSERT INTO bosses (boss_name, difficulty, crystal_price, max_party_size, is_mon
 -- 각 프리셋 내에서 같은 보스명은 하나의 난이도만 포함
 INSERT INTO boss_presets (preset_name, boss_ids) VALUES
 
--- 스데미: 데미안 노말부터 아래로 12개 (같은 보스명 중복 제거)
+-- 스데미: 데미안 노말부터 아래로 12개
 ('스데미', '[
   {"boss_id": 15}, {"boss_id": 12}, {"boss_id": 4}, {"boss_id": 8}, 
   {"boss_id": 2}, {"boss_id": 5}, {"boss_id": 6}, {"boss_id": 7}, 
   {"boss_id": 1}, {"boss_id": 11}, {"boss_id": 9}, {"boss_id": 3}
 ]'),
 
--- 이루윌: 윌 이지부터 아래로 12개 (루시드는 이지만 포함)
+-- 이루윌: 윌 이지부터 아래로 12개
 ('이루윌', '[
   {"boss_id": 22}, {"boss_id": 19}, {"boss_id": 17}, {"boss_id": 15}, 
   {"boss_id": 12}, {"boss_id": 4}, {"boss_id": 8}, {"boss_id": 2}, 
   {"boss_id": 5}, {"boss_id": 6}, {"boss_id": 7}, {"boss_id": 1}
 ]'),
 
--- 노듄더: 듄켈 노말부터 아래로 12개 (매그너스 다음은 피에르, 반반)
+-- 노듄더: 듄켈 노말부터 아래로 12개
 ('노듄더', '[
   {"boss_id": 29}, {"boss_id": 25}, {"boss_id": 23}, {"boss_id": 20}, 
   {"boss_id": 17}, {"boss_id": 15}, {"boss_id": 12}, {"boss_id": 4}, 
   {"boss_id": 8}, {"boss_id": 2}, {"boss_id": 5}, {"boss_id": 6}
 ]'),
 
--- 하스데: 스우 하드부터 아래로 12개 (같은 보스명 중복 제거)
+-- 하스데: 스우 하드부터 아래로 12개
 ('하스데', '[
   {"boss_id": 13}, {"boss_id": 16}, {"boss_id": 29}, {"boss_id": 25}, 
   {"boss_id": 23}, {"boss_id": 20}, {"boss_id": 17}, {"boss_id": 4}, 
   {"boss_id": 8}, {"boss_id": 2}, {"boss_id": 5}, {"boss_id": 6}
 ]'),
 
--- 검밑솔: 진힐라 하드부터 아래로 12개 (가디언은 카오스만 포함)
+-- 검밑솔: 진힐라 하드부터 아래로 12개
 ('검밑솔', '[
   {"boss_id": 28}, {"boss_id": 30}, {"boss_id": 24}, {"boss_id": 21}, 
   {"boss_id": 26}, {"boss_id": 18}, {"boss_id": 13}, {"boss_id": 16}, 
   {"boss_id": 4}, {"boss_id": 8}, {"boss_id": 2}, {"boss_id": 5}
 ]'),
 
--- 하세이칼: 세렌 하드부터 아래로 12개 (카링 제외, 가디언은 카오스만)
+-- 하세이칼: 세렌 하드부터 아래로 12개
 ('하세이칼', '[
   {"boss_id": 34}, {"boss_id": 36}, {"boss_id": 28}, {"boss_id": 30}, 
   {"boss_id": 24}, {"boss_id": 21}, {"boss_id": 26}, {"boss_id": 18}, 
   {"boss_id": 13}, {"boss_id": 16}, {"boss_id": 4}, {"boss_id": 8}
 ]'); 
+
+-- 물욕템 데이터 삽입
+INSERT INTO desire_items (boss_id, item_name, is_random_box) VALUES
+
+-- 스우
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), '루즈 컨트롤 머신 마크', false),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), '손상된 블랙 하트', false),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '루즈 컨트롤 머신 마크', false),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '손상된 블랙 하트', false),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '컴플리트 언더 컨트롤', false),
+
+-- 데미안
+((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '하드'), '마력이 깃든 안대', false),
+
+-- 가디언 엔젤 슬라임
+((SELECT id FROM bosses WHERE boss_name = '가디언 엔젤 슬라임' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '가디언 엔젤 슬라임' AND difficulty = '카오스'), '흑옥의 보스 반지 상자', true),
+
+-- 루시드
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '이지'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '노말'), '트와일라이트 마크', false),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), '트와일라이트 마크', false),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), '몽환의 벨트', false),
+
+-- 윌
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '이지'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '노말'), '트와일라이트 마크', false),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), '트와일라이트 마크', false),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), '저주받은 마도서 선택 상자', true),
+
+-- 듄켈
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '노말'), '에스텔라 이어링', false),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), '흑옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), '에스텔라 이어링', false),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), '커맨더 포스 이어링', false),
+
+-- 더스크
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '노말'), '에스텔라 이어링', false),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), '흑옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), '에스텔라 이어링', false),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), '거대한 공포', false),
+
+-- 진 힐라
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '노말'), '홍옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '노말'), '데이브레이크 펜던트', false),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), '흑옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), '데이브레이크 펜던트', false),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), '고통의 근원', false),
+
+-- 검은 마법사
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '하드'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '하드'), '창세의 뱃지', false),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), '창세의 뱃지', false),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), '익셉셔널 해머 - 벨트', false),
+
+-- 선택받은 세렌
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '노말'), '흑옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '노말'), '데이브레이크 펜던트', false),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), '데이브레이크 펜던트', false),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), '미트라의 분노 선택 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '데이브레이크 펜던트', false),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '미트라의 분노 선택 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '익셉셔널 해머 - 얼굴장식', false),
+
+-- 감시자 칼로스
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '이지'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '노말'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '노말'), '생명의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), '생명의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), '의지의 에테르넬 방어구 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '생명의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '의지의 에테르넬 방어구 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '익셉셔널 해머 - 눈장식', false),
+
+-- 카링
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '이지'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), '백옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), '생명의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), '생명의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), '흉수의 에테르넬 방어구 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '생명의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '흉수의 에테르넬 방어구 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '익셉셔널 해머 - 귀고리', false),
+
+-- 림보
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), '신념의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '신념의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '욕망의 에테르넬 방어구 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '근원의 속삭임', false),
+
+-- 발드릭스
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), '신념의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), '발드릭스로이드', false),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '신념의 연마석', false),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '발드릭스로이드', false),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '맹세의 에테르넬 방어구 상자', true); 

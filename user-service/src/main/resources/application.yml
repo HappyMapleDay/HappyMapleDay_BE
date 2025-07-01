@@ -24,6 +24,10 @@ jwt:
   secret: happy-maple-day-jwt-secret-key-for-user-service-authentication
   expiration: 86400000 # 24시간
 
+# 암호화 설정
+encryption:
+  secret-key: happy-maple-day-encryption-key-12345
+
 # 다른 서비스 URL 설정
 services:
   boss-service:

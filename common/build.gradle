@@ -1,0 +1,19 @@
+// common 모듈 - 라이브러리이므로 bootJar 비활성화
+jar {
+    enabled = true
+    archiveClassifier = '' // 빈 문자열로 설정
+}
+
+bootJar {
+    enabled = false
+}
+
+dependencies {
+    // 공통으로 사용할 의존성들
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    
+    // OpenFeign (서비스 간 통신)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
+} 

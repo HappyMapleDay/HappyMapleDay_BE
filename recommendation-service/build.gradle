@@ -1,0 +1,18 @@
+dependencies {
+    // 공통 모듈 의존성
+    implementation project(':common')
+    
+    // recommendation-service 전용 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis' // 결과 캐싱
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    
+    // 비동기 처리 (알고리즘 실행)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    
+    // OpenFeign (다른 서비스 호출)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
+    
+    runtimeOnly 'com.mysql:mysql-connector-j'
+} 

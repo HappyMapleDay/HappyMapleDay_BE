@@ -1,0 +1,32 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user-service
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_user?createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# JWT 설정
+jwt:
+  secret: happy-maple-day-jwt-secret-key-for-user-service-authentication
+  expiration: 86400000 # 24시간
+
+# 다른 서비스 URL 설정
+services:
+  boss-service:
+    url: http://localhost:8081
+  character-service:
+    url: http://localhost:8083 

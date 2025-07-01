@@ -1,0 +1,12 @@
+# Settlement Service 전용 무시 항목
+
+# 배치 처리 임시 파일
+batch-temp/
+*.batch-temp
+
+# 정산 중간 결과
+settlement-intermediate/
+
+# 스케줄러 로그
+scheduler.log
+quartz.log 

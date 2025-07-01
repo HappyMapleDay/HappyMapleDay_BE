@@ -1,0 +1,12 @@
+# Gateway 전용 무시 항목
+
+# 라우팅 로그
+routing.log
+gateway.log
+
+# NettyResolver 캐시
+netty-cache/
+
+# Gateway 메트릭 임시 파일
+gateway-metrics/
+*.gateway-temp 

@@ -1,0 +1,48 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: history-service
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_history?createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Redis 캐싱 설정
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+  
+  # Batch 설정 (대용량 데이터 처리)
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
+# 시계열 데이터 설정
+timeseries:
+  retention:
+    daily: 365  # 일별 데이터 1년 보관
+    weekly: 104  # 주별 데이터 2년 보관
+    monthly: 36  # 월별 데이터 3년 보관
+
+# 다른 서비스 URL 설정
+services:
+  settlement-service:
+    url: http://localhost:8084
+  boss-service:
+    url: http://localhost:8081 

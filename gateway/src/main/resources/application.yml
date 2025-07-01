@@ -1,0 +1,101 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  
+  cloud:
+    gateway:
+      routes:
+        # User Service 라우팅
+        - id: user-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/auth/**, /api/user/**
+          filters:
+            - StripPrefix=0
+        
+        # Character Service 라우팅
+        - id: character-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/character/**
+          filters:
+            - StripPrefix=0
+        
+        # Boss Service 라우팅
+        - id: boss-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/boss/**
+          filters:
+            - StripPrefix=0
+        
+        # Settlement Service 라우팅
+        - id: settlement-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/settlement/**
+          filters:
+            - StripPrefix=0
+        
+        # Recommendation Service 라우팅
+        - id: recommendation-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/recommendation/**
+          filters:
+            - StripPrefix=0
+        
+        # History Service 라우팅
+        - id: history-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/history/**
+          filters:
+            - StripPrefix=0
+        
+        # Admin Service 라우팅
+        - id: admin-service
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - StripPrefix=0
+
+      # CORS 설정
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: 
+              - "http://localhost:3000"  # React 개발 서버
+              - "http://localhost:5173"  # Vite 개발 서버
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+# JWT 검증 설정 (User Service와 동일)
+jwt:
+  secret: happy-maple-day-jwt-secret-key-for-user-service-authentication
+
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+# 로깅 설정
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: DEBUG 

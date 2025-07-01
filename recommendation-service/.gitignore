@@ -1,0 +1,12 @@
+# Recommendation Service 전용 무시 항목
+
+# 알고리즘 실행 결과 임시 파일
+algorithm-results/
+*.algorithm-temp
+
+# 최적화 과정 로그
+optimization.log
+performance.log
+
+# 캐시된 추천 결과
+recommendation-cache/ 

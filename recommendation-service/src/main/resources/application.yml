@@ -1,0 +1,44 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: recommendation-service
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_recommendation?createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Redis 캐싱 설정 (결과 캐싱용)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+# 알고리즘 설정
+algorithm:
+  optimization:
+    max-iterations: 1000
+    timeout-seconds: 30
+  cache:
+    result-ttl: 3600  # 1시간
+
+# 다른 서비스 URL 설정
+services:
+  boss-service:
+    url: http://localhost:8081
+  character-service:
+    url: http://localhost:8083
+  settlement-service:
+    url: http://localhost:8084 

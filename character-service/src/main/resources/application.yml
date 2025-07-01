@@ -1,0 +1,49 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: character-service
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_character?createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Redis 캐싱 설정
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+# Circuit Breaker 설정
+resilience4j:
+  circuitbreaker:
+    instances:
+      nexon-api:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+
+# Nexon API 설정
+nexon:
+  api:
+    base-url: https://open.api.nexon.com
+    rate-limit: 1000
+
+# 다른 서비스 URL 설정
+services:
+  boss-service:
+    url: http://localhost:8081
+  user-service:
+    url: http://localhost:8082 

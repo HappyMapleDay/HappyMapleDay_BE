@@ -1,0 +1,11 @@
+# Character Service 전용 무시 항목
+
+# Nexon API 캐시
+nexon-api-cache/
+*.nexon-cache
+
+# Circuit Breaker 로그
+circuit-breaker.log
+
+# Redis 덤프 (로컬 개발시)
+dump.rdb 

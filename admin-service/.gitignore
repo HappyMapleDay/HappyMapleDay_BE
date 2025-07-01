@@ -1,0 +1,12 @@
+# Admin Service 전용 무시 항목
+
+# 모니터링 데이터
+monitoring-data/
+*.monitoring-temp
+
+# 통계 리포트 임시 파일
+reports/
+*.report-temp
+
+# Prometheus 메트릭 캐시
+prometheus-cache/ 

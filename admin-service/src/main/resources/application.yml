@@ -1,0 +1,56 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: admin-service
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_admin?createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Security 설정 (관리자 권한)
+  security:
+    user:
+      name: admin
+      password: admin123
+      roles: ADMIN
+
+# Actuator 설정 (모니터링)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 다른 서비스 URL 설정 (모든 서비스 모니터링)
+services:
+  user-service:
+    url: http://localhost:8082
+  character-service:
+    url: http://localhost:8083
+  boss-service:
+    url: http://localhost:8081
+  settlement-service:
+    url: http://localhost:8084
+  recommendation-service:
+    url: http://localhost:8085
+  history-service:
+    url: http://localhost:8086 

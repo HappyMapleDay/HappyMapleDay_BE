@@ -1,0 +1,14 @@
+rootProject.name = 'happy-maple-day'
+
+// 서비스 모듈들
+include 'user-service'
+include 'character-service'
+include 'boss-service'
+include 'settlement-service'
+include 'recommendation-service'
+include 'history-service'
+include 'admin-service'
+
+// 공통 모듈들
+include 'common'
+include 'gateway' 

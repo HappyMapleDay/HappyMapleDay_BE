@@ -24,7 +24,7 @@ public interface BossPresetRepository extends JpaRepository<BossPreset, Long> {
     // 프리셋 이름으로 검색 (부분 일치)
     List<BossPreset> findByPresetNameContainingIgnoreCaseOrderByCreatedAtDesc(String presetName);
 
-    // 특정 보스를 포함하는 프리셋 조회 (H2 호환)
+    // 특정 보스를 포함하는 프리셋 조회
     @Query("SELECT bp FROM BossPreset bp WHERE CAST(bp.bossIds AS string) LIKE CONCAT('%', :bossIdJson, '%')")
     List<BossPreset> findPresetsContainingBoss(@Param("bossIdJson") String bossIdJson);
 } 

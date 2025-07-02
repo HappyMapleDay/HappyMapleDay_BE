@@ -2,7 +2,6 @@ package com.happymapleday.boss.service;
 
 import com.happymapleday.boss.dto.BossDto;
 import com.happymapleday.boss.dto.BossPresetDto;
-import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.entity.BossPreset;
 import com.happymapleday.boss.repository.BossPresetRepository;
 import com.happymapleday.boss.repository.BossRepository;

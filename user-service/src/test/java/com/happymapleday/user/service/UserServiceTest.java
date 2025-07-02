@@ -4,6 +4,8 @@ import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
 import com.happymapleday.user.dto.LogoutResponseDto;
+import com.happymapleday.user.dto.PasswordResetRequestDto;
+import com.happymapleday.user.dto.PasswordResetResponseDto;
 import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
@@ -63,6 +65,7 @@ class UserServiceTest {
     private LoginRequestDto loginRequest;
     private RefreshTokenRequestDto refreshTokenRequest;
     private LogoutRequestDto logoutRequest;
+    private PasswordResetRequestDto passwordResetRequest;
     private User savedUser;
 
     @BeforeEach
@@ -79,6 +82,7 @@ class UserServiceTest {
         loginRequest = new LoginRequestDto("testCharacter", "password123");
         refreshTokenRequest = new RefreshTokenRequestDto("valid-refresh-token");
         logoutRequest = new LogoutRequestDto("valid-refresh-token");
+        passwordResetRequest = new PasswordResetRequestDto("testCharacter");
 
         savedUser = new User("testCharacter", "encodedPassword", "encryptedApiKey");
         // 리플렉션을 사용하여 ID와 생성시간 설정
@@ -498,6 +502,121 @@ class UserServiceTest {
             verify(jwtService).getUserIdFromToken("valid-refresh-token");
             verify(secureRefreshTokenService).invalidateAllTokens(1L);
         }
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 성공")
+    void resetPassword_Success() {
+        // given
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
+        given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+        // when
+        PasswordResetResponseDto response = userService.resetPassword(passwordResetRequest);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo("임시 비밀번호가 생성되었습니다. 로그인 후 비밀번호를 변경해주세요.");
+        assertThat(response.getTemporaryPassword()).isNotNull();
+        assertThat(response.getTemporaryPassword()).hasSize(8);
+        
+        // 임시 비밀번호 패턴 검증 (영문 대소문자, 숫자, 특수문자 포함)
+        String tempPassword = response.getTemporaryPassword();
+        assertThat(tempPassword).matches(".*[A-Z].*"); // 대문자 포함
+        assertThat(tempPassword).matches(".*[a-z].*"); // 소문자 포함
+        assertThat(tempPassword).matches(".*[0-9].*"); // 숫자 포함
+        assertThat(tempPassword).matches(".*[!@#$%^&*].*"); // 특수문자 포함
+
+        verify(userRepository).findByMainCharacterName("testCharacter");
+        verify(passwordEncoder).encode(anyString());
+        verify(userRepository).save(savedUser);
+        verify(secureRefreshTokenService).invalidateAllTokens(1L);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 실패 - 존재하지 않는 사용자")
+    void resetPassword_UserNotFound_ThrowsException() {
+        // given
+        given(userRepository.findByMainCharacterName("nonExistentUser")).willReturn(Optional.empty());
+        
+        PasswordResetRequestDto nonExistentUserRequest = new PasswordResetRequestDto("nonExistentUser");
+
+        // when & then
+        assertThatThrownBy(() -> userService.resetPassword(nonExistentUserRequest))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("존재하지 않는 사용자입니다.");
+
+        verify(userRepository).findByMainCharacterName("nonExistentUser");
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 - 임시 비밀번호 생성 확인")
+    void resetPassword_TemporaryPasswordGeneration() {
+        // given
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
+        given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+        // when
+        PasswordResetResponseDto response1 = userService.resetPassword(passwordResetRequest);
+        PasswordResetResponseDto response2 = userService.resetPassword(passwordResetRequest);
+
+        // then - 매번 다른 임시 비밀번호가 생성되어야 함
+        assertThat(response1.getTemporaryPassword()).isNotEqualTo(response2.getTemporaryPassword());
+        
+        // 두 임시 비밀번호 모두 요구사항 충족
+        assertThat(response1.getTemporaryPassword()).hasSize(8);
+        assertThat(response2.getTemporaryPassword()).hasSize(8);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 - 비밀번호 암호화 확인")
+    void resetPassword_PasswordEncryption() {
+        // given
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
+        given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+        // when
+        userService.resetPassword(passwordResetRequest);
+
+        // then - 임시 비밀번호가 암호화되어 저장되는지 확인
+        verify(passwordEncoder).encode(anyString());
+        verify(userRepository).save(savedUser);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 - Refresh Token 무효화 확인")
+    void resetPassword_RefreshTokenInvalidation() {
+        // given
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
+        given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+        // when
+        userService.resetPassword(passwordResetRequest);
+
+        // then - 보안상 해당 사용자의 모든 토큰이 무효화되어야 함
+        verify(secureRefreshTokenService).invalidateAllTokens(1L);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 실패 - 데이터베이스 저장 실패")
+    void resetPassword_DatabaseSaveError_ThrowsException() {
+        // given
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
+        given(userRepository.save(any(User.class))).willThrow(new RuntimeException("데이터베이스 연결 실패"));
+
+        // when & then
+        assertThatThrownBy(() -> userService.resetPassword(passwordResetRequest))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("데이터베이스 연결 실패");
+
+        verify(userRepository).findByMainCharacterName("testCharacter");
+        verify(passwordEncoder).encode(anyString());
+        verify(userRepository).save(savedUser);
     }
 
     // 리플렉션을 사용하여 private 필드 설정하는 헬퍼 메서드

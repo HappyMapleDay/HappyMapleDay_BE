@@ -5,6 +5,8 @@ import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
 import com.happymapleday.user.dto.LogoutResponseDto;
+import com.happymapleday.user.dto.PasswordResetRequestDto;
+import com.happymapleday.user.dto.PasswordResetResponseDto;
 import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
@@ -104,6 +106,21 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("중복 체크 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 비밀번호 재설정
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<PasswordResetResponseDto>> resetPassword(@Valid @RequestBody PasswordResetRequestDto request) {
+        try {
+            PasswordResetResponseDto response = userService.resetPassword(request);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("비밀번호 재설정 처리 중 오류가 발생했습니다."));
         }
     }
 } 

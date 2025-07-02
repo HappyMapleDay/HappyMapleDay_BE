@@ -4,6 +4,8 @@ import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
 import com.happymapleday.user.dto.LogoutResponseDto;
+import com.happymapleday.user.dto.PasswordResetRequestDto;
+import com.happymapleday.user.dto.PasswordResetResponseDto;
 import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
@@ -19,6 +21,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
 
 @Service
 public class UserService {
@@ -163,5 +167,60 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException("로그아웃 처리 중 오류가 발생했습니다.", e);
         }
+    }
+    
+    // 비밀번호 재설정 처리
+    @Transactional
+    public PasswordResetResponseDto resetPassword(PasswordResetRequestDto request) {
+        // 사용자 조회
+        User user = userRepository.findByMainCharacterName(request.getMainCharacterName())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                
+        // 임시 비밀번호 생성
+        String temporaryPassword = generateTemporaryPassword();
+        
+        // 비밀번호 암호화 후 업데이트
+        String encodedPassword = passwordEncoder.encode(temporaryPassword);
+        user.updatePassword(encodedPassword);
+        
+        userRepository.save(user);
+        
+        // 해당 사용자의 모든 Refresh Token 무효화 (보안상 로그아웃 처리)
+        secureRefreshTokenService.invalidateAllTokens(user.getId());
+        
+        return PasswordResetResponseDto.success(temporaryPassword);
+    }
+    
+    // 임시 비밀번호 생성 (8자리, 영문 대소문자 + 숫자 + 특수문자)
+    private String generateTemporaryPassword() {
+        String upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lowerCase = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
+        String specialChars = "!@#$%^&*";
+        String allChars = upperCase + lowerCase + digits + specialChars;
+        
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder(8);
+        
+        // 각 문자 종류에서 최소 1개씩 포함
+        password.append(upperCase.charAt(random.nextInt(upperCase.length())));
+        password.append(lowerCase.charAt(random.nextInt(lowerCase.length())));
+        password.append(digits.charAt(random.nextInt(digits.length())));
+        password.append(specialChars.charAt(random.nextInt(specialChars.length())));
+        
+        // 나머지 4자리는 모든 문자에서 랜덤 선택
+        for (int i = 0; i < 4; i++) {
+            password.append(allChars.charAt(random.nextInt(allChars.length())));
+        }
+        
+        // 문자열 섞기
+        for (int i = password.length() - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char temp = password.charAt(i);
+            password.setCharAt(i, password.charAt(j));
+            password.setCharAt(j, temp);
+        }
+        
+        return password.toString();
     }
 } 

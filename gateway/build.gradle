@@ -1,6 +1,6 @@
 dependencies {
     // gateway 전용 의존성 (common 모듈 불필요)
-    implementation 'org.springframework.cloud:spring-cloud-starter-gateway:4.1.0'
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
     implementation 'org.springframework.boot:spring-boot-starter-webflux' // Gateway는 WebFlux 기반
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // 모니터링
     

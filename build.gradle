@@ -30,6 +30,12 @@ subprojects {
         }
     }
     
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:2024.0.1"
+        }
+    }
+    
     dependencies {
         // 공통 의존성
         compileOnly 'org.projectlombok:lombok'

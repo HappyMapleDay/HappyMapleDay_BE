@@ -1,7 +1,10 @@
 package com.happymapleday.boss.service;
 
-import com.happymapleday.boss.dto.BossDto;
-import com.happymapleday.boss.dto.BossPresetDto;
+import com.happymapleday.boss.dto.response.BossSimpleResponse;
+import com.happymapleday.boss.dto.response.BossPresetResponse;
+import com.happymapleday.boss.dto.response.BossPresetApplyResponse;
+import com.happymapleday.boss.dto.request.ValidateLimitsRequest;
+import com.happymapleday.boss.dto.response.ValidateLimitsResponse;
 import com.happymapleday.boss.entity.BossPreset;
 import com.happymapleday.boss.repository.BossPresetRepository;
 import com.happymapleday.boss.repository.BossRepository;
@@ -23,47 +26,47 @@ public class BossPresetService {
     private final BossRepository bossRepository;
 
     // 보스 정보를 포함한 모든 프리셋 조회
-    public List<BossPresetDto.Response> getAllPresetsWithBosses() {
+    public List<BossPresetResponse> getAllPresetsWithBosses() {
         return bossPresetRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(preset -> {
-                    List<BossDto.SimpleResponse> bosses = getBossesFromPreset(preset);
-                    return BossPresetDto.Response.fromWithBosses(preset, bosses);
+                    List<BossSimpleResponse> bosses = getBossesFromPreset(preset);
+                    return BossPresetResponse.fromWithBosses(preset, bosses);
                 })
                 .toList();
     }
 
     // 프리셋 적용
     @Transactional
-    public BossPresetDto.ApplyResponse applyPreset(Long presetId, Long characterId) {
+    public BossPresetApplyResponse applyPreset(Long presetId, Long characterId) {
         BossPreset preset = bossPresetRepository.findById(presetId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 ID의 프리셋을 찾을 수 없습니다: " + presetId));
 
-        List<BossDto.SimpleResponse> appliedBosses = getBossesFromPreset(preset);
+        List<BossSimpleResponse> appliedBosses = getBossesFromPreset(preset);
         
         log.info("캐릭터 {}에게 프리셋 '{}'이 적용되었습니다. (보스 {}개)", 
                 characterId, preset.getPresetName(), appliedBosses.size());
 
-        return BossPresetDto.ApplyResponse.builder()
+        return BossPresetApplyResponse.builder()
                 .appliedBosses(appliedBosses)
                 .characterId(characterId)
                 .build();
     }
 
     // 보스 제한 검증
-    public BossPresetDto.ValidateLimitsResponse validateLimits(BossPresetDto.ValidateLimitsRequest request) {
+    public ValidateLimitsResponse validateLimits(ValidateLimitsRequest request) {
         // 캐릭터별 보스 개수 계산
-        Map<String, BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus> characterLimitStatus = 
+        Map<String, ValidateLimitsResponse.CharacterLimitStatus> characterLimitStatus = 
                 calculateCharacterLimits(request.getSelectedBosses());
         
         // 서버 전체 보스 개수 계산
-        BossPresetDto.ValidateLimitsResponse.ServerLimitStatus serverLimitStatus = 
+        ValidateLimitsResponse.ServerLimitStatus serverLimitStatus = 
                 calculateServerLimits(request.getSelectedBosses());
         
         // 제한 위반 체크
         List<String> violations = checkViolations(characterLimitStatus, serverLimitStatus);
         
-        return BossPresetDto.ValidateLimitsResponse.builder()
+        return ValidateLimitsResponse.builder()
                 .isValid(violations.isEmpty())
                 .characterLimitStatus(characterLimitStatus)
                 .serverLimitStatus(serverLimitStatus)
@@ -72,23 +75,23 @@ public class BossPresetService {
     }
 
     // 프리셋에서 보스 목록 추출
-    private List<BossDto.SimpleResponse> getBossesFromPreset(BossPreset preset) {
+    private List<BossSimpleResponse> getBossesFromPreset(BossPreset preset) {
         List<Long> bossIds = preset.extractBossIds();
         return bossRepository.findAllById(bossIds)
                 .stream()
-                .map(BossDto.SimpleResponse::from)
+                .map(BossSimpleResponse::from)
                 .toList();
     }
 
     // 캐릭터별 제한 계산
-    private Map<String, BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus> calculateCharacterLimits(
-            List<BossPresetDto.ValidateLimitsRequest.SelectedBoss> selectedBosses) {
+    private Map<String, ValidateLimitsResponse.CharacterLimitStatus> calculateCharacterLimits(
+            List<ValidateLimitsRequest.SelectedBoss> selectedBosses) {
         
-        Map<String, BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus> characterLimits = new java.util.HashMap<>();
+        Map<String, ValidateLimitsResponse.CharacterLimitStatus> characterLimits = new java.util.HashMap<>();
         Map<Long, Integer> characterBossCounts = new java.util.HashMap<>();
         
         // 캐릭터별 보스 개수 계산
-        for (BossPresetDto.ValidateLimitsRequest.SelectedBoss selectedBoss : selectedBosses) {
+        for (ValidateLimitsRequest.SelectedBoss selectedBoss : selectedBosses) {
             characterBossCounts.merge(selectedBoss.getCharacterId(), 1, Integer::sum);
         }
         
@@ -100,7 +103,7 @@ public class BossPresetService {
             Integer remaining = Math.max(0, limit - current);
             
             characterLimits.put(characterId.toString(), 
-                    BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus.builder()
+                    ValidateLimitsResponse.CharacterLimitStatus.builder()
                             .current(current)
                             .limit(limit)
                             .remaining(remaining)
@@ -111,14 +114,14 @@ public class BossPresetService {
     }
 
     // 서버 전체 제한 계산
-    private BossPresetDto.ValidateLimitsResponse.ServerLimitStatus calculateServerLimits(
-            List<BossPresetDto.ValidateLimitsRequest.SelectedBoss> selectedBosses) {
+    private ValidateLimitsResponse.ServerLimitStatus calculateServerLimits(
+            List<ValidateLimitsRequest.SelectedBoss> selectedBosses) {
         
         Integer current = selectedBosses.size();
         Integer limit = 90; // 서버 전체 최대 90개 보스
         Integer remaining = Math.max(0, limit - current);
         
-        return BossPresetDto.ValidateLimitsResponse.ServerLimitStatus.builder()
+        return ValidateLimitsResponse.ServerLimitStatus.builder()
                 .current(current)
                 .limit(limit)
                 .remaining(remaining)
@@ -127,15 +130,15 @@ public class BossPresetService {
 
     // 제한 위반 체크
     private List<String> checkViolations(
-            Map<String, BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus> characterLimitStatus,
-            BossPresetDto.ValidateLimitsResponse.ServerLimitStatus serverLimitStatus) {
+            Map<String, ValidateLimitsResponse.CharacterLimitStatus> characterLimitStatus,
+            ValidateLimitsResponse.ServerLimitStatus serverLimitStatus) {
         
         List<String> violations = new java.util.ArrayList<>();
         
         // 캐릭터별 제한 위반 체크
-        for (Map.Entry<String, BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus> entry : characterLimitStatus.entrySet()) {
+        for (Map.Entry<String, ValidateLimitsResponse.CharacterLimitStatus> entry : characterLimitStatus.entrySet()) {
             String characterId = entry.getKey();
-            BossPresetDto.ValidateLimitsResponse.CharacterLimitStatus status = entry.getValue();
+            ValidateLimitsResponse.CharacterLimitStatus status = entry.getValue();
             
             if (status.getCurrent() > status.getLimit()) {
                 violations.add(String.format("캐릭터 %s번이 %d개 제한을 초과했습니다.", 

@@ -1,6 +1,6 @@
 package com.happymapleday.boss.service;
 
-import com.happymapleday.boss.dto.BossDto;
+import com.happymapleday.boss.dto.response.BossResponse;
 import com.happymapleday.boss.repository.BossRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,10 +18,10 @@ public class BossService {
     private final BossRepository bossRepository;
 
     // 모든 활성화된 보스 조회
-    public List<BossDto.Response> getAllActiveBosses() {
+    public List<BossResponse> getAllActiveBosses() {
         return bossRepository.findByIsActiveTrueOrderByCrystalPriceDesc()
                 .stream()
-                .map(BossDto.Response::from)
+                .map(BossResponse::from)
                 .toList();
     }
 } 

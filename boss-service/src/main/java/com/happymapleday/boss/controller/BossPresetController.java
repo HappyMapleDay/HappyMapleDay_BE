@@ -1,6 +1,8 @@
 package com.happymapleday.boss.controller;
 
-import com.happymapleday.boss.dto.BossPresetDto;
+import com.happymapleday.boss.dto.response.BossPresetResponse;
+import com.happymapleday.boss.dto.request.BossPresetApplyRequest;
+import com.happymapleday.boss.dto.response.BossPresetApplyResponse;
 import com.happymapleday.boss.service.BossPresetService;
 import com.happymapleday.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +23,9 @@ public class BossPresetController {
 
     // 3. 보스 프리셋 조회 API
     @GetMapping("/presets")
-    public ResponseEntity<ApiResponse<List<BossPresetDto.Response>>> getAllPresets() {
+    public ResponseEntity<ApiResponse<List<BossPresetResponse>>> getAllPresets() {
         try {
-            List<BossPresetDto.Response> presets = bossPresetService.getAllPresetsWithBosses();
+            List<BossPresetResponse> presets = bossPresetService.getAllPresetsWithBosses();
             return ResponseEntity.ok(ApiResponse.success(presets));
         } catch (Exception e) {
             log.error("프리셋 목록 조회 중 오류 발생", e);
@@ -34,10 +36,10 @@ public class BossPresetController {
 
     // 4. 보스 프리셋 적용 API
     @PostMapping("/preset/apply")
-    public ResponseEntity<ApiResponse<BossPresetDto.ApplyResponse>> applyPresetApi(
-            @RequestBody BossPresetDto.ApplyRequest request) {
+    public ResponseEntity<ApiResponse<BossPresetApplyResponse>> applyPresetApi(
+            @RequestBody BossPresetApplyRequest request) {
         try {
-            BossPresetDto.ApplyResponse response = bossPresetService.applyPreset(request.getPresetId(), request.getCharacterId());
+            BossPresetApplyResponse response = bossPresetService.applyPreset(request.getPresetId(), request.getCharacterId());
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

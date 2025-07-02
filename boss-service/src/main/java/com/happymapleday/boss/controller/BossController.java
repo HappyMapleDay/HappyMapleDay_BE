@@ -1,8 +1,9 @@
 package com.happymapleday.boss.controller;
 
-import com.happymapleday.boss.dto.BossDto;
-import com.happymapleday.boss.dto.BossPresetDto;
-import com.happymapleday.boss.dto.DesireItemDto;
+import com.happymapleday.boss.dto.response.BossResponse;
+import com.happymapleday.boss.dto.response.DesireItemResponse;
+import com.happymapleday.boss.dto.request.ValidateLimitsRequest;
+import com.happymapleday.boss.dto.response.ValidateLimitsResponse;
 import com.happymapleday.boss.service.BossService;
 import com.happymapleday.boss.service.BossPresetService;
 import com.happymapleday.boss.service.DesireItemService;
@@ -27,9 +28,9 @@ public class BossController {
 
     // 1. 보스 목록 조회 API
     @GetMapping("/list")
-    public ResponseEntity<ApiResponse<List<BossDto.Response>>> getAllActiveBosses() {
+    public ResponseEntity<ApiResponse<List<BossResponse>>> getAllActiveBosses() {
         try {
-            List<BossDto.Response> bosses = bossService.getAllActiveBosses();
+            List<BossResponse> bosses = bossService.getAllActiveBosses();
             return ResponseEntity.ok(ApiResponse.success(bosses));
         } catch (Exception e) {
             log.error("보스 목록 조회 중 오류 발생", e);
@@ -40,9 +41,9 @@ public class BossController {
 
     // 2. 물욕템 목록 조회 API
     @GetMapping("/{bossId}/desire-items")
-    public ResponseEntity<ApiResponse<List<DesireItemDto.Response>>> getDesireItemsApi(@PathVariable Long bossId) {
+    public ResponseEntity<ApiResponse<List<DesireItemResponse>>> getDesireItemsApi(@PathVariable Long bossId) {
         try {
-            List<DesireItemDto.Response> desireItems = desireItemService.getDesireItemsWithRandomBoxByBossId(bossId);
+            List<DesireItemResponse> desireItems = desireItemService.getDesireItemsByBossId(bossId);
             return ResponseEntity.ok(ApiResponse.success(desireItems));
         } catch (Exception e) {
             log.error("물욕템 목록 조회 중 오류 발생", e);
@@ -53,10 +54,10 @@ public class BossController {
 
     // 5. 보스 제한 검증 API
     @PostMapping("/validate-limits")
-    public ResponseEntity<ApiResponse<BossPresetDto.ValidateLimitsResponse>> validateLimitsApi(
-            @RequestBody BossPresetDto.ValidateLimitsRequest request) {
+    public ResponseEntity<ApiResponse<ValidateLimitsResponse>> validateLimitsApi(
+            @RequestBody ValidateLimitsRequest request) {
         try {
-            BossPresetDto.ValidateLimitsResponse response = bossPresetService.validateLimits(request);
+            ValidateLimitsResponse response = bossPresetService.validateLimits(request);
             if (response.getIsValid()) {
                 return ResponseEntity.ok(ApiResponse.success(response));
             } else {

@@ -6,4 +6,7 @@ jwt-test-keys/
 
 # 사용자 데이터 백업 (로컬)
 user-backup/
-*.user-backup 
+*.user-backup
+
+# 빌드 결과물
+build/ 

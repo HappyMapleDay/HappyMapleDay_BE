@@ -1,0 +1,79 @@
+package com.happymapleday.user.entity;
+
+import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users")
+@EntityListeners(AuditingEntityListener.class)
+public class User {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "main_character_name", unique = true, nullable = false, length = 50)
+    private String mainCharacterName; // 로그인 ID
+    
+    @Column(name = "password", nullable = false)
+    private String password; // 암호화된 비밀번호
+    
+    @Column(name = "nexon_api_key", nullable = false)
+    private String nexonApiKey; // 암호화된 API Key
+    
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+    
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+    
+    // 기본 생성자
+    protected User() {}
+    
+    // 생성자
+    public User(String mainCharacterName, String password, String nexonApiKey) {
+        this.mainCharacterName = mainCharacterName;
+        this.password = password;
+        this.nexonApiKey = nexonApiKey;
+    }
+    
+    // Getter 메서드들
+    public Long getId() {
+        return id;
+    }
+    
+    public String getMainCharacterName() {
+        return mainCharacterName;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public String getNexonApiKey() {
+        return nexonApiKey;
+    }
+    
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+    
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    // Setter 메서드들 (필요한 경우)
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+    
+    public void updateNexonApiKey(String nexonApiKey) {
+        this.nexonApiKey = nexonApiKey;
+    }
+} 

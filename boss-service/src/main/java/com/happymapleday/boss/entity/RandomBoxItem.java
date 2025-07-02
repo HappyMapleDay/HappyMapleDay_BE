@@ -20,31 +20,33 @@ public class RandomBoxItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "desire_item_id", nullable = false, foreignKey = @ForeignKey(name = "fk_random_box_desire_item"))
-    private DesireItem desireItem;
+    @JoinColumn(name = "item_id", nullable = false, foreignKey = @ForeignKey(name = "fk_random_box_item"))
+    private Item item;
 
-    @Column(name = "drop_item_name", nullable = false, length = 100)
-    private String dropItemName;
-
-    @Column(name = "drop_item_level")
-    private Integer dropItemLevel;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "box_content_item_id", nullable = false, foreignKey = @ForeignKey(name = "fk_random_box_content_item"))
+    private BoxContentItem boxContentItem;
 
     @Builder
-    public RandomBoxItem(DesireItem desireItem, String dropItemName, Integer dropItemLevel) {
-        this.desireItem = desireItem;
-        this.dropItemName = dropItemName;
-        this.dropItemLevel = dropItemLevel;
+    public RandomBoxItem(Item item, BoxContentItem boxContentItem) {
+        this.item = item;
+        this.boxContentItem = boxContentItem;
     }
 
     // 비즈니스 메서드
+    public String getDropItemName() {
+        return boxContentItem.getItemName();
+    }
+
+    public Integer getDropItemLevel() {
+        return boxContentItem.getItemLevel();
+    }
+
     public String getFullDropItemName() {
-        if (dropItemLevel != null) {
-            return dropItemName + " (Lv." + dropItemLevel + ")";
-        }
-        return dropItemName;
+        return boxContentItem.getFullItemName();
     }
 
     public boolean hasDropLevel() {
-        return dropItemLevel != null;
+        return boxContentItem.hasLevel();
     }
 } 

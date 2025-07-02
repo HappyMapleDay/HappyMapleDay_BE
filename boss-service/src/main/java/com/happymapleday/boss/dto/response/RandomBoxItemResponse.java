@@ -16,18 +16,24 @@ public class RandomBoxItemResponse {
     private Integer dropItemLevel;
     private String fullDropItemName;
     private Boolean hasDropLevel;
-    private Long desireItemId;
-    private String desireItemName;
 
     public static RandomBoxItemResponse from(RandomBoxItem randomBoxItem) {
         return RandomBoxItemResponse.builder()
-                .id(randomBoxItem.getId())
+                .id(randomBoxItem.getBoxContentItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())
                 .fullDropItemName(randomBoxItem.getFullDropItemName())
                 .hasDropLevel(randomBoxItem.hasDropLevel())
-                .desireItemId(randomBoxItem.getDesireItem().getId())
-                .desireItemName(randomBoxItem.getDesireItem().getItemName())
+                .build();
+    }
+
+    public static RandomBoxItemResponse fromRandomBoxItem(RandomBoxItem randomBoxItem) {
+        return RandomBoxItemResponse.builder()
+                .id(randomBoxItem.getBoxContentItem().getId())
+                .dropItemName(randomBoxItem.getDropItemName())
+                .dropItemLevel(randomBoxItem.getDropItemLevel())
+                .fullDropItemName(randomBoxItem.getFullDropItemName())
+                .hasDropLevel(randomBoxItem.hasDropLevel())
                 .build();
     }
 } 

@@ -47,10 +47,10 @@ public class BossResponse {
 
     public static BossResponse fromWithDesireItems(Boss boss) {
         BossResponse response = from(boss);
-        if (boss.getDesireItems() != null) {
+        if (boss.getBossDropItems() != null) {
             response.setDesireItems(
-                    boss.getDesireItems().stream()
-                            .map(DesireItemResponse::from)
+                    boss.getBossDropItems().stream()
+                            .map(DesireItemResponse::fromBossDropItem)
                             .toList()
             );
         }

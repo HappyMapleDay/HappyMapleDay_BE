@@ -55,4 +55,12 @@ public interface BossRepository extends JpaRepository<Boss, Long> {
 
     // 보스명과 난이도 중복 체크
     boolean existsByBossNameAndDifficultyAndIsActiveTrue(String bossName, String difficulty);
+
+    // 보스 드랍 아이템과 함께 활성화된 보스 조회
+    @Query("SELECT DISTINCT b FROM Boss b " +
+           "LEFT JOIN FETCH b.bossDropItems bdi " +
+           "LEFT JOIN FETCH bdi.item i " +
+           "WHERE b.isActive = true " +
+           "ORDER BY b.crystalPrice DESC")
+    List<Boss> findByIsActiveTrueWithBossDropItemsOrderByCrystalPriceDesc();
 } 

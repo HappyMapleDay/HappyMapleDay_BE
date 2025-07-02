@@ -13,11 +13,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
     
-    // OpenFeign (테스트에서는 제외)
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-openfeign'
-    }
+
+    // OpenFeign
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     
     // Lombok
     compileOnly 'org.projectlombok:lombok'

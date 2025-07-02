@@ -1,6 +1,6 @@
 package com.happymapleday.boss.dto.response;
 
-import com.happymapleday.boss.entity.DesireItem;
+import com.happymapleday.boss.entity.BossDropItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,27 +22,24 @@ public class DesireItemResponse {
     private String bossDifficulty;
     private List<RandomBoxItemResponse> randomBoxItems;
 
-    public static DesireItemResponse from(DesireItem desireItem) {
-        return DesireItemResponse.builder()
-                .id(desireItem.getId())
-                .itemName(desireItem.getItemName())
-                .isRandomBox(desireItem.getIsRandomBox())
-                .fullItemName(desireItem.getFullItemName())
-                .bossId(desireItem.getBoss().getId())
-                .bossName(desireItem.getBoss().getBossName())
-                .bossDifficulty(desireItem.getBoss().getDifficulty())
+    public static DesireItemResponse fromBossDropItem(BossDropItem bossDropItem) {
+        DesireItemResponse response = DesireItemResponse.builder()
+                .id(bossDropItem.getId())
+                .itemName(bossDropItem.getItemName())
+                .isRandomBox(bossDropItem.getIsRandomBox())
+                .fullItemName(bossDropItem.getFullItemName())
+                .bossId(bossDropItem.getBoss().getId())
+                .bossName(bossDropItem.getBoss().getBossName())
+                .bossDifficulty(bossDropItem.getBoss().getDifficulty())
                 .build();
-    }
-
-    public static DesireItemResponse fromWithRandomBoxItems(DesireItem desireItem) {
-        DesireItemResponse response = from(desireItem);
-        if (desireItem.getRandomBoxItems() != null) {
+        
+        if (bossDropItem.getItem().getRandomBoxItems() != null) {
             response.setRandomBoxItems(
-                    desireItem.getRandomBoxItems().stream()
-                            .map(RandomBoxItemResponse::from)
+                    bossDropItem.getItem().getRandomBoxItems().stream()
+                            .map(randomBoxItem -> RandomBoxItemResponse.fromRandomBoxItem(randomBoxItem, bossDropItem.getId(), bossDropItem.getItemName()))
                             .toList()
             );
         }
         return response;
     }
-} 
+}

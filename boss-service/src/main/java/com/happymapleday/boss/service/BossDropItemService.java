@@ -1,7 +1,7 @@
 package com.happymapleday.boss.service;
 
 import com.happymapleday.boss.dto.response.DesireItemResponse;
-import com.happymapleday.boss.repository.DesireItemRepository;
+import com.happymapleday.boss.repository.BossDropItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,15 +13,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
-public class DesireItemService {
+public class BossDropItemService {
 
-    private final DesireItemRepository desireItemRepository;
+    private final BossDropItemRepository bossDropItemRepository;
 
-    // 특정 보스의 모든 물욕템 조회
-    public List<DesireItemResponse> getDesireItemsByBossId(Long bossId) {
-        return desireItemRepository.findByBossIdWithRandomBoxItems(bossId)
+    // 특정 보스의 모든 드랍 아이템 조회
+    public List<DesireItemResponse> getDropItemsByBossId(Long bossId) {
+        return bossDropItemRepository.findByBossIdWithRandomBoxItems(bossId)
                 .stream()
-                .map(DesireItemResponse::fromWithRandomBoxItems)
+                .map(DesireItemResponse::fromBossDropItem)
                 .toList();
     }
 } 

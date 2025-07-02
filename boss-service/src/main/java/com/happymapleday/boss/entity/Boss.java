@@ -64,9 +64,9 @@ public class Boss {
     @Column(name = "required_force_amount")
     private Integer requiredForceAmount;
 
-    // 물욕템과의 연관관계 (일대다)
+    // 보스 드랍 아이템과의 연관관계 (일대다)
     @OneToMany(mappedBy = "boss", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DesireItem> desireItems = new ArrayList<>();
+    private List<BossDropItem> bossDropItems = new ArrayList<>();
 
     @Builder
     public Boss(String bossName, String difficulty, Long crystalPrice, 

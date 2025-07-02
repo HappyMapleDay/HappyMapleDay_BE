@@ -142,253 +142,236 @@ INSERT INTO boss_presets (preset_name, boss_ids) VALUES
   {"boss_id": 13}, {"boss_id": 16}, {"boss_id": 4}, {"boss_id": 8}
 ]'); 
 
--- 물욕템 데이터 삽입
-INSERT INTO desire_items (boss_id, item_name, is_random_box) VALUES
+-- 아이템 마스터 데이터 삽입
+INSERT INTO items (item_name, is_random_box) VALUES
+('녹옥의 보스 반지 상자', true),
+('홍옥의 보스 반지 상자', true),
+('흑옥의 보스 반지 상자', true),
+('백옥의 보스 반지 상자', true),
+('생명의 보스 반지 상자', true),
+('루즈 컨트롤 머신 마크', false),
+('손상된 블랙 하트', false),
+('컴플리트 언더 컨트롤', false),
+('마력이 깃든 안대', false),
+('트와일라이트 마크', false),
+('몽환의 벨트', false),
+('저주받은 마도서 선택 상자', false),
+('에스텔라 이어링', false),
+('커맨더 포스 이어링', false),
+('거대한 공포', false),
+('데이브레이크 펜던트', false),
+('고통의 근원', false),
+('창세의 뱃지', false),
+('익셉셔널 해머 - 벨트', false),
+('미트라의 분노 선택 상자', false),
+('익셉셔널 해머 - 얼굴장식', false),
+('생명의 연마석', false),
+('의지의 에테르넬 방어구 상자', false),
+('익셉셔널 해머 - 눈장식', false),
+('흉수의 에테르넬 방어구 상자', false),
+('익셉셔널 해머 - 귀고리', false),
+('신념의 연마석', false),
+('욕망의 에테르넬 방어구 상자', false),
+('근원의 속삭임', false),
+('발드릭스로이드', false),
+('맹세의 에테르넬 방어구 상자', false);
+
+-- 보스 드랍 아이템 연결 데이터 삽입
+INSERT INTO boss_drop_items (boss_id, item_id) VALUES
 
 -- 스우
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), '루즈 컨트롤 머신 마크', false),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), '손상된 블랙 하트', false),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '루즈 컨트롤 머신 마크', false),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '손상된 블랙 하트', false),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), '컴플리트 언더 컨트롤', false),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '홍옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '루즈 컨트롤 머신 마크')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '손상된 블랙 하트')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '루즈 컨트롤 머신 마크')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '손상된 블랙 하트')),
+((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '컴플리트 언더 컨트롤')),
 
 -- 데미안
-((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '하드'), '마력이 깃든 안대', false),
+((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '홍옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '데미안' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '마력이 깃든 안대')),
 
 -- 가디언 엔젤 슬라임
-((SELECT id FROM bosses WHERE boss_name = '가디언 엔젤 슬라임' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '가디언 엔젤 슬라임' AND difficulty = '카오스'), '흑옥의 보스 반지 상자', true),
+((SELECT id FROM bosses WHERE boss_name = '가디언 엔젤 슬라임' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '가디언 엔젤 슬라임' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '흑옥의 보스 반지 상자')),
 
 -- 루시드
-((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '이지'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '노말'), '트와일라이트 마크', false),
-((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), '트와일라이트 마크', false),
-((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), '몽환의 벨트', false),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '이지'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '트와일라이트 마크')),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '홍옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '트와일라이트 마크')),
+((SELECT id FROM bosses WHERE boss_name = '루시드' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '몽환의 벨트')),
 
 -- 윌
-((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '이지'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '노말'), '트와일라이트 마크', false),
-((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), '홍옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), '트와일라이트 마크', false),
-((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), '저주받은 마도서 선택 상자', false),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '이지'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '트와일라이트 마크')),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '홍옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '트와일라이트 마크')),
+((SELECT id FROM bosses WHERE boss_name = '윌' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '저주받은 마도서 선택 상자')),
 
 -- 듄켈
-((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '노말'), '에스텔라 이어링', false),
-((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), '흑옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), '에스텔라 이어링', false),
-((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), '커맨더 포스 이어링', false),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '에스텔라 이어링')),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '흑옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '에스텔라 이어링')),
+((SELECT id FROM bosses WHERE boss_name = '듄켈' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '커맨더 포스 이어링')),
 
 -- 더스크
-((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '노말'), '녹옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '노말'), '에스텔라 이어링', false),
-((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), '흑옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), '에스텔라 이어링', false),
-((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), '거대한 공포', false),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '녹옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '에스텔라 이어링')),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '흑옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '에스텔라 이어링')),
+((SELECT id FROM bosses WHERE boss_name = '더스크' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '거대한 공포')),
 
 -- 진 힐라
-((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '노말'), '홍옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '노말'), '데이브레이크 펜던트', false),
-((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), '흑옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), '데이브레이크 펜던트', false),
-((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), '고통의 근원', false),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '홍옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '데이브레이크 펜던트')),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '흑옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '데이브레이크 펜던트')),
+((SELECT id FROM bosses WHERE boss_name = '진 힐라' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '고통의 근원')),
 
 -- 검은 마법사
-((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '하드'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '하드'), '창세의 뱃지', false),
-((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), '창세의 뱃지', false),
-((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), '익셉셔널 해머 - 벨트', false),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '창세의 뱃지')),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '창세의 뱃지')),
+((SELECT id FROM bosses WHERE boss_name = '검은 마법사' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '익셉셔널 해머 - 벨트')),
 
 -- 선택받은 세렌
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '노말'), '흑옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '노말'), '데이브레이크 펜던트', false),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), '데이브레이크 펜던트', false),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), '미트라의 분노 선택 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '데이브레이크 펜던트', false),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '미트라의 분노 선택 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), '익셉셔널 해머 - 얼굴장식', false),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '흑옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '데이브레이크 펜던트')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '데이브레이크 펜던트')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '미트라의 분노 선택 상자')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '데이브레이크 펜던트')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '미트라의 분노 선택 상자')),
+((SELECT id FROM bosses WHERE boss_name = '선택받은 세렌' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '익셉셔널 해머 - 얼굴장식')),
 
 -- 감시자 칼로스
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '이지'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '노말'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '노말'), '생명의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), '생명의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), '의지의 에테르넬 방어구 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '생명의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '의지의 에테르넬 방어구 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), '익셉셔널 해머 - 눈장식', false),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '이지'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '카오스'), (SELECT id FROM items WHERE item_name = '의지의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '의지의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '감시자 칼로스' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '익셉셔널 해머 - 눈장식')),
 
 -- 카링
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '이지'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), '백옥의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), '생명의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), '생명의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), '흉수의 에테르넬 방어구 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '생명의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '흉수의 에테르넬 방어구 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), '익셉셔널 해머 - 귀고리', false),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '이지'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '흉수의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '흉수의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '익셉셔널 해머 - 귀고리')),
 
 -- 림보
-((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), '신념의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '신념의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '욕망의 에테르넬 방어구 상자', false),
-((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), '근원의 속삭임', false),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '욕망의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '근원의 속삭임')),
 
 -- 발드릭스
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), '신념의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), '발드릭스로이드', false),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '신념의 연마석', false),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '발드릭스로이드', false),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '맹세의 에테르넬 방어구 상자', false);
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '발드릭스로이드')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '발드릭스로이드')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '맹세의 에테르넬 방어구 상자'));
 
--- 랜덤 상자 아이템 데이터 삽입
--- 모든 반지 상자에 대해 각각 랜덤박스 아이템을 연결
-INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
-SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
-FROM desire_items di
-CROSS JOIN (
-    -- 녹옥의 보스 반지 상자 아이템 (1~3 레벨)
-    SELECT '웨폰퍼프 - S링' as drop_item_name, 1 as drop_item_level
-    UNION ALL SELECT '웨폰퍼프 - S링', 2
-    UNION ALL SELECT '웨폰퍼프 - S링', 3
-    UNION ALL SELECT '웨폰퍼프 - D링', 1
-    UNION ALL SELECT '웨폰퍼프 - D링', 2
-    UNION ALL SELECT '웨폰퍼프 - D링', 3
-    UNION ALL SELECT '웨폰퍼프 - L링', 1
-    UNION ALL SELECT '웨폰퍼프 - L링', 2
-    UNION ALL SELECT '웨폰퍼프 - L링', 3
-    UNION ALL SELECT '웨폰퍼프 - I링', 1
-    UNION ALL SELECT '웨폰퍼프 - I링', 2
-    UNION ALL SELECT '웨폰퍼프 - I링', 3
-    UNION ALL SELECT '리스트레인트 링', 1
-    UNION ALL SELECT '리스트레인트 링', 2
-    UNION ALL SELECT '리스트레인트 링', 3
-    UNION ALL SELECT '컨티뉴어스 링', 1
-    UNION ALL SELECT '컨티뉴어스 링', 2
-    UNION ALL SELECT '컨티뉴어스 링', 3
-) as item_data
-WHERE di.item_name = '녹옥의 보스 반지 상자' AND di.is_random_box = true;
+-- 박스 내용물 마스터 데이터 삽입
+INSERT INTO box_content_item (item_name, item_level, is_special, notes) VALUES
+-- 웨폰퍼프 링 시리즈
+('웨폰퍼프 - S링', 1, false, null),
+('웨폰퍼프 - S링', 2, false, null),
+('웨폰퍼프 - S링', 3, false, null),
+('웨폰퍼프 - S링', 4, false, null),
+('웨폰퍼프 - D링', 1, false, null),
+('웨폰퍼프 - D링', 2, false, null),
+('웨폰퍼프 - D링', 3, false, null),
+('웨폰퍼프 - D링', 4, false, null),
+('웨폰퍼프 - L링', 1, false, null),
+('웨폰퍼프 - L링', 2, false, null),
+('웨폰퍼프 - L링', 3, false, null),
+('웨폰퍼프 - L링', 4, false, null),
+('웨폰퍼프 - I링', 1, false, null),
+('웨폰퍼프 - I링', 2, false, null),
+('웨폰퍼프 - I링', 3, false, null),
+('웨폰퍼프 - I링', 4, false, null),
+-- 리스트레인트 링 시리즈
+('리스트레인트 링', 1, false, null),
+('리스트레인트 링', 2, false, null),
+('리스트레인트 링', 3, false, null),
+('리스트레인트 링', 4, false, null),
+-- 컨티뉴어스 링 시리즈
+('컨티뉴어스 링', 1, false, null),
+('컨티뉴어스 링', 2, false, null),
+('컨티뉴어스 링', 3, false, null),
+('컨티뉴어스 링', 4, false, null),
+-- 기타 아이템
+('생명의 연마석', null, true, '생명의 보스 반지 상자에서만 나옴');
+
+-- 랜덤박스-내용물 연결 데이터 삽입
+
+-- 녹옥의 보스 반지 상자 (1~3 레벨)
+INSERT INTO random_box_items (item_id, box_content_item_id) 
+SELECT items.id, box_content_item.id
+FROM items
+CROSS JOIN box_content_item
+WHERE items.item_name = '녹옥의 보스 반지 상자'
+  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_level BETWEEN 1 AND 3;
 
 -- 홍옥의 보스 반지 상자 (1~4 레벨)
-INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
-SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
-FROM desire_items di
-CROSS JOIN (
-    SELECT '웨폰퍼프 - S링' as drop_item_name, 1 as drop_item_level
-    UNION ALL SELECT '웨폰퍼프 - S링', 2
-    UNION ALL SELECT '웨폰퍼프 - S링', 3
-    UNION ALL SELECT '웨폰퍼프 - S링', 4
-    UNION ALL SELECT '웨폰퍼프 - D링', 1
-    UNION ALL SELECT '웨폰퍼프 - D링', 2
-    UNION ALL SELECT '웨폰퍼프 - D링', 3
-    UNION ALL SELECT '웨폰퍼프 - D링', 4
-    UNION ALL SELECT '웨폰퍼프 - L링', 1
-    UNION ALL SELECT '웨폰퍼프 - L링', 2
-    UNION ALL SELECT '웨폰퍼프 - L링', 3
-    UNION ALL SELECT '웨폰퍼프 - L링', 4
-    UNION ALL SELECT '웨폰퍼프 - I링', 1
-    UNION ALL SELECT '웨폰퍼프 - I링', 2
-    UNION ALL SELECT '웨폰퍼프 - I링', 3
-    UNION ALL SELECT '웨폰퍼프 - I링', 4
-    UNION ALL SELECT '리스트레인트 링', 1
-    UNION ALL SELECT '리스트레인트 링', 2
-    UNION ALL SELECT '리스트레인트 링', 3
-    UNION ALL SELECT '리스트레인트 링', 4
-    UNION ALL SELECT '컨티뉴어스 링', 1
-    UNION ALL SELECT '컨티뉴어스 링', 2
-    UNION ALL SELECT '컨티뉴어스 링', 3
-    UNION ALL SELECT '컨티뉴어스 링', 4
-) as item_data
-WHERE di.item_name = '홍옥의 보스 반지 상자' AND di.is_random_box = true;
+INSERT INTO random_box_items (item_id, box_content_item_id) 
+SELECT items.id, box_content_item.id
+FROM items
+CROSS JOIN box_content_item
+WHERE items.item_name = '홍옥의 보스 반지 상자'
+  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_level BETWEEN 1 AND 4;
 
 -- 흑옥의 보스 반지 상자 (1~4 레벨)
-INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
-SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
-FROM desire_items di
-CROSS JOIN (
-    SELECT '웨폰퍼프 - S링' as drop_item_name, 1 as drop_item_level
-    UNION ALL SELECT '웨폰퍼프 - S링', 2
-    UNION ALL SELECT '웨폰퍼프 - S링', 3
-    UNION ALL SELECT '웨폰퍼프 - S링', 4
-    UNION ALL SELECT '웨폰퍼프 - D링', 1
-    UNION ALL SELECT '웨폰퍼프 - D링', 2
-    UNION ALL SELECT '웨폰퍼프 - D링', 3
-    UNION ALL SELECT '웨폰퍼프 - D링', 4
-    UNION ALL SELECT '웨폰퍼프 - L링', 1
-    UNION ALL SELECT '웨폰퍼프 - L링', 2
-    UNION ALL SELECT '웨폰퍼프 - L링', 3
-    UNION ALL SELECT '웨폰퍼프 - L링', 4
-    UNION ALL SELECT '웨폰퍼프 - I링', 1
-    UNION ALL SELECT '웨폰퍼프 - I링', 2
-    UNION ALL SELECT '웨폰퍼프 - I링', 3
-    UNION ALL SELECT '웨폰퍼프 - I링', 4
-    UNION ALL SELECT '리스트레인트 링', 1
-    UNION ALL SELECT '리스트레인트 링', 2
-    UNION ALL SELECT '리스트레인트 링', 3
-    UNION ALL SELECT '리스트레인트 링', 4
-    UNION ALL SELECT '컨티뉴어스 링', 1
-    UNION ALL SELECT '컨티뉴어스 링', 2
-    UNION ALL SELECT '컨티뉴어스 링', 3
-    UNION ALL SELECT '컨티뉴어스 링', 4
-) as item_data
-WHERE di.item_name = '흑옥의 보스 반지 상자' AND di.is_random_box = true;
+INSERT INTO random_box_items (item_id, box_content_item_id) 
+SELECT items.id, box_content_item.id
+FROM items
+CROSS JOIN box_content_item
+WHERE items.item_name = '흑옥의 보스 반지 상자'
+  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_level BETWEEN 1 AND 4;
 
 -- 백옥의 보스 반지 상자 (3~4 레벨)
-INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
-SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
-FROM desire_items di
-CROSS JOIN (
-    SELECT '웨폰퍼프 - S링' as drop_item_name, 3 as drop_item_level
-    UNION ALL SELECT '웨폰퍼프 - S링', 4
-    UNION ALL SELECT '웨폰퍼프 - D링', 3
-    UNION ALL SELECT '웨폰퍼프 - D링', 4
-    UNION ALL SELECT '웨폰퍼프 - L링', 3
-    UNION ALL SELECT '웨폰퍼프 - L링', 4
-    UNION ALL SELECT '웨폰퍼프 - I링', 3
-    UNION ALL SELECT '웨폰퍼프 - I링', 4
-    UNION ALL SELECT '리스트레인트 링', 3
-    UNION ALL SELECT '리스트레인트 링', 4
-    UNION ALL SELECT '컨티뉴어스 링', 3
-    UNION ALL SELECT '컨티뉴어스 링', 4
-) as item_data
-WHERE di.item_name = '백옥의 보스 반지 상자' AND di.is_random_box = true;
+INSERT INTO random_box_items (item_id, box_content_item_id) 
+SELECT items.id, box_content_item.id
+FROM items
+CROSS JOIN box_content_item
+WHERE items.item_name = '백옥의 보스 반지 상자'
+  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_level BETWEEN 3 AND 4;
 
--- 생명의 보스 반지 상자 (3~4 레벨)
-INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
-SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
-FROM desire_items di
-CROSS JOIN (
-    SELECT '웨폰퍼프 - S링' as drop_item_name, 3 as drop_item_level
-    UNION ALL SELECT '웨폰퍼프 - S링', 4
-    UNION ALL SELECT '웨폰퍼프 - D링', 3
-    UNION ALL SELECT '웨폰퍼프 - D링', 4
-    UNION ALL SELECT '웨폰퍼프 - L링', 3
-    UNION ALL SELECT '웨폰퍼프 - L링', 4
-    UNION ALL SELECT '웨폰퍼프 - I링', 3
-    UNION ALL SELECT '웨폰퍼프 - I링', 4
-    UNION ALL SELECT '리스트레인트 링', 3
-    UNION ALL SELECT '리스트레인트 링', 4
-    UNION ALL SELECT '컨티뉴어스 링', 3
-    UNION ALL SELECT '컨티뉴어스 링', 4
-    UNION ALL SELECT '생명의 연마석', NULL
-) as item_data
-WHERE di.item_name = '생명의 보스 반지 상자' AND di.is_random_box = true;
+-- 생명의 보스 반지 상자 (3~4 레벨 + 생명의 연마석)
+INSERT INTO random_box_items (item_id, box_content_item_id) 
+SELECT items.id, box_content_item.id
+FROM items
+CROSS JOIN box_content_item
+WHERE items.item_name = '생명의 보스 반지 상자'
+  AND (
+    (box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링') 
+     AND box_content_item.item_level BETWEEN 3 AND 4)
+    OR box_content_item.item_name = '생명의 연마석'
+  );

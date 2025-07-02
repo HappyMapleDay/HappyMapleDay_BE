@@ -5,7 +5,7 @@ import com.happymapleday.boss.dto.response.BossResponse;
 import com.happymapleday.boss.dto.response.DesireItemResponse;
 import com.happymapleday.boss.entity.ForceType;
 import com.happymapleday.boss.service.BossService;
-import com.happymapleday.boss.service.DesireItemService;
+import com.happymapleday.boss.service.BossDropItemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class BossControllerTest {
     private BossService bossService;
 
     @MockBean
-    private DesireItemService desireItemService;
+    private BossDropItemService bossDropItemService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -93,7 +93,7 @@ class BossControllerTest {
                         .bossId(1L)
                         .build()
         );
-        given(desireItemService.getDesireItemsByBossId(anyLong())).willReturn(desireItems);
+        given(bossDropItemService.getDropItemsByBossId(anyLong())).willReturn(desireItems);
 
         // when & then
         mockMvc.perform(get("/api/boss/{bossId}/desire-items", 1L))

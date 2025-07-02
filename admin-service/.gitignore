@@ -9,4 +9,4 @@ reports/
 *.report-temp
 
 # Prometheus 메트릭 캐시
-prometheus-cache/ 
+prometheus-cache/

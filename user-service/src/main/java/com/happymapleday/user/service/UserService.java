@@ -2,12 +2,15 @@ package com.happymapleday.user.service;
 
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
+import com.happymapleday.user.dto.RefreshTokenRequestDto;
+import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
 import com.happymapleday.user.dto.SignupResponseDto;
 import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
 import com.happymapleday.user.repository.UserSettingsRepository;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,11 +50,44 @@ public class UserService {
             throw new BadCredentialsException("아이디 또는 비밀번호가 잘못되었습니다.");
         }
         
-        // JWT 토큰 생성
-        String token = jwtService.generateToken(user.getId(), user.getMainCharacterName());
+        // Access Token과 Refresh Token 생성
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getMainCharacterName());
+        String refreshToken = jwtService.generateRefreshToken(user.getId());
         
         // 응답 DTO 생성
-        return LoginResponseDto.of(token, user.getId(), user.getMainCharacterName());
+        return LoginResponseDto.of(accessToken, refreshToken, user.getId(), user.getMainCharacterName());
+    }
+    
+    // 토큰 갱신 처리
+    public RefreshTokenResponseDto refreshToken(RefreshTokenRequestDto request) {
+        String refreshToken = request.getRefreshToken();
+        
+        try {
+            // Refresh Token 유효성 검증
+            if (!jwtService.isTokenValid(refreshToken)) {
+                throw new BadCredentialsException("유효하지 않은 Refresh Token입니다.");
+            }
+            
+            // Refresh Token인지 확인
+            if (!jwtService.isRefreshToken(refreshToken)) {
+                throw new BadCredentialsException("올바른 Refresh Token이 아닙니다.");
+            }
+            
+            // 사용자 ID 추출
+            Long userId = jwtService.getUserIdFromToken(refreshToken);
+            
+            // 사용자 정보 조회
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new BadCredentialsException("사용자를 찾을 수 없습니다."));
+            
+            // 새로운 Access Token과 Refresh Token 생성
+            String newAccessToken = jwtService.generateAccessToken(user.getId(), user.getMainCharacterName());
+            String newRefreshToken = jwtService.generateRefreshToken(user.getId());
+            
+            return RefreshTokenResponseDto.of(newAccessToken, newRefreshToken);
+        } catch (JwtException e) {
+            throw new BadCredentialsException("토큰 갱신에 실패했습니다.");
+        }
     }
     
     // 회원가입 처리

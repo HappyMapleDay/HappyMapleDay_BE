@@ -17,21 +17,42 @@ public class JwtService {
     private final String SECRET_KEY = "mySecretKeyForJwtTokenGenerationThatShouldBeLongEnoughForHS256Algorithm";
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     
-    // 토큰 만료 시간 (24시간)
-    private final long EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 24시간을 밀리초로
+    // 토큰 만료 시간 설정
+    private final int ACCESS_TOKEN_HOURS = 1;    // Access Token: 1시간
+    private final int REFRESH_TOKEN_DAYS = 30;   // Refresh Token: 30일
     
-    // JWT 토큰 생성
-    public String generateToken(Long userId, String mainCharacterName) {
+    // Access Token 생성
+    public String generateAccessToken(Long userId, String mainCharacterName) {
         Instant now = Instant.now();
-        Instant expiration = now.plus(24, ChronoUnit.HOURS); // 24시간 후
+        Instant expiration = now.plus(ACCESS_TOKEN_HOURS, ChronoUnit.HOURS);
         
         return Jwts.builder()
-                .subject(userId.toString()) // 사용자 ID를 subject로 설정
+                .subject(userId.toString())
                 .claim("mainCharacterName", mainCharacterName)
+                .claim("tokenType", "ACCESS")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
                 .signWith(key)
                 .compact();
+    }
+    
+    // Refresh Token 생성
+    public String generateRefreshToken(Long userId) {
+        Instant now = Instant.now();
+        Instant expiration = now.plus(REFRESH_TOKEN_DAYS, ChronoUnit.DAYS);
+        
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("tokenType", "REFRESH")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .signWith(key)
+                .compact();
+    }
+    
+    // 기존 메서드 유지 (호환성)
+    public String generateToken(Long userId, String mainCharacterName) {
+        return generateAccessToken(userId, mainCharacterName);
     }
     
     // JWT 토큰에서 사용자 ID 추출
@@ -44,6 +65,22 @@ public class JwtService {
     public String getMainCharacterNameFromToken(String token) {
         Claims claims = validateAndGetClaims(token);
         return claims.get("mainCharacterName", String.class);
+    }
+    
+    // 토큰 타입 확인 (ACCESS/REFRESH)
+    public String getTokenType(String token) {
+        Claims claims = validateAndGetClaims(token);
+        return claims.get("tokenType", String.class);
+    }
+    
+    // Access Token인지 확인
+    public boolean isAccessToken(String token) {
+        return "ACCESS".equals(getTokenType(token));
+    }
+    
+    // Refresh Token인지 확인
+    public boolean isRefreshToken(String token) {
+        return "REFRESH".equals(getTokenType(token));
     }
     
     // JWT 토큰 유효성 검증

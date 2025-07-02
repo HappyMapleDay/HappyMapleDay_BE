@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/user")
 public class UserController {
     
     private final UserService userService;
@@ -22,11 +22,18 @@ public class UserController {
     }
     
     // 회원가입
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<SignupResponseDto>> signup(@Valid @RequestBody SignupRequestDto signupRequest) {
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<SignupResponseDto>> register(@Valid @RequestBody SignupRequestDto signupRequest) {
         try {
+            // 비밀번호 확인 검증
+            if (!signupRequest.getPassword().equals(signupRequest.getPasswordConfirm())) {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("비밀번호가 일치하지 않습니다."));
+            }
+            
             SignupResponseDto response = userService.signup(signupRequest);
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));

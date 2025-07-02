@@ -61,11 +61,7 @@ public class UserService {
         
         userSettingsRepository.save(userSettings);
         
-        return SignupResponseDto.success(
-            savedUser.getId(),
-            savedUser.getMainCharacterName(),
-            savedUser.getCreatedAt()
-        );
+        return SignupResponseDto.success();
     }
     
     // 메인 캐릭터명 중복 체크

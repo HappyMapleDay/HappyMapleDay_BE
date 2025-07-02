@@ -85,4 +85,71 @@ public class BossPresetDto {
                     .build();
         }
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ApplyRequest {
+        private Long presetId;
+        private Long characterId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ApplyResponse {
+        private List<BossDto.SimpleResponse> appliedBosses;
+        private Long characterId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ValidateLimitsRequest {
+        private Long userId;
+        private List<SelectedBoss> selectedBosses;
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @Builder
+        public static class SelectedBoss {
+            private Long characterId;
+            private Long bossId;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ValidateLimitsResponse {
+        private Boolean isValid;
+        private Map<String, CharacterLimitStatus> characterLimitStatus;
+        private ServerLimitStatus serverLimitStatus;
+        private List<String> violations;
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @Builder
+        public static class CharacterLimitStatus {
+            private Integer current;
+            private Integer limit;
+            private Integer remaining;
+        }
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @Builder
+        public static class ServerLimitStatus {
+            private Integer current;
+            private Integer limit;
+            private Integer remaining;
+        }
+    }
 } 

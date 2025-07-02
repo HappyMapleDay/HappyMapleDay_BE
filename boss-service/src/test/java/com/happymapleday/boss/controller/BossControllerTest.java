@@ -2,10 +2,8 @@ package com.happymapleday.boss.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.happymapleday.boss.dto.response.BossResponse;
-import com.happymapleday.boss.dto.response.DesireItemResponse;
 import com.happymapleday.boss.entity.ForceType;
 import com.happymapleday.boss.service.BossService;
-import com.happymapleday.boss.service.BossDropItemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -33,9 +30,6 @@ class BossControllerTest {
 
     @MockBean
     private BossService bossService;
-
-    @MockBean
-    private BossDropItemService bossDropItemService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -70,38 +64,10 @@ class BossControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.message").value("보스 목록 조회가 완료되었습니다."))
+                .andExpect(jsonPath("$.message").value("요청이 성공했습니다."))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].bossName").value("자쿰"));
     }
 
-    @Test
-    @DisplayName("보스 물욕템 조회 API")
-    void getBossDesireItems() throws Exception {
-        // given
-        List<DesireItemResponse> desireItems = Arrays.asList(
-                DesireItemResponse.builder()
-                        .id(1L)
-                        .itemName("홍옥의 보스 반지 상자")
-                        .isRandomBox(true)
-                        .bossId(1L)
-                        .build(),
-                DesireItemResponse.builder()
-                        .id(2L)
-                        .itemName("손상된 블랙 하트")
-                        .isRandomBox(false)
-                        .bossId(1L)
-                        .build()
-        );
-        given(bossDropItemService.getDropItemsByBossId(anyLong())).willReturn(desireItems);
 
-        // when & then
-        mockMvc.perform(get("/api/boss/{bossId}/desire-items", 1L))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.message").value("보스 물욕템 조회가 완료되었습니다."))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].itemName").value("홍옥의 보스 반지 상자"));
-    }
 } 

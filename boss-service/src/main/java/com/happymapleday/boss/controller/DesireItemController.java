@@ -18,7 +18,6 @@ import java.util.List;
 public class DesireItemController {
 
     private final DesireItemService desireItemService;
-
     // 보스별 물욕템 목록 조회 API
     @GetMapping("/boss/{bossId}")
     public ResponseEntity<ApiResponse<List<DesireItemResponse>>> getDesireItemsByBossId(@PathVariable Long bossId) {

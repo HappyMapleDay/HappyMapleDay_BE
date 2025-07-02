@@ -1,9 +1,7 @@
 package com.happymapleday.boss.controller;
 
 import com.happymapleday.boss.dto.response.BossResponse;
-
 import com.happymapleday.boss.service.BossService;
-
 import com.happymapleday.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class BossController {
-
     private final BossService bossService;
-
 
     // 보스 목록 조회 API
     @GetMapping("/list")

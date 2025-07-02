@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/api/bosses")
+@RequestMapping("/api/boss/admin")
 @RequiredArgsConstructor
 public class AdminBossController {
     

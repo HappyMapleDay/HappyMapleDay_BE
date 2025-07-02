@@ -258,7 +258,7 @@ INSERT INTO desire_items (boss_id, item_name, is_random_box) VALUES
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '신념의 연마석', false),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '발드릭스로이드', false),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '맹세의 에테르넬 방어구 상자', fasle);
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '맹세의 에테르넬 방어구 상자', false);
 
 -- 랜덤 상자 아이템 데이터 삽입
 -- 모든 반지 상자에 대해 각각 랜덤박스 아이템을 연결

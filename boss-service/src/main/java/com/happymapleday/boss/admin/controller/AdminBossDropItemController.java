@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/boss-drop-items")
+@RequestMapping("/api/boss/admin/drop-items")
 @RequiredArgsConstructor
 @Slf4j
 public class AdminBossDropItemController {

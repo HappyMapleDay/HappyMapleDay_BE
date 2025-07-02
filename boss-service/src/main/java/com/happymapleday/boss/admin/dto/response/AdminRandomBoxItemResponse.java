@@ -18,7 +18,7 @@ public class AdminRandomBoxItemResponse {
 
     public static AdminRandomBoxItemResponse from(RandomBoxItem randomBoxItem) {
         return AdminRandomBoxItemResponse.builder()
-                .id(randomBoxItem.getId())
+                .id(randomBoxItem.getBoxContentItem().getId())
                 .itemId(randomBoxItem.getItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())

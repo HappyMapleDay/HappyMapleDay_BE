@@ -32,6 +32,4 @@ public class BossPresetController {
                     .body(ApiResponse.error("프리셋 목록 조회 중 오류가 발생했습니다."));
         }
     }
-
-
 } 

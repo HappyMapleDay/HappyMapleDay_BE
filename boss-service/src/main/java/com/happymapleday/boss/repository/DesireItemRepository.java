@@ -41,4 +41,12 @@ public interface DesireItemRepository extends JpaRepository<DesireItem, Long> {
     // 일반 물욕템만 조회 (랜덤박스가 아닌)
     @Query("SELECT di FROM DesireItem di WHERE di.boss.id = :bossId AND di.isRandomBox = false ORDER BY di.itemName")
     List<DesireItem> findNormalDesireItemsByBossId(@Param("bossId") Long bossId);
+    
+    // 보스 ID로 물욕템과 랜덤박스 아이템을 함께 조회 (Fetch Join)
+    @Query("SELECT DISTINCT di FROM DesireItem di " +
+           "LEFT JOIN FETCH di.randomBoxItems rbi " +
+           "LEFT JOIN FETCH di.boss " +
+           "WHERE di.boss.id = :bossId " +
+           "ORDER BY di.itemName")
+    List<DesireItem> findByBossIdWithRandomBoxItems(@Param("bossId") Long bossId);
 } 

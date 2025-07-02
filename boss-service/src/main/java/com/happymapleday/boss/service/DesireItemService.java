@@ -19,7 +19,7 @@ public class DesireItemService {
 
     // 특정 보스의 모든 물욕템 조회
     public List<DesireItemResponse> getDesireItemsByBossId(Long bossId) {
-        return desireItemRepository.findByBossIdOrderByItemName(bossId)
+        return desireItemRepository.findByBossIdWithRandomBoxItems(bossId)
                 .stream()
                 .map(DesireItemResponse::fromWithRandomBoxItems)
                 .toList();

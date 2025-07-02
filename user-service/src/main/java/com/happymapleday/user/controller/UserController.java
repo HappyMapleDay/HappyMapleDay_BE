@@ -1,6 +1,8 @@
 package com.happymapleday.user.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.user.dto.LoginRequestDto;
+import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
 import com.happymapleday.user.dto.SignupResponseDto;
 import com.happymapleday.user.service.UserService;
@@ -8,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +22,21 @@ public class UserController {
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+    
+    // 로그인
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto loginRequest) {
+        try {
+            LoginResponseDto response = userService.login(loginRequest);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("아이디 또는 비밀번호가 잘못되었습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("로그인 처리 중 오류가 발생했습니다."));
+        }
     }
     
     // 회원가입

@@ -1,12 +1,10 @@
 package com.happymapleday.boss.controller;
 
 import com.happymapleday.boss.dto.response.BossResponse;
-import com.happymapleday.boss.dto.response.DesireItemResponse;
 import com.happymapleday.boss.dto.request.ValidateLimitsRequest;
 import com.happymapleday.boss.dto.response.ValidateLimitsResponse;
 import com.happymapleday.boss.service.BossService;
 import com.happymapleday.boss.service.BossPresetService;
-import com.happymapleday.boss.service.DesireItemService;
 import com.happymapleday.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +21,6 @@ import java.util.List;
 public class BossController {
 
     private final BossService bossService;
-    private final DesireItemService desireItemService;
     private final BossPresetService bossPresetService;
 
     // 보스 목록 조회 API
@@ -36,19 +33,6 @@ public class BossController {
             log.error("보스 목록 조회 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("보스 목록 조회 중 오류가 발생했습니다."));
-        }
-    }
-
-    // 물욕템 목록 조회 API
-    @GetMapping("/{bossId}/desire-items")
-    public ResponseEntity<ApiResponse<List<DesireItemResponse>>> getDesireItemsApi(@PathVariable Long bossId) {
-        try {
-            List<DesireItemResponse> desireItems = desireItemService.getDesireItemsByBossId(bossId);
-            return ResponseEntity.ok(ApiResponse.success(desireItems));
-        } catch (Exception e) {
-            log.error("물욕템 목록 조회 중 오류 발생", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("물욕템 목록 조회 중 오류가 발생했습니다."));
         }
     }
 

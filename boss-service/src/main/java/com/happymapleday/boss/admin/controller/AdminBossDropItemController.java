@@ -126,4 +126,4 @@ public class AdminBossDropItemController {
                     .body(ApiResponse.error("보스 드랍 아이템 삭제 중 오류가 발생했습니다."));
         }
     }
-} 
+}

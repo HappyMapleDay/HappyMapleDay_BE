@@ -1,7 +1,8 @@
 package com.happymapleday.boss.service;
 
-import com.happymapleday.boss.dto.BossDto;
-import com.happymapleday.boss.dto.BossPresetDto;
+import com.happymapleday.boss.dto.response.BossPresetResponse;
+import com.happymapleday.boss.dto.request.ValidateLimitsRequest;
+import com.happymapleday.boss.dto.response.ValidateLimitsResponse;
 import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.entity.BossPreset;
 import com.happymapleday.boss.entity.ForceType;
@@ -98,7 +99,7 @@ class BossPresetServiceTest {
         given(bossRepository.findAllById(Arrays.asList(1L, 2L, 3L))).willReturn(Arrays.asList(testBoss1, testBoss2, testBoss3));
 
         // when
-        List<BossPresetDto.Response> result = bossPresetService.getAllPresetsWithBosses();
+        List<BossPresetResponse> result = bossPresetService.getAllPresetsWithBosses();
 
         // then
         assertThat(result).hasSize(1);
@@ -107,56 +108,30 @@ class BossPresetServiceTest {
         assertThat(result.get(0).getBosses().get(0).getBossName()).isEqualTo("자쿰");
     }
 
-    @Test
-    @DisplayName("프리셋 적용 - 성공")
-    void applyPreset_Success() {
-        // given
-        given(bossPresetRepository.findById(1L)).willReturn(Optional.of(testPreset));
-        given(bossRepository.findAllById(Arrays.asList(1L, 2L, 3L))).willReturn(Arrays.asList(testBoss1, testBoss2, testBoss3));
 
-        // when
-        BossPresetDto.ApplyResponse result = bossPresetService.applyPreset(1L, 100L);
-
-        // then
-        assertThat(result.getCharacterId()).isEqualTo(100L);
-        assertThat(result.getAppliedBosses()).hasSize(3);
-        assertThat(result.getAppliedBosses().get(0).getBossName()).isEqualTo("자쿰");
-    }
-
-    @Test
-    @DisplayName("프리셋 적용 - 실패 (존재하지 않는 프리셋)")
-    void applyPreset_NotFound() {
-        // given
-        given(bossPresetRepository.findById(999L)).willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> bossPresetService.applyPreset(999L, 100L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("해당 ID의 프리셋을 찾을 수 없습니다: 999");
-    }
 
     @Test
     @DisplayName("보스 선택 제한 검증 - 성공")
     void validateLimits_Success() {
         // given
-        List<BossPresetDto.ValidateLimitsRequest.SelectedBoss> selectedBosses = Arrays.asList(
-            BossPresetDto.ValidateLimitsRequest.SelectedBoss.builder()
+        List<ValidateLimitsRequest.SelectedBoss> selectedBosses = Arrays.asList(
+            ValidateLimitsRequest.SelectedBoss.builder()
                 .characterId(1L)
                 .bossId(1L)
                 .build(),
-            BossPresetDto.ValidateLimitsRequest.SelectedBoss.builder()
+            ValidateLimitsRequest.SelectedBoss.builder()
                 .characterId(1L)
                 .bossId(2L)
                 .build()
         );
 
-        BossPresetDto.ValidateLimitsRequest request = BossPresetDto.ValidateLimitsRequest.builder()
+        ValidateLimitsRequest request = ValidateLimitsRequest.builder()
             .userId(1L)
             .selectedBosses(selectedBosses)
             .build();
 
         // when
-        BossPresetDto.ValidateLimitsResponse result = bossPresetService.validateLimits(request);
+        ValidateLimitsResponse result = bossPresetService.validateLimits(request);
 
         // then
         assertThat(result.getIsValid()).isTrue();
@@ -170,21 +145,21 @@ class BossPresetServiceTest {
     @DisplayName("보스 선택 제한 검증 - 캐릭터 제한 초과")
     void validateLimits_CharacterLimitExceeded() {
         // given - 캐릭터 1명이 13개 보스 선택
-        List<BossPresetDto.ValidateLimitsRequest.SelectedBoss> selectedBosses = new java.util.ArrayList<>();
+        List<ValidateLimitsRequest.SelectedBoss> selectedBosses = new java.util.ArrayList<>();
         for (int i = 1; i <= 13; i++) {
-            selectedBosses.add(BossPresetDto.ValidateLimitsRequest.SelectedBoss.builder()
+            selectedBosses.add(ValidateLimitsRequest.SelectedBoss.builder()
                 .characterId(1L)
                 .bossId((long) i)
                 .build());
         }
 
-        BossPresetDto.ValidateLimitsRequest request = BossPresetDto.ValidateLimitsRequest.builder()
+        ValidateLimitsRequest request = ValidateLimitsRequest.builder()
             .userId(1L)
             .selectedBosses(selectedBosses)
             .build();
 
         // when
-        BossPresetDto.ValidateLimitsResponse result = bossPresetService.validateLimits(request);
+        ValidateLimitsResponse result = bossPresetService.validateLimits(request);
 
         // then
         assertThat(result.getIsValid()).isFalse();
@@ -197,21 +172,21 @@ class BossPresetServiceTest {
     @DisplayName("보스 선택 제한 검증 - 서버 제한 초과")
     void validateLimits_ServerLimitExceeded() {
         // given - 서버 전체 91개 보스 선택
-        List<BossPresetDto.ValidateLimitsRequest.SelectedBoss> selectedBosses = new java.util.ArrayList<>();
+        List<ValidateLimitsRequest.SelectedBoss> selectedBosses = new java.util.ArrayList<>();
         for (int i = 1; i <= 91; i++) {
-            selectedBosses.add(BossPresetDto.ValidateLimitsRequest.SelectedBoss.builder()
+            selectedBosses.add(ValidateLimitsRequest.SelectedBoss.builder()
                 .characterId((long) ((i - 1) / 12 + 1)) // 캐릭터당 12개씩 배분
                 .bossId((long) i)
                 .build());
         }
 
-        BossPresetDto.ValidateLimitsRequest request = BossPresetDto.ValidateLimitsRequest.builder()
+        ValidateLimitsRequest request = ValidateLimitsRequest.builder()
             .userId(1L)
             .selectedBosses(selectedBosses)
             .build();
 
         // when
-        BossPresetDto.ValidateLimitsResponse result = bossPresetService.validateLimits(request);
+        ValidateLimitsResponse result = bossPresetService.validateLimits(request);
 
         // then
         assertThat(result.getIsValid()).isFalse();

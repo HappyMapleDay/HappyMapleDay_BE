@@ -2,7 +2,7 @@ package com.happymapleday.boss.service;
 
 import com.happymapleday.boss.dto.response.BossSimpleResponse;
 import com.happymapleday.boss.dto.response.BossPresetResponse;
-import com.happymapleday.boss.dto.response.BossPresetApplyResponse;
+
 import com.happymapleday.boss.dto.request.ValidateLimitsRequest;
 import com.happymapleday.boss.dto.response.ValidateLimitsResponse;
 import com.happymapleday.boss.entity.BossPreset;
@@ -36,22 +36,6 @@ public class BossPresetService {
                 .toList();
     }
 
-    // 프리셋 적용
-    @Transactional
-    public BossPresetApplyResponse applyPreset(Long presetId, Long characterId) {
-        BossPreset preset = bossPresetRepository.findById(presetId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 프리셋을 찾을 수 없습니다: " + presetId));
-
-        List<BossSimpleResponse> appliedBosses = getBossesFromPreset(preset);
-        
-        log.info("캐릭터 {}에게 프리셋 '{}'이 적용되었습니다. (보스 {}개)", 
-                characterId, preset.getPresetName(), appliedBosses.size());
-
-        return BossPresetApplyResponse.builder()
-                .appliedBosses(appliedBosses)
-                .characterId(characterId)
-                .build();
-    }
 
     // 보스 제한 검증
     public ValidateLimitsResponse validateLimits(ValidateLimitsRequest request) {

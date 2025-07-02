@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/desire-items")
+@RequestMapping("/api/boss/desire-items")
 @RequiredArgsConstructor
 @Slf4j
 public class DesireItemController {

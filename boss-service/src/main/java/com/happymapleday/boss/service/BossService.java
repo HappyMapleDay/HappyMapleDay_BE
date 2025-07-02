@@ -19,9 +19,9 @@ public class BossService {
 
     // 모든 활성화된 보스 조회
     public List<BossResponse> getAllActiveBosses() {
-        return bossRepository.findByIsActiveTrueOrderByCrystalPriceDesc()
+        return bossRepository.findByIsActiveTrueWithBossDropItemsOrderByCrystalPriceDesc()
                 .stream()
-                .map(BossResponse::from)
+                .map(BossResponse::fromWithDesireItems)
                 .toList();
     }
 } 

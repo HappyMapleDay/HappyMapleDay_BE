@@ -24,7 +24,7 @@ public class DesireItemResponse {
 
     public static DesireItemResponse fromBossDropItem(BossDropItem bossDropItem) {
         DesireItemResponse response = DesireItemResponse.builder()
-                .id(bossDropItem.getId())
+                .id(bossDropItem.getItem().getId())
                 .itemName(bossDropItem.getItemName())
                 .isRandomBox(bossDropItem.getIsRandomBox())
                 .fullItemName(bossDropItem.getFullItemName())
@@ -36,7 +36,7 @@ public class DesireItemResponse {
         if (bossDropItem.getItem().getRandomBoxItems() != null) {
             response.setRandomBoxItems(
                     bossDropItem.getItem().getRandomBoxItems().stream()
-                            .map(randomBoxItem -> RandomBoxItemResponse.fromRandomBoxItem(randomBoxItem, bossDropItem.getId(), bossDropItem.getItemName()))
+                            .map(randomBoxItem -> RandomBoxItemResponse.fromRandomBoxItem(randomBoxItem))
                             .toList()
             );
         }

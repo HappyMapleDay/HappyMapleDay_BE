@@ -16,32 +16,24 @@ public class RandomBoxItemResponse {
     private Integer dropItemLevel;
     private String fullDropItemName;
     private Boolean hasDropLevel;
-    private Long itemId;
-    private String itemName;
 
     public static RandomBoxItemResponse from(RandomBoxItem randomBoxItem) {
         return RandomBoxItemResponse.builder()
-                .id(randomBoxItem.getId())
+                .id(randomBoxItem.getBoxContentItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())
                 .fullDropItemName(randomBoxItem.getFullDropItemName())
                 .hasDropLevel(randomBoxItem.hasDropLevel())
-                .itemId(randomBoxItem.getItem().getId())
-                .itemName(randomBoxItem.getItem().getItemName())
                 .build();
     }
 
-    // 더 이상 사용하지 않는 메서드 - Template 구조 제거됨
-
-    public static RandomBoxItemResponse fromRandomBoxItem(RandomBoxItem randomBoxItem, Long bossDropItemId, String itemName) {
+    public static RandomBoxItemResponse fromRandomBoxItem(RandomBoxItem randomBoxItem) {
         return RandomBoxItemResponse.builder()
-                .id(randomBoxItem.getId())
+                .id(randomBoxItem.getBoxContentItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())
                 .fullDropItemName(randomBoxItem.getFullDropItemName())
                 .hasDropLevel(randomBoxItem.hasDropLevel())
-                .itemId(bossDropItemId)
-                .itemName(itemName)
                 .build();
     }
 } 

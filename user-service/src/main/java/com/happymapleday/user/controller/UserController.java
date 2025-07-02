@@ -3,6 +3,8 @@ package com.happymapleday.user.controller;
 import com.happymapleday.common.dto.ApiResponse;
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
+import com.happymapleday.user.dto.LogoutRequestDto;
+import com.happymapleday.user.dto.LogoutResponseDto;
 import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
@@ -53,6 +55,21 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("토큰 갱신 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<LogoutResponseDto>> logout(@Valid @RequestBody LogoutRequestDto logoutRequest) {
+        try {
+            LogoutResponseDto response = userService.logout(logoutRequest);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("로그아웃 처리 중 오류가 발생했습니다."));
         }
     }
     

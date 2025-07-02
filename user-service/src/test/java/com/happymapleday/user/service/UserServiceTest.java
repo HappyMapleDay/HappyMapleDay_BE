@@ -2,6 +2,8 @@ package com.happymapleday.user.service;
 
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
+import com.happymapleday.user.dto.LogoutRequestDto;
+import com.happymapleday.user.dto.LogoutResponseDto;
 import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
@@ -10,6 +12,7 @@ import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
 import com.happymapleday.user.repository.UserSettingsRepository;
+import com.happymapleday.user.util.SecurityUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -48,12 +53,16 @@ class UserServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private SecureRefreshTokenService secureRefreshTokenService;
+
     @InjectMocks
     private UserService userService;
 
     private SignupRequestDto signupRequest;
     private LoginRequestDto loginRequest;
     private RefreshTokenRequestDto refreshTokenRequest;
+    private LogoutRequestDto logoutRequest;
     private User savedUser;
 
     @BeforeEach
@@ -69,6 +78,7 @@ class UserServiceTest {
 
         loginRequest = new LoginRequestDto("testCharacter", "password123");
         refreshTokenRequest = new RefreshTokenRequestDto("valid-refresh-token");
+        logoutRequest = new LogoutRequestDto("valid-refresh-token");
 
         savedUser = new User("testCharacter", "encodedPassword", "encryptedApiKey");
         // 리플렉션을 사용하여 ID와 생성시간 설정
@@ -366,6 +376,128 @@ class UserServiceTest {
         verify(jwtService).isTokenValid("valid-refresh-token");
         verify(jwtService).isRefreshToken("valid-refresh-token");
         verify(jwtService).getUserIdFromToken("valid-refresh-token");
+    }
+
+    @Test
+    @DisplayName("로그아웃 성공")
+    void logout_Success() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(jwtService.isTokenValid("valid-refresh-token")).willReturn(true);
+            given(jwtService.getUserIdFromToken("valid-refresh-token")).willReturn(1L);
+
+            // when
+            LogoutResponseDto response = userService.logout(logoutRequest);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMessage()).isEqualTo("로그아웃이 완료되었습니다.");
+
+            mockedSecurityUtil.verify(SecurityUtil::getCurrentUserId);
+            verify(jwtService).isTokenValid("valid-refresh-token");
+            verify(jwtService).getUserIdFromToken("valid-refresh-token");
+            verify(secureRefreshTokenService).invalidateAllTokens(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 - 유효하지 않은 Refresh Token")
+    void logout_InvalidToken_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(jwtService.isTokenValid("invalid-token")).willReturn(false);
+            
+            LogoutRequestDto invalidRequest = new LogoutRequestDto("invalid-token");
+
+            // when & then
+            assertThatThrownBy(() -> userService.logout(invalidRequest))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessage("유효하지 않은 Refresh Token입니다.");
+
+            mockedSecurityUtil.verify(SecurityUtil::getCurrentUserId);
+            verify(jwtService).isTokenValid("invalid-token");
+        }
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 - 토큰 사용자와 현재 사용자 불일치")
+    void logout_UserMismatch_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(jwtService.isTokenValid("valid-refresh-token")).willReturn(true);
+            given(jwtService.getUserIdFromToken("valid-refresh-token")).willReturn(2L); // 다른 사용자 ID
+
+            // when & then
+            assertThatThrownBy(() -> userService.logout(logoutRequest))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessage("토큰의 사용자 정보가 일치하지 않습니다.");
+
+            mockedSecurityUtil.verify(SecurityUtil::getCurrentUserId);
+            verify(jwtService).isTokenValid("valid-refresh-token");
+            verify(jwtService).getUserIdFromToken("valid-refresh-token");
+        }
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 - JWT 서비스 예외")
+    void logout_JwtServiceException_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(jwtService.isTokenValid("valid-refresh-token"))
+                .willThrow(new RuntimeException("JWT 파싱 실패"));
+
+            // when & then
+            assertThatThrownBy(() -> userService.logout(logoutRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("로그아웃 처리 중 오류가 발생했습니다.");
+
+            mockedSecurityUtil.verify(SecurityUtil::getCurrentUserId);
+            verify(jwtService).isTokenValid("valid-refresh-token");
+        }
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 - SecurityUtil 예외")
+    void logout_SecurityUtilException_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId)
+                .thenThrow(new RuntimeException("인증 정보를 찾을 수 없습니다"));
+
+            // when & then
+            assertThatThrownBy(() -> userService.logout(logoutRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("로그아웃 처리 중 오류가 발생했습니다.");
+
+            mockedSecurityUtil.verify(SecurityUtil::getCurrentUserId);
+        }
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 - SecureRefreshTokenService 예외")
+    void logout_SecureRefreshTokenServiceException_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(jwtService.isTokenValid("valid-refresh-token")).willReturn(true);
+            given(jwtService.getUserIdFromToken("valid-refresh-token")).willReturn(1L);
+            doThrow(new RuntimeException("데이터베이스 연결 실패"))
+                .when(secureRefreshTokenService).invalidateAllTokens(1L);
+
+            // when & then
+            assertThatThrownBy(() -> userService.logout(logoutRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("로그아웃 처리 중 오류가 발생했습니다.");
+
+            mockedSecurityUtil.verify(SecurityUtil::getCurrentUserId);
+            verify(jwtService).isTokenValid("valid-refresh-token");
+            verify(jwtService).getUserIdFromToken("valid-refresh-token");
+            verify(secureRefreshTokenService).invalidateAllTokens(1L);
+        }
     }
 
     // 리플렉션을 사용하여 private 필드 설정하는 헬퍼 메서드

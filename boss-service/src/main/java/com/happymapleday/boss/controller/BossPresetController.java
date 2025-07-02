@@ -21,7 +21,7 @@ public class BossPresetController {
 
     private final BossPresetService bossPresetService;
 
-    // 3. 보스 프리셋 조회 API
+    // 보스 프리셋 조회 API
     @GetMapping("/presets")
     public ResponseEntity<ApiResponse<List<BossPresetResponse>>> getAllPresets() {
         try {
@@ -34,7 +34,7 @@ public class BossPresetController {
         }
     }
 
-    // 4. 보스 프리셋 적용 API
+    // 보스 프리셋 적용 API
     @PostMapping("/preset/apply")
     public ResponseEntity<ApiResponse<BossPresetApplyResponse>> applyPresetApi(
             @RequestBody BossPresetApplyRequest request) {

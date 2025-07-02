@@ -26,7 +26,7 @@ public class BossController {
     private final DesireItemService desireItemService;
     private final BossPresetService bossPresetService;
 
-    // 1. 보스 목록 조회 API
+    // 보스 목록 조회 API
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<List<BossResponse>>> getAllActiveBosses() {
         try {
@@ -39,7 +39,7 @@ public class BossController {
         }
     }
 
-    // 2. 물욕템 목록 조회 API
+    // 물욕템 목록 조회 API
     @GetMapping("/{bossId}/desire-items")
     public ResponseEntity<ApiResponse<List<DesireItemResponse>>> getDesireItemsApi(@PathVariable Long bossId) {
         try {
@@ -52,7 +52,7 @@ public class BossController {
         }
     }
 
-    // 5. 보스 제한 검증 API
+    // 보스 제한 검증 API
     @PostMapping("/validate-limits")
     public ResponseEntity<ApiResponse<ValidateLimitsResponse>> validateLimitsApi(
             @RequestBody ValidateLimitsRequest request) {

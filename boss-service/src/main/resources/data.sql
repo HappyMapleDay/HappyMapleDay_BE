@@ -258,108 +258,137 @@ INSERT INTO desire_items (boss_id, item_name, is_random_box) VALUES
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '생명의 보스 반지 상자', true),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '신념의 연마석', false),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '발드릭스로이드', false),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '맹세의 에테르넬 방어구 상자', true);
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), '맹세의 에테르넬 방어구 상자', fasle);
 
 -- 랜덤 상자 아이템 데이터 삽입
-INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) VALUES
-
--- 녹옥의 보스 반지 상자 (1~3 레벨)
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 1),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 2),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 3),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 1),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 2),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 3),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 1),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 2),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 3),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 1),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 2),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 3),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 1),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 2),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 1),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 2),
-((SELECT id FROM desire_items WHERE item_name = '녹옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 3),
+-- 모든 반지 상자에 대해 각각 랜덤박스 아이템을 연결
+INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
+SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
+FROM desire_items di
+CROSS JOIN (
+    -- 녹옥의 보스 반지 상자 아이템 (1~3 레벨)
+    SELECT '웨폰퍼프 - S링' as drop_item_name, 1 as drop_item_level
+    UNION ALL SELECT '웨폰퍼프 - S링', 2
+    UNION ALL SELECT '웨폰퍼프 - S링', 3
+    UNION ALL SELECT '웨폰퍼프 - D링', 1
+    UNION ALL SELECT '웨폰퍼프 - D링', 2
+    UNION ALL SELECT '웨폰퍼프 - D링', 3
+    UNION ALL SELECT '웨폰퍼프 - L링', 1
+    UNION ALL SELECT '웨폰퍼프 - L링', 2
+    UNION ALL SELECT '웨폰퍼프 - L링', 3
+    UNION ALL SELECT '웨폰퍼프 - I링', 1
+    UNION ALL SELECT '웨폰퍼프 - I링', 2
+    UNION ALL SELECT '웨폰퍼프 - I링', 3
+    UNION ALL SELECT '리스트레인트 링', 1
+    UNION ALL SELECT '리스트레인트 링', 2
+    UNION ALL SELECT '리스트레인트 링', 3
+    UNION ALL SELECT '컨티뉴어스 링', 1
+    UNION ALL SELECT '컨티뉴어스 링', 2
+    UNION ALL SELECT '컨티뉴어스 링', 3
+) as item_data
+WHERE di.item_name = '녹옥의 보스 반지 상자' AND di.is_random_box = true;
 
 -- 홍옥의 보스 반지 상자 (1~4 레벨)
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 1),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 2),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 3),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 4),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 1),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 2),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 3),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 4),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 1),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 2),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 3),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 4),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 1),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 2),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 3),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 4),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 1),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 2),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 4),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 1),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 2),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '홍옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 4),
+INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
+SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
+FROM desire_items di
+CROSS JOIN (
+    SELECT '웨폰퍼프 - S링' as drop_item_name, 1 as drop_item_level
+    UNION ALL SELECT '웨폰퍼프 - S링', 2
+    UNION ALL SELECT '웨폰퍼프 - S링', 3
+    UNION ALL SELECT '웨폰퍼프 - S링', 4
+    UNION ALL SELECT '웨폰퍼프 - D링', 1
+    UNION ALL SELECT '웨폰퍼프 - D링', 2
+    UNION ALL SELECT '웨폰퍼프 - D링', 3
+    UNION ALL SELECT '웨폰퍼프 - D링', 4
+    UNION ALL SELECT '웨폰퍼프 - L링', 1
+    UNION ALL SELECT '웨폰퍼프 - L링', 2
+    UNION ALL SELECT '웨폰퍼프 - L링', 3
+    UNION ALL SELECT '웨폰퍼프 - L링', 4
+    UNION ALL SELECT '웨폰퍼프 - I링', 1
+    UNION ALL SELECT '웨폰퍼프 - I링', 2
+    UNION ALL SELECT '웨폰퍼프 - I링', 3
+    UNION ALL SELECT '웨폰퍼프 - I링', 4
+    UNION ALL SELECT '리스트레인트 링', 1
+    UNION ALL SELECT '리스트레인트 링', 2
+    UNION ALL SELECT '리스트레인트 링', 3
+    UNION ALL SELECT '리스트레인트 링', 4
+    UNION ALL SELECT '컨티뉴어스 링', 1
+    UNION ALL SELECT '컨티뉴어스 링', 2
+    UNION ALL SELECT '컨티뉴어스 링', 3
+    UNION ALL SELECT '컨티뉴어스 링', 4
+) as item_data
+WHERE di.item_name = '홍옥의 보스 반지 상자' AND di.is_random_box = true;
 
 -- 흑옥의 보스 반지 상자 (1~4 레벨)
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 1),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 2),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 3),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 4),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 1),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 2),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 3),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 4),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 1),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 2),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 3),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 4),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 1),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 2),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 3),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 4),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 1),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 2),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 4),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 1),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 2),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '흑옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 4),
+INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
+SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
+FROM desire_items di
+CROSS JOIN (
+    SELECT '웨폰퍼프 - S링' as drop_item_name, 1 as drop_item_level
+    UNION ALL SELECT '웨폰퍼프 - S링', 2
+    UNION ALL SELECT '웨폰퍼프 - S링', 3
+    UNION ALL SELECT '웨폰퍼프 - S링', 4
+    UNION ALL SELECT '웨폰퍼프 - D링', 1
+    UNION ALL SELECT '웨폰퍼프 - D링', 2
+    UNION ALL SELECT '웨폰퍼프 - D링', 3
+    UNION ALL SELECT '웨폰퍼프 - D링', 4
+    UNION ALL SELECT '웨폰퍼프 - L링', 1
+    UNION ALL SELECT '웨폰퍼프 - L링', 2
+    UNION ALL SELECT '웨폰퍼프 - L링', 3
+    UNION ALL SELECT '웨폰퍼프 - L링', 4
+    UNION ALL SELECT '웨폰퍼프 - I링', 1
+    UNION ALL SELECT '웨폰퍼프 - I링', 2
+    UNION ALL SELECT '웨폰퍼프 - I링', 3
+    UNION ALL SELECT '웨폰퍼프 - I링', 4
+    UNION ALL SELECT '리스트레인트 링', 1
+    UNION ALL SELECT '리스트레인트 링', 2
+    UNION ALL SELECT '리스트레인트 링', 3
+    UNION ALL SELECT '리스트레인트 링', 4
+    UNION ALL SELECT '컨티뉴어스 링', 1
+    UNION ALL SELECT '컨티뉴어스 링', 2
+    UNION ALL SELECT '컨티뉴어스 링', 3
+    UNION ALL SELECT '컨티뉴어스 링', 4
+) as item_data
+WHERE di.item_name = '흑옥의 보스 반지 상자' AND di.is_random_box = true;
 
 -- 백옥의 보스 반지 상자 (3~4 레벨)
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 3),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 4),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 3),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 4),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 3),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 4),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 3),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 4),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 4),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '백옥의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 4),
+INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
+SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
+FROM desire_items di
+CROSS JOIN (
+    SELECT '웨폰퍼프 - S링' as drop_item_name, 3 as drop_item_level
+    UNION ALL SELECT '웨폰퍼프 - S링', 4
+    UNION ALL SELECT '웨폰퍼프 - D링', 3
+    UNION ALL SELECT '웨폰퍼프 - D링', 4
+    UNION ALL SELECT '웨폰퍼프 - L링', 3
+    UNION ALL SELECT '웨폰퍼프 - L링', 4
+    UNION ALL SELECT '웨폰퍼프 - I링', 3
+    UNION ALL SELECT '웨폰퍼프 - I링', 4
+    UNION ALL SELECT '리스트레인트 링', 3
+    UNION ALL SELECT '리스트레인트 링', 4
+    UNION ALL SELECT '컨티뉴어스 링', 3
+    UNION ALL SELECT '컨티뉴어스 링', 4
+) as item_data
+WHERE di.item_name = '백옥의 보스 반지 상자' AND di.is_random_box = true;
 
 -- 생명의 보스 반지 상자 (3~4 레벨)
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 3),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - S링', 4),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 3),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - D링', 4),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 3),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - L링', 4),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 3),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '웨폰퍼프 - I링', 4),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '리스트레인트 링', 4),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 3),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '컨티뉴어스 링', 4),
-((SELECT id FROM desire_items WHERE item_name = '생명의 보스 반지 상자' LIMIT 1), '생명의 연마석', NULL);
+INSERT INTO random_box_items (desire_item_id, drop_item_name, drop_item_level) 
+SELECT di.id, item_data.drop_item_name, item_data.drop_item_level
+FROM desire_items di
+CROSS JOIN (
+    SELECT '웨폰퍼프 - S링' as drop_item_name, 3 as drop_item_level
+    UNION ALL SELECT '웨폰퍼프 - S링', 4
+    UNION ALL SELECT '웨폰퍼프 - D링', 3
+    UNION ALL SELECT '웨폰퍼프 - D링', 4
+    UNION ALL SELECT '웨폰퍼프 - L링', 3
+    UNION ALL SELECT '웨폰퍼프 - L링', 4
+    UNION ALL SELECT '웨폰퍼프 - I링', 3
+    UNION ALL SELECT '웨폰퍼프 - I링', 4
+    UNION ALL SELECT '리스트레인트 링', 3
+    UNION ALL SELECT '리스트레인트 링', 4
+    UNION ALL SELECT '컨티뉴어스 링', 3
+    UNION ALL SELECT '컨티뉴어스 링', 4
+    UNION ALL SELECT '생명의 연마석', NULL
+) as item_data
+WHERE di.item_name = '생명의 보스 반지 상자' AND di.is_random_box = true;

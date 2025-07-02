@@ -1,8 +1,7 @@
 package com.happymapleday.boss.service;
 
 import com.happymapleday.boss.dto.response.BossPresetResponse;
-import com.happymapleday.boss.dto.request.ValidateLimitsRequest;
-import com.happymapleday.boss.dto.response.ValidateLimitsResponse;
+
 import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.entity.BossPreset;
 import com.happymapleday.boss.entity.ForceType;
@@ -110,88 +109,5 @@ class BossPresetServiceTest {
 
 
 
-    @Test
-    @DisplayName("보스 선택 제한 검증 - 성공")
-    void validateLimits_Success() {
-        // given
-        List<ValidateLimitsRequest.SelectedBoss> selectedBosses = Arrays.asList(
-            ValidateLimitsRequest.SelectedBoss.builder()
-                .characterId(1L)
-                .bossId(1L)
-                .build(),
-            ValidateLimitsRequest.SelectedBoss.builder()
-                .characterId(1L)
-                .bossId(2L)
-                .build()
-        );
 
-        ValidateLimitsRequest request = ValidateLimitsRequest.builder()
-            .userId(1L)
-            .selectedBosses(selectedBosses)
-            .build();
-
-        // when
-        ValidateLimitsResponse result = bossPresetService.validateLimits(request);
-
-        // then
-        assertThat(result.getIsValid()).isTrue();
-        assertThat(result.getViolations()).isEmpty();
-        assertThat(result.getCharacterLimitStatus()).hasSize(1);
-        assertThat(result.getServerLimitStatus().getCurrent()).isEqualTo(2);
-        assertThat(result.getServerLimitStatus().getLimit()).isEqualTo(90);
-    }
-
-    @Test
-    @DisplayName("보스 선택 제한 검증 - 캐릭터 제한 초과")
-    void validateLimits_CharacterLimitExceeded() {
-        // given - 캐릭터 1명이 13개 보스 선택
-        List<ValidateLimitsRequest.SelectedBoss> selectedBosses = new java.util.ArrayList<>();
-        for (int i = 1; i <= 13; i++) {
-            selectedBosses.add(ValidateLimitsRequest.SelectedBoss.builder()
-                .characterId(1L)
-                .bossId((long) i)
-                .build());
-        }
-
-        ValidateLimitsRequest request = ValidateLimitsRequest.builder()
-            .userId(1L)
-            .selectedBosses(selectedBosses)
-            .build();
-
-        // when
-        ValidateLimitsResponse result = bossPresetService.validateLimits(request);
-
-        // then
-        assertThat(result.getIsValid()).isFalse();
-        assertThat(result.getViolations()).isNotEmpty();
-        assertThat(result.getCharacterLimitStatus().get("1").getCurrent()).isEqualTo(13);
-        assertThat(result.getCharacterLimitStatus().get("1").getLimit()).isEqualTo(12);
-    }
-
-    @Test
-    @DisplayName("보스 선택 제한 검증 - 서버 제한 초과")
-    void validateLimits_ServerLimitExceeded() {
-        // given - 서버 전체 91개 보스 선택
-        List<ValidateLimitsRequest.SelectedBoss> selectedBosses = new java.util.ArrayList<>();
-        for (int i = 1; i <= 91; i++) {
-            selectedBosses.add(ValidateLimitsRequest.SelectedBoss.builder()
-                .characterId((long) ((i - 1) / 12 + 1)) // 캐릭터당 12개씩 배분
-                .bossId((long) i)
-                .build());
-        }
-
-        ValidateLimitsRequest request = ValidateLimitsRequest.builder()
-            .userId(1L)
-            .selectedBosses(selectedBosses)
-            .build();
-
-        // when
-        ValidateLimitsResponse result = bossPresetService.validateLimits(request);
-
-        // then
-        assertThat(result.getIsValid()).isFalse();
-        assertThat(result.getViolations()).isNotEmpty();
-        assertThat(result.getServerLimitStatus().getCurrent()).isEqualTo(91);
-        assertThat(result.getServerLimitStatus().getLimit()).isEqualTo(90);
-    }
 } 

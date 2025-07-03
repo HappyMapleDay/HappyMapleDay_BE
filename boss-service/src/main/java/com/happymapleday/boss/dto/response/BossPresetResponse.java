@@ -18,7 +18,6 @@ public class BossPresetResponse {
     private Long id;
     private String presetName;
     private List<Map<String, Object>> bossIds;
-    private LocalDateTime createdAt;
     private Integer bossCount;
     private List<BossSimpleResponse> bosses;
 
@@ -27,7 +26,6 @@ public class BossPresetResponse {
                 .id(preset.getId())
                 .presetName(preset.getPresetName())
                 .bossIds(preset.getBossIds())
-                .createdAt(preset.getCreatedAt())
                 .bossCount(preset.getBossCount())
                 .build();
     }

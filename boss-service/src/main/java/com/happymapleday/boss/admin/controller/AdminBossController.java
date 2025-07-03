@@ -62,21 +62,21 @@ public class AdminBossController {
     }
     
     // 보스 삭제 (소프트 삭제 - 비활성화)
-    @DeleteMapping("/{id}")
+    @PutMapping("/delete/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteBoss(@PathVariable Long id) {
         adminBossService.deleteBoss(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
     
     // 보스 완전 삭제 (하드 삭제)
-    @DeleteMapping("/{id}/completely")
+    @DeleteMapping("/delete/{id}/completely")
     public ResponseEntity<ApiResponse<Void>> deleteBossCompletely(@PathVariable Long id) {
         adminBossService.deleteBossCompletely(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
     
     // 보스 활성화
-    @PatchMapping("/{id}/activate")
+    @PutMapping("/{id}/activate")
     public ResponseEntity<ApiResponse<AdminBossResponse>> activateBoss(@PathVariable Long id) {
         AdminBossResponse boss = adminBossService.activateBoss(id);
         return ResponseEntity.ok(ApiResponse.success(boss));

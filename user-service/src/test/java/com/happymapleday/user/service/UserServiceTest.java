@@ -10,6 +10,11 @@ import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
 import com.happymapleday.user.dto.SignupResponseDto;
+import com.happymapleday.user.dto.MainCharacterUpdateRequestDto;
+import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
+import com.happymapleday.user.dto.UserSettingsResponseDto;
+import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
+import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
 import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
@@ -36,6 +41,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -617,6 +623,271 @@ class UserServiceTest {
         verify(userRepository).findByMainCharacterName("testCharacter");
         verify(passwordEncoder).encode(anyString());
         verify(userRepository).save(savedUser);
+    }
+
+    // ==================== 새로운 4개 API 테스트 ====================
+
+    @Test
+    @DisplayName("본캐 변경 성공")
+    void updateMainCharacter_Success() {
+        // given
+        Long userId = 1L;
+        String previousName = "oldCharacter";
+        String newName = "newCharacter";
+        
+        User mockUser = new User(previousName, "encodedPassword", "encryptedApiKey");
+        setField(mockUser, "id", userId);
+        
+        MainCharacterUpdateRequestDto request = new MainCharacterUpdateRequestDto(newName);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            given(userRepository.existsByMainCharacterName(newName)).willReturn(false);
+            given(userRepository.save(any(User.class))).willReturn(mockUser);
+            
+            // when
+            MainCharacterUpdateResponseDto response = userService.updateMainCharacter(request);
+            
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getPreviousMainCharacterName()).isEqualTo(previousName);
+            assertThat(response.getNewMainCharacterName()).isEqualTo(newName);
+            assertThat(response.getMessage()).isEqualTo("본캐명이 성공적으로 변경되었습니다.");
+            
+            verify(userRepository).findById(userId);
+            verify(userRepository).existsByMainCharacterName(newName);
+            verify(userRepository).save(mockUser);
+        }
+    }
+
+    @Test
+    @DisplayName("본캐 변경 실패 - 중복된 본캐명")
+    void updateMainCharacter_DuplicateName_ThrowsException() {
+        // given
+        Long userId = 1L;
+        String previousName = "oldCharacter";
+        String newName = "existingCharacter";
+        
+        User mockUser = new User(previousName, "encodedPassword", "encryptedApiKey");
+        setField(mockUser, "id", userId);
+        
+        MainCharacterUpdateRequestDto request = new MainCharacterUpdateRequestDto(newName);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            given(userRepository.existsByMainCharacterName(newName)).willReturn(true);
+            
+            // when & then
+            assertThatThrownBy(() -> userService.updateMainCharacter(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("이미 사용 중인 본캐명입니다.");
+            
+            verify(userRepository).findById(userId);
+            verify(userRepository).existsByMainCharacterName(newName);
+        }
+    }
+
+    @Test
+    @DisplayName("본캐 변경 실패 - 존재하지 않는 사용자")
+    void updateMainCharacter_UserNotFound_ThrowsException() {
+        // given
+        Long userId = 1L;
+        MainCharacterUpdateRequestDto request = new MainCharacterUpdateRequestDto("newCharacter");
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
+            
+            // when & then
+            assertThatThrownBy(() -> userService.updateMainCharacter(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자를 찾을 수 없습니다.");
+            
+            verify(userRepository).findById(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("사용자 설정 조회 성공")
+    void getUserSettings_Success() {
+        // given
+        Long userId = 1L;
+        String mainCharacterName = "testCharacter";
+        
+        User mockUser = new User(mainCharacterName, "encodedPassword", "encryptedApiKey");
+        setField(mockUser, "id", userId);
+        
+        UserSettings mockUserSettings = new UserSettings(userId, true, true);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            given(userSettingsRepository.findByUserId(userId)).willReturn(Optional.of(mockUserSettings));
+            
+            // when
+            UserSettingsResponseDto response = userService.getUserSettings();
+            
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMainCharacterName()).isEqualTo(mainCharacterName);
+            assertThat(response.getDataCollectionAgreed()).isTrue();
+            assertThat(response.getWeeklyResetEnabled()).isTrue();
+            
+            verify(userRepository).findById(userId);
+            verify(userSettingsRepository).findByUserId(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("사용자 설정 조회 실패 - 존재하지 않는 사용자")
+    void getUserSettings_UserNotFound_ThrowsException() {
+        // given
+        Long userId = 1L;
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
+            
+            // when & then
+            assertThatThrownBy(() -> userService.getUserSettings())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자를 찾을 수 없습니다.");
+            
+            verify(userRepository).findById(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("사용자 설정 조회 실패 - 존재하지 않는 사용자 설정")
+    void getUserSettings_UserSettingsNotFound_ThrowsException() {
+        // given
+        Long userId = 1L;
+        String mainCharacterName = "testCharacter";
+        
+        User mockUser = new User(mainCharacterName, "encodedPassword", "encryptedApiKey");
+        setField(mockUser, "id", userId);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            given(userSettingsRepository.findByUserId(userId)).willReturn(Optional.empty());
+            
+            // when & then
+            assertThatThrownBy(() -> userService.getUserSettings())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 설정을 찾을 수 없습니다.");
+            
+            verify(userRepository).findById(userId);
+            verify(userSettingsRepository).findByUserId(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("개인정보 수집 동의 설정 수정 성공")
+    void updatePrivacySettings_Success() {
+        // given
+        Long userId = 1L;
+        String mainCharacterName = "testCharacter";
+        
+        User mockUser = new User(mainCharacterName, "encodedPassword", "encryptedApiKey");
+        setField(mockUser, "id", userId);
+        
+        UserSettings mockUserSettings = new UserSettings(userId, true, true);
+        PrivacySettingsUpdateRequestDto request = new PrivacySettingsUpdateRequestDto(false);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userSettingsRepository.findByUserId(userId)).willReturn(Optional.of(mockUserSettings));
+            given(userSettingsRepository.save(any(UserSettings.class))).willReturn(mockUserSettings);
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            
+            // when
+            UserSettingsResponseDto response = userService.updatePrivacySettings(request);
+            
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMainCharacterName()).isEqualTo(mainCharacterName);
+            
+            // verify - getUserSettings() 호출로 인해 2번 호출됨
+            verify(userSettingsRepository, times(2)).findByUserId(userId);
+            verify(userSettingsRepository).save(mockUserSettings);
+            verify(userRepository).findById(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("개인정보 수집 동의 설정 수정 실패 - 사용자 설정 없음")
+    void updatePrivacySettings_UserSettingsNotFound_ThrowsException() {
+        // given
+        Long userId = 1L;
+        PrivacySettingsUpdateRequestDto request = new PrivacySettingsUpdateRequestDto(false);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userSettingsRepository.findByUserId(userId)).willReturn(Optional.empty());
+            
+            // when & then
+            assertThatThrownBy(() -> userService.updatePrivacySettings(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 설정을 찾을 수 없습니다.");
+            
+            verify(userSettingsRepository).findByUserId(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("주간 초기화 설정 수정 성공")
+    void updateWeeklyResetSettings_Success() {
+        // given
+        Long userId = 1L;
+        String mainCharacterName = "testCharacter";
+        
+        User mockUser = new User(mainCharacterName, "encodedPassword", "encryptedApiKey");
+        setField(mockUser, "id", userId);
+        
+        UserSettings mockUserSettings = new UserSettings(userId, true, true);
+        WeeklyResetSettingsUpdateRequestDto request = new WeeklyResetSettingsUpdateRequestDto(false);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userSettingsRepository.findByUserId(userId)).willReturn(Optional.of(mockUserSettings));
+            given(userSettingsRepository.save(any(UserSettings.class))).willReturn(mockUserSettings);
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            
+            // when
+            UserSettingsResponseDto response = userService.updateWeeklyResetSettings(request);
+            
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMainCharacterName()).isEqualTo(mainCharacterName);
+            
+            // verify - getUserSettings() 호출로 인해 2번 호출됨
+            verify(userSettingsRepository, times(2)).findByUserId(userId);
+            verify(userSettingsRepository).save(mockUserSettings);
+            verify(userRepository).findById(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("주간 초기화 설정 수정 실패 - 사용자 설정 없음")
+    void updateWeeklyResetSettings_UserSettingsNotFound_ThrowsException() {
+        // given
+        Long userId = 1L;
+        WeeklyResetSettingsUpdateRequestDto request = new WeeklyResetSettingsUpdateRequestDto(false);
+        
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(userId);
+            given(userSettingsRepository.findByUserId(userId)).willReturn(Optional.empty());
+            
+            // when & then
+            assertThatThrownBy(() -> userService.updateWeeklyResetSettings(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자 설정을 찾을 수 없습니다.");
+            
+            verify(userSettingsRepository).findByUserId(userId);
+        }
     }
 
     // 리플렉션을 사용하여 private 필드 설정하는 헬퍼 메서드

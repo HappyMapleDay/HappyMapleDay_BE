@@ -10,6 +10,11 @@ import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
 import com.happymapleday.user.dto.SignupResponseDto;
+import com.happymapleday.user.dto.MainCharacterUpdateRequestDto;
+import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
+import com.happymapleday.user.dto.UserSettingsResponseDto;
+import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
+import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
 import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
@@ -222,5 +227,88 @@ public class UserService {
         }
         
         return password.toString();
+    }
+    
+    // 본캐 변경 처리
+    @Transactional
+    public MainCharacterUpdateResponseDto updateMainCharacter(MainCharacterUpdateRequestDto request) {
+        // 현재 인증된 사용자 ID 가져오기
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        
+        // 사용자 조회
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        
+        String previousName = user.getMainCharacterName();
+        String newName = request.getNewMainCharacterName();
+        
+        // 중복 체크 (자신의 현재 이름과 같으면 허용)
+        if (!previousName.equals(newName) && userRepository.existsByMainCharacterName(newName)) {
+            throw new IllegalArgumentException("이미 사용 중인 본캐명입니다.");
+        }
+        
+        // 본캐명 업데이트
+        user.updateMainCharacterName(newName);
+        userRepository.save(user);
+        
+        return MainCharacterUpdateResponseDto.of(previousName, newName);
+    }
+    
+    // 사용자 설정 조회
+    public UserSettingsResponseDto getUserSettings() {
+        // 현재 인증된 사용자 ID 가져오기
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        
+        // 사용자 조회
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        
+        // 사용자 설정 조회
+        UserSettings userSettings = userSettingsRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 설정을 찾을 수 없습니다."));
+        
+        return UserSettingsResponseDto.from(
+            user.getMainCharacterName(),
+            userSettings.getDataCollectionAgreed(),
+            userSettings.getWeeklyResetEnabled()
+        );
+    }
+    
+    // 개인정보 수집 동의 설정 수정
+    @Transactional
+    public UserSettingsResponseDto updatePrivacySettings(PrivacySettingsUpdateRequestDto request) {
+        // 현재 인증된 사용자 ID 가져오기
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        
+        // 사용자 설정 조회
+        UserSettings userSettings = userSettingsRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 설정을 찾을 수 없습니다."));
+        
+        // 개인정보 설정 업데이트
+        userSettings.updateDataCollectionAgreed(request.getDataCollectionAgreed());
+        
+        userSettingsRepository.save(userSettings);
+        
+        // 업데이트된 설정 반환
+        return getUserSettings();
+    }
+    
+    // 주간 초기화 설정 수정
+    @Transactional
+    public UserSettingsResponseDto updateWeeklyResetSettings(WeeklyResetSettingsUpdateRequestDto request) {
+        // 현재 인증된 사용자 ID 가져오기
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        
+        // 사용자 설정 조회
+        UserSettings userSettings = userSettingsRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 설정을 찾을 수 없습니다."));
+        
+        // 주간 초기화 설정 업데이트
+        userSettings.updateWeeklyResetEnabled(request.getWeeklyResetEnabled());
+        
+        userSettingsRepository.save(userSettings);
+        
+        // 업데이트된 설정 반환
+        return getUserSettings();
     }
 } 

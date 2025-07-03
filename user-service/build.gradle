@@ -13,6 +13,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
     
+    // OpenFeign - @EnableFeignClients 사용을 위해 명시적 선언
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

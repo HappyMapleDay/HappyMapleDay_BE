@@ -75,6 +75,8 @@ public class UserSettings {
         return updatedAt;
     }
     
+
+    
     // Setter 메서드들
     public void updateWeeklyResetEnabled(Boolean weeklyResetEnabled) {
         this.weeklyResetEnabled = weeklyResetEnabled;

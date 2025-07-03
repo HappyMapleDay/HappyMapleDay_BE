@@ -2,10 +2,7 @@ package com.happymapleday.boss.service;
 
 import com.happymapleday.boss.admin.dto.request.AdminBossDropItemCreateRequest;
 import com.happymapleday.boss.admin.dto.request.AdminBossDropItemUpdateRequest;
-import com.happymapleday.boss.admin.dto.request.AdminItemCreateRequest;
 import com.happymapleday.boss.admin.dto.response.AdminBossDropItemResponse;
-import com.happymapleday.boss.admin.dto.response.AdminItemResponse;
-import com.happymapleday.boss.admin.service.AdminItemService;
 import com.happymapleday.boss.admin.service.impl.AdminBossDropItemServiceImpl;
 import com.happymapleday.boss.entity.*;
 import com.happymapleday.boss.repository.BossDropItemRepository;
@@ -24,7 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,17 +42,13 @@ class AdminBossDropItemServiceTest {
     @Mock
     private ItemRepository itemRepository;
 
-    @Mock
-    private AdminItemService adminItemService;
-
     @InjectMocks
     private AdminBossDropItemServiceImpl adminBossDropItemService;
 
     private Boss testBoss;
     private Item testItem;
     private BossDropItem testDropItem;
-    private AdminBossDropItemCreateRequest createRequestWithExistingItem;
-    private AdminBossDropItemCreateRequest createRequestWithNewItem;
+    private AdminBossDropItemCreateRequest createRequest;
     private AdminBossDropItemUpdateRequest updateRequest;
 
     @BeforeEach
@@ -88,14 +80,9 @@ class AdminBossDropItemServiceTest {
                 .build();
 
         // 테스트 요청 DTO들 생성
-        createRequestWithExistingItem = new AdminBossDropItemCreateRequest();
-        createRequestWithExistingItem.setBossId(1L);
-        createRequestWithExistingItem.setItemId(1L);
-
-        createRequestWithNewItem = new AdminBossDropItemCreateRequest();
-        createRequestWithNewItem.setBossId(1L);
-        createRequestWithNewItem.setItemName("새로운 아이템");
-        createRequestWithNewItem.setIsRandomBox(false);
+        createRequest = new AdminBossDropItemCreateRequest();
+        createRequest.setBossId(1L);
+        createRequest.setItemId(1L);
 
         updateRequest = new AdminBossDropItemUpdateRequest();
         updateRequest.setBossId(1L);
@@ -190,44 +177,12 @@ class AdminBossDropItemServiceTest {
         given(bossDropItemRepository.save(any(BossDropItem.class))).willReturn(testDropItem);
 
         // when
-        AdminBossDropItemResponse result = adminBossDropItemService.createBossDropItem(createRequestWithExistingItem);
+        AdminBossDropItemResponse result = adminBossDropItemService.createBossDropItem(createRequest);
 
         // then
         assertThat(result).isNotNull();
         verify(bossRepository).findById(1L);
         verify(itemRepository).findById(1L);
-        verify(bossDropItemRepository).save(any(BossDropItem.class));
-        verify(adminItemService, never()).createItem(any(AdminItemCreateRequest.class));
-    }
-
-    @Test
-    @DisplayName("보스 드랍 아이템 생성 - 새로운 아이템 생성")
-    void createBossDropItem_WithNewItem() {
-        // given
-        AdminItemResponse newItemResponse = AdminItemResponse.builder()
-                .id(2L)
-                .itemName("새로운 아이템")
-                .isRandomBox(false)
-                .build();
-
-        Item newItem = Item.builder()
-                .itemName("새로운 아이템")
-                .isRandomBox(false)
-                .build();
-
-        given(bossRepository.findById(1L)).willReturn(Optional.of(testBoss));
-        given(adminItemService.createItem(any(AdminItemCreateRequest.class))).willReturn(newItemResponse);
-        given(itemRepository.findById(2L)).willReturn(Optional.of(newItem));
-        given(bossDropItemRepository.save(any(BossDropItem.class))).willReturn(testDropItem);
-
-        // when
-        AdminBossDropItemResponse result = adminBossDropItemService.createBossDropItem(createRequestWithNewItem);
-
-        // then
-        assertThat(result).isNotNull();
-        verify(bossRepository).findById(1L);
-        verify(adminItemService).createItem(any(AdminItemCreateRequest.class));
-        verify(itemRepository).findById(2L);
         verify(bossDropItemRepository).save(any(BossDropItem.class));
     }
 
@@ -238,7 +193,7 @@ class AdminBossDropItemServiceTest {
         given(bossRepository.findById(1L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminBossDropItemService.createBossDropItem(createRequestWithExistingItem))
+        assertThatThrownBy(() -> adminBossDropItemService.createBossDropItem(createRequest))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("존재하지 않는 보스입니다. ID: 1");
 
@@ -255,33 +210,12 @@ class AdminBossDropItemServiceTest {
         given(itemRepository.findById(1L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminBossDropItemService.createBossDropItem(createRequestWithExistingItem))
+        assertThatThrownBy(() -> adminBossDropItemService.createBossDropItem(createRequest))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("존재하지 않는 아이템입니다. ID: 1");
 
         verify(bossRepository).findById(1L);
         verify(itemRepository).findById(1L);
-        verify(bossDropItemRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("보스 드랍 아이템 생성 - 아이템 정보가 불완전함")
-    void createBossDropItem_IncompleteItemInfo() {
-        // given
-        AdminBossDropItemCreateRequest incompleteRequest = new AdminBossDropItemCreateRequest();
-        incompleteRequest.setBossId(1L);
-        // itemId도 itemName도 설정하지 않음
-
-        given(bossRepository.findById(1L)).willReturn(Optional.of(testBoss));
-
-        // when & then
-        assertThatThrownBy(() -> adminBossDropItemService.createBossDropItem(incompleteRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("기존 아이템 ID 또는 새로운 아이템 정보를 제공해야 합니다.");
-
-        verify(bossRepository).findById(1L);
-        verify(itemRepository, never()).findById(any());
-        verify(adminItemService, never()).createItem(any());
         verify(bossDropItemRepository, never()).save(any());
     }
 

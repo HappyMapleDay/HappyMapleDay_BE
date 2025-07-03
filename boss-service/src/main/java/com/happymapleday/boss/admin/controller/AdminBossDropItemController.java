@@ -78,7 +78,7 @@ public class AdminBossDropItemController {
         }
     }
 
-    // 보스 드랍 아이템 생성 (기존 아이템 연결 또는 새로운 아이템 생성)
+    // 보스 드랍 아이템 생성 (기존 보스와 기존 아이템 연결)
     @PostMapping
     public ResponseEntity<ApiResponse<AdminBossDropItemResponse>> createBossDropItem(@RequestBody AdminBossDropItemCreateRequest request) {
         try {

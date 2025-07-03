@@ -11,6 +11,11 @@ import com.happymapleday.user.dto.RefreshTokenRequestDto;
 import com.happymapleday.user.dto.RefreshTokenResponseDto;
 import com.happymapleday.user.dto.SignupRequestDto;
 import com.happymapleday.user.dto.SignupResponseDto;
+import com.happymapleday.user.dto.MainCharacterUpdateRequestDto;
+import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
+import com.happymapleday.user.dto.UserSettingsResponseDto;
+import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
+import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
 import com.happymapleday.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +126,66 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("비밀번호 재설정 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 본캐 변경
+    @PutMapping("/main-character")
+    public ResponseEntity<ApiResponse<MainCharacterUpdateResponseDto>> updateMainCharacter(@Valid @RequestBody MainCharacterUpdateRequestDto request) {
+        try {
+            MainCharacterUpdateResponseDto response = userService.updateMainCharacter(request);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("본캐 변경 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 사용자 설정 조회
+    @GetMapping("/settings")
+    public ResponseEntity<ApiResponse<UserSettingsResponseDto>> getUserSettings() {
+        try {
+            UserSettingsResponseDto response = userService.getUserSettings();
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("사용자 설정 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 개인정보 수집 동의 설정 수정
+    @PutMapping("/settings/privacy")
+    public ResponseEntity<ApiResponse<UserSettingsResponseDto>> updatePrivacySettings(@Valid @RequestBody PrivacySettingsUpdateRequestDto request) {
+        try {
+            UserSettingsResponseDto response = userService.updatePrivacySettings(request);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("개인정보 설정 수정 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 주간 초기화 설정 수정
+    @PutMapping("/settings/weekly-reset")
+    public ResponseEntity<ApiResponse<UserSettingsResponseDto>> updateWeeklyResetSettings(@Valid @RequestBody WeeklyResetSettingsUpdateRequestDto request) {
+        try {
+            UserSettingsResponseDto response = userService.updateWeeklyResetSettings(request);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("주간 초기화 설정 수정 중 오류가 발생했습니다."));
         }
     }
 } 

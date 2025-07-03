@@ -13,9 +13,25 @@ import java.util.Date;
 @Service
 public class JwtService {
     
-    // 기본 시크릿 키 (실제 운영에서는 외부 설정으로 관리해야 함)
-    private final String SECRET_KEY = "mySecretKeyForJwtTokenGenerationThatShouldBeLongEnoughForHS256Algorithm";
-    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    // application.yml에서 시크릿 키 주입
+    @Value("${jwt.secret}")
+    private String secretKey;
+    
+    private SecretKey getSigningKey() {
+        // HS256 알고리즘을 위해 32바이트(256비트) 키 생성
+        byte[] keyBytes = secretKey.getBytes();
+        if (keyBytes.length < 32) {
+            // 32바이트로 패딩
+            byte[] paddedKey = new byte[32];
+            System.arraycopy(keyBytes, 0, paddedKey, 0, Math.min(keyBytes.length, 32));
+            return Keys.hmacShaKeyFor(paddedKey);
+        } else {
+            // 32바이트로 자르기
+            byte[] truncatedKey = new byte[32];
+            System.arraycopy(keyBytes, 0, truncatedKey, 0, 32);
+            return Keys.hmacShaKeyFor(truncatedKey);
+        }
+    }
     
     // 토큰 만료 시간 설정
     private final int ACCESS_TOKEN_HOURS = 1;    // Access Token: 1시간
@@ -28,11 +44,11 @@ public class JwtService {
         
         return Jwts.builder()
                 .subject(userId.toString())
-                .claim("mainCharacterName", mainCharacterName)
+                .claim("characterName", mainCharacterName)
                 .claim("tokenType", "ACCESS")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
-                .signWith(key)
+                .signWith(getSigningKey())
                 .compact();
     }
     
@@ -46,7 +62,7 @@ public class JwtService {
                 .claim("tokenType", "REFRESH")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
-                .signWith(key)
+                .signWith(getSigningKey())
                 .compact();
     }
     
@@ -64,7 +80,7 @@ public class JwtService {
     // JWT 토큰에서 메인 캐릭터명 추출
     public String getMainCharacterNameFromToken(String token) {
         Claims claims = validateAndGetClaims(token);
-        return claims.get("mainCharacterName", String.class);
+        return claims.get("characterName", String.class);
     }
     
     // 토큰 타입 확인 (ACCESS/REFRESH)
@@ -96,7 +112,7 @@ public class JwtService {
     // JWT 토큰 검증 및 Claims 반환
     private Claims validateAndGetClaims(String token) {
         return Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

@@ -16,7 +16,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "main_character_name", unique = true, nullable = false, length = 50)
+    @Column(name = "main_character_name", unique = true, nullable = false, length = 12)
     private String mainCharacterName; // 로그인 ID
     
     @Column(name = "password", nullable = false)
@@ -75,5 +75,9 @@ public class User {
     
     public void updateNexonApiKey(String nexonApiKey) {
         this.nexonApiKey = nexonApiKey;
+    }
+    
+    public void updateMainCharacterName(String mainCharacterName) {
+        this.mainCharacterName = mainCharacterName;
     }
 } 

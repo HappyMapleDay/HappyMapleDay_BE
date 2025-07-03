@@ -2,8 +2,11 @@ package com.happymapleday.boss.admin.service.impl;
 
 import com.happymapleday.boss.admin.dto.request.AdminBossDropItemCreateRequest;
 import com.happymapleday.boss.admin.dto.request.AdminBossDropItemUpdateRequest;
+import com.happymapleday.boss.admin.dto.request.AdminItemCreateRequest;
 import com.happymapleday.boss.admin.dto.response.AdminBossDropItemResponse;
+import com.happymapleday.boss.admin.dto.response.AdminItemResponse;
 import com.happymapleday.boss.admin.service.AdminBossDropItemService;
+import com.happymapleday.boss.admin.service.AdminItemService;
 import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.entity.BossDropItem;
 import com.happymapleday.boss.entity.Item;
@@ -26,6 +29,7 @@ public class AdminBossDropItemServiceImpl implements AdminBossDropItemService {
     private final BossDropItemRepository bossDropItemRepository;
     private final BossRepository bossRepository;
     private final ItemRepository itemRepository;
+    private final AdminItemService adminItemService;
     
     // 모든 보스 드랍 아이템 조회
     @Override
@@ -65,8 +69,27 @@ public class AdminBossDropItemServiceImpl implements AdminBossDropItemService {
         Boss boss = bossRepository.findById(request.getBossId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + request.getBossId()));
         
-        Item item = itemRepository.findById(request.getItemId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다. ID: " + request.getItemId()));
+        Item item;
+        
+        // 기존 아이템 사용하는 경우
+        if (request.isUsingExistingItem()) {
+            item = itemRepository.findById(request.getItemId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다. ID: " + request.getItemId()));
+        }
+        // 새로운 아이템 생성하는 경우
+        else if (request.isCreatingNewItem()) {
+            AdminItemCreateRequest itemCreateRequest = new AdminItemCreateRequest(
+                    request.getItemName(), 
+                    request.getIsRandomBox()
+            );
+            AdminItemResponse createdItem = adminItemService.createItem(itemCreateRequest);
+            item = itemRepository.findById(createdItem.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("아이템 생성 후 조회에 실패했습니다."));
+        }
+        // 둘 다 없는 경우 에러
+        else {
+            throw new IllegalArgumentException("기존 아이템 ID 또는 새로운 아이템 정보를 제공해야 합니다.");
+        }
         
         BossDropItem bossDropItem = BossDropItem.builder()
                 .boss(boss)

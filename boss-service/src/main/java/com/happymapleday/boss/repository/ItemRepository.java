@@ -10,4 +10,10 @@ import java.util.List;
 public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findByIsRandomBoxTrue();
     List<Item> findByIsRandomBoxFalse();
+    
+    // 아이템 이름으로 검색 (대소문자 구분 없이 부분 일치)
+    List<Item> findByItemNameContainingIgnoreCase(String itemName);
+    
+    // 아이템 이름 중복 체크
+    boolean existsByItemName(String itemName);
 } 

@@ -12,10 +12,9 @@ spring:
         - id: user-service
           uri: http://localhost:8082
           predicates:
-            - Path=/api/user/**
+            - Path=/api/auth/**, /api/user/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
         
         # Character Service 라우팅
         - id: character-service
@@ -24,7 +23,6 @@ spring:
             - Path=/api/character/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
         
         # Boss Service 라우팅
         - id: boss-service
@@ -33,7 +31,6 @@ spring:
             - Path=/api/boss/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
         
         # Settlement Service 라우팅
         - id: settlement-service
@@ -42,7 +39,6 @@ spring:
             - Path=/api/settlement/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
         
         # Recommendation Service 라우팅
         - id: recommendation-service
@@ -51,7 +47,6 @@ spring:
             - Path=/api/recommendation/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
         
         # History Service 라우팅
         - id: history-service
@@ -60,7 +55,6 @@ spring:
             - Path=/api/history/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
         
         # Admin Service 라우팅
         - id: admin-service
@@ -69,7 +63,6 @@ spring:
             - Path=/api/admin/**
           filters:
             - StripPrefix=0
-            - AddResponseHeader=X-Response-Time, $\{responseTime}
 
       # CORS 설정
       globalcors:
@@ -96,7 +89,6 @@ spring:
               - "Access-Control-Request-Headers"
             exposedHeaders:
               - "Authorization"
-              - "X-Response-Time"
             allowCredentials: true
             maxAge: 3600 # 1시간
 

@@ -296,23 +296,7 @@ INSERT INTO boss_drop_items (boss_id, item_id) VALUES
 
 -- 박스 내용물 마스터 데이터 삽입
 INSERT INTO box_content_item (item_name, item_level, full_item_name, is_special, notes) VALUES
--- 웨폰퍼프 링 시리즈
-('웨폰퍼프 - S링', 1, '웨폰퍼프 - S링 1레벨', false, null),
-('웨폰퍼프 - S링', 2, '웨폰퍼프 - S링 2레벨', false, null),
-('웨폰퍼프 - S링', 3, '웨폰퍼프 - S링 3레벨', false, null),
-('웨폰퍼프 - S링', 4, '웨폰퍼프 - S링 4레벨', false, null),
-('웨폰퍼프 - D링', 1, '웨폰퍼프 - D링 1레벨', false, null),
-('웨폰퍼프 - D링', 2, '웨폰퍼프 - D링 2레벨', false, null),
-('웨폰퍼프 - D링', 3, '웨폰퍼프 - D링 3레벨', false, null),
-('웨폰퍼프 - D링', 4, '웨폰퍼프 - D링 4레벨', false, null),
-('웨폰퍼프 - L링', 1, '웨폰퍼프 - L링 1레벨', false, null),
-('웨폰퍼프 - L링', 2, '웨폰퍼프 - L링 2레벨', false, null),
-('웨폰퍼프 - L링', 3, '웨폰퍼프 - L링 3레벨', false, null),
-('웨폰퍼프 - L링', 4, '웨폰퍼프 - L링 4레벨', false, null),
-('웨폰퍼프 - I링', 1, '웨폰퍼프 - I링 1레벨', false, null),
-('웨폰퍼프 - I링', 2, '웨폰퍼프 - I링 2레벨', false, null),
-('웨폰퍼프 - I링', 3, '웨폰퍼프 - I링 3레벨', false, null),
-('웨폰퍼프 - I링', 4, '웨폰퍼프 - I링 4레벨', false, null),
+
 -- 리스트레인트 링 시리즈
 ('리스트레인트 링', 1, '리스트레인트 링 1레벨', false, null),
 ('리스트레인트 링', 2, '리스트레인트 링 2레벨', false, null),
@@ -334,7 +318,7 @@ SELECT items.id, box_content_item.id
 FROM items
 CROSS JOIN box_content_item
 WHERE items.item_name = '녹옥의 보스 반지 상자'
-  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_name IN ('리스트레인트 링', '컨티뉴어스 링')
   AND box_content_item.item_level BETWEEN 1 AND 3;
 
 -- 홍옥의 보스 반지 상자 (1~4 레벨)
@@ -343,7 +327,7 @@ SELECT items.id, box_content_item.id
 FROM items
 CROSS JOIN box_content_item
 WHERE items.item_name = '홍옥의 보스 반지 상자'
-  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_name IN ('리스트레인트 링', '컨티뉴어스 링')
   AND box_content_item.item_level BETWEEN 1 AND 4;
 
 -- 흑옥의 보스 반지 상자 (1~4 레벨)
@@ -352,7 +336,7 @@ SELECT items.id, box_content_item.id
 FROM items
 CROSS JOIN box_content_item
 WHERE items.item_name = '흑옥의 보스 반지 상자'
-  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_name IN ('리스트레인트 링', '컨티뉴어스 링')
   AND box_content_item.item_level BETWEEN 1 AND 4;
 
 -- 백옥의 보스 반지 상자 (3~4 레벨)
@@ -361,7 +345,7 @@ SELECT items.id, box_content_item.id
 FROM items
 CROSS JOIN box_content_item
 WHERE items.item_name = '백옥의 보스 반지 상자'
-  AND box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링')
+  AND box_content_item.item_name IN ('리스트레인트 링', '컨티뉴어스 링')
   AND box_content_item.item_level BETWEEN 3 AND 4;
 
 -- 생명의 보스 반지 상자 (3~4 레벨 + 생명의 연마석)
@@ -371,7 +355,7 @@ FROM items
 CROSS JOIN box_content_item
 WHERE items.item_name = '생명의 보스 반지 상자'
   AND (
-    (box_content_item.item_name IN ('웨폰퍼프 - S링', '웨폰퍼프 - D링', '웨폰퍼프 - L링', '웨폰퍼프 - I링', '리스트레인트 링', '컨티뉴어스 링') 
+    (box_content_item.item_name IN ('리스트레인트 링', '컨티뉴어스 링') 
      AND box_content_item.item_level BETWEEN 3 AND 4)
     OR box_content_item.item_name = '생명의 연마석'
   );

@@ -120,10 +120,8 @@ public class SettlementServiceImpl implements SettlementService {
                         .createdAt(bossRecord.getCreatedAt())
                         .updatedAt(LocalDateTime.now())
                         .build();
-                bossRecord = weeklyBossRecordRepository.save(bossRecord);
-            } else {
-                bossRecord = weeklyBossRecordRepository.save(bossRecord);
             }
+            bossRecord = weeklyBossRecordRepository.save(bossRecord);
             bossRecords.add(bossRecord);
         }
         // 정산 총계 계산 및 저장 (불변 객체로 새로 생성)
@@ -133,11 +131,20 @@ public class SettlementServiceImpl implements SettlementService {
                 .worldName(settlement.getWorldName())
                 .weekStartDate(settlement.getWeekStartDate())
                 .bossRecords(bossRecords)
-                .totalCrystalIncome(settlement.calculateTotalCrystalIncome())
-                .totalDesireItemIncome(settlement.calculateTotalDesireItemIncome())
-                .totalIncome(settlement.calculateTotalIncome())
-                .totalBossCount(settlement.calculateTotalBossCount())
-                .characterCount(settlement.calculateCharacterCount())
+                .totalCrystalIncome(bossRecords.stream()
+                        .map(WeeklyBossRecord::getCrystalIncome)
+                        .reduce(BigInteger.ZERO, BigInteger::add))
+                .totalDesireItemIncome(bossRecords.stream()
+                        .map(WeeklyBossRecord::getDesireItemIncome)
+                        .reduce(BigInteger.ZERO, BigInteger::add))
+                .totalIncome(bossRecords.stream()
+                        .map(WeeklyBossRecord::getTotalIncome)
+                        .reduce(BigInteger.ZERO, BigInteger::add))
+                .totalBossCount((int) bossRecords.size())
+                .characterCount((int) bossRecords.stream()
+                        .map(WeeklyBossRecord::getCharacterId)
+                        .distinct()
+                        .count())
                 .isFinalized(true)
                 .finalizedAt(LocalDateTime.now())
                 .createdAt(settlement.getCreatedAt())
@@ -300,28 +307,23 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     @Transactional(readOnly = true)
     public CurrentWeekStatusResponse getCurrentWeekStatus(Long userId) {
-        LocalDate now = LocalDate.now();
-        LocalDate currentWeekStart = getWeekStartDate(now);
-        LocalDate nextWeekStart = currentWeekStart.plusWeeks(1);
+        List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId);
+        LocalDate currentWeekStart = getWeekStartDate(LocalDate.now());
         
-        // 이번 주 정산 완료 여부 확인 (모든 월드 기준으로 확인)
-        List<WeeklySettlement> thisWeekSettlements = weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId)
-                .stream()
+        boolean isCompleted = settlements.stream()
                 .filter(s -> s.getWeekStartDate().equals(currentWeekStart))
-                .toList();
-        boolean isCompleted = !thisWeekSettlements.isEmpty() && 
-                             thisWeekSettlements.stream().anyMatch(s -> s.getIsFinalized());
+                .anyMatch(WeeklySettlement::getIsFinalized);
         
-        // 다음 리셋까지 남은 일수 계산
-        long remainingDays = ChronoUnit.DAYS.between(now, nextWeekStart);
-        LocalDateTime nextResetDate = nextWeekStart.atStartOfDay();
+        LocalDate nextWeekStart = currentWeekStart.plusWeeks(1);
+        LocalDate nextResetDate = currentWeekStart.plusDays(3); // 목요일이 리셋일
+        long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), nextResetDate);
         
         return CurrentWeekStatusResponse.builder()
+                .isCompleted(isCompleted)
                 .currentWeekStart(currentWeekStart)
                 .nextWeekStart(nextWeekStart)
-                .isCompleted(isCompleted)
                 .remainingDays((int) remainingDays)
-                .nextResetDate(nextResetDate)
+                .nextResetDate(nextResetDate.atStartOfDay())
                 .build();
     }
     

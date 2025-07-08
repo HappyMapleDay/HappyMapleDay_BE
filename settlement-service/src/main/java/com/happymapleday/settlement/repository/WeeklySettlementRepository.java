@@ -14,4 +14,7 @@ import java.util.Optional;
 public interface WeeklySettlementRepository extends JpaRepository<WeeklySettlement, Long> {
     // 사용자별 정산 조회 (최신순)
     List<WeeklySettlement> findByUserIdOrderByWeekStartDateDesc(Long userId);
+    
+    boolean existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
+            Long userId, String worldName, LocalDate weekStartDate);
 } 

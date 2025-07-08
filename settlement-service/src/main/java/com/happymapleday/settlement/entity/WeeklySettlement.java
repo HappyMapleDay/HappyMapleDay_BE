@@ -62,10 +62,10 @@ public class WeeklySettlement {
     private Integer characterCount = 0;
     
     @Column(name = "is_finalized")
-    private Boolean isFinalized = true;
+    private Boolean isFinalized = false;
     
     @Column(name = "finalized_at")
-    private LocalDateTime finalizedAt = LocalDateTime.now();
+    private LocalDateTime finalizedAt;
     
     @CreationTimestamp
     @Column(name = "created_at")
@@ -89,8 +89,8 @@ public class WeeklySettlement {
         this.totalIncome = BigInteger.ZERO;
         this.totalBossCount = 0;
         this.characterCount = 0;
-        this.isFinalized = true;
-        this.finalizedAt = LocalDateTime.now();
+        this.isFinalized = false;
+        this.finalizedAt = null;
     }
     
     // 도메인 로직 메서드 (불변 계산)

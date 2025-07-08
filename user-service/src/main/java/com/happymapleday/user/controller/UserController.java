@@ -1,6 +1,8 @@
 package com.happymapleday.user.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.user.dto.ApiKeyValidationRequestDto;
+import com.happymapleday.user.dto.ApiKeyValidationResponseDto;
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
@@ -111,6 +113,24 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("중복 체크 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // Nexon API Key 검증
+    @PostMapping("/validate-api-key")
+    public ResponseEntity<ApiResponse<ApiKeyValidationResponseDto>> validateApiKey(@Valid @RequestBody ApiKeyValidationRequestDto request) {
+        try {
+            ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+            
+            if (response.isValid()) {
+                return ResponseEntity.ok(ApiResponse.success(response));
+            } else {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.success(response));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("API Key 검증 처리 중 오류가 발생했습니다."));
         }
     }
     

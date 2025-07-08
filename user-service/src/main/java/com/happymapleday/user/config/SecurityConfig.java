@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/login").permitAll()
                 .requestMatchers("/api/user/refresh").permitAll()
                 .requestMatchers("/api/user/check-username/**").permitAll()
+                .requestMatchers("/api/user/validate-api-key").permitAll()
+                .requestMatchers("/api/user/reset-password").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

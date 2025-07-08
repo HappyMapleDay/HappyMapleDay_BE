@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: user-service
+  
+  # 캐시 설정
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=1h
 
 # JWT 설정
 jwt:

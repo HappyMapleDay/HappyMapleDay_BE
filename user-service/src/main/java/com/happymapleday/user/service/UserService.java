@@ -1,5 +1,7 @@
 package com.happymapleday.user.service;
 
+import com.happymapleday.user.dto.ApiKeyValidationRequestDto;
+import com.happymapleday.user.dto.ApiKeyValidationResponseDto;
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
@@ -38,6 +40,7 @@ public class UserService {
     private final EncryptionService encryptionService;
     private final JwtService jwtService;
     private final SecureRefreshTokenService secureRefreshTokenService;
+    private final NexonApiService nexonApiService;
     
     @Autowired
     public UserService(UserRepository userRepository, 
@@ -45,13 +48,15 @@ public class UserService {
                        PasswordEncoder passwordEncoder,
                        EncryptionService encryptionService,
                        JwtService jwtService,
-                       SecureRefreshTokenService secureRefreshTokenService) {
+                       SecureRefreshTokenService secureRefreshTokenService,
+                       NexonApiService nexonApiService) {
         this.userRepository = userRepository;
         this.userSettingsRepository = userSettingsRepository;
         this.passwordEncoder = passwordEncoder;
         this.encryptionService = encryptionService;
         this.jwtService = jwtService;
         this.secureRefreshTokenService = secureRefreshTokenService;
+        this.nexonApiService = nexonApiService;
     }
     
     // 로그인 처리
@@ -180,6 +185,22 @@ public class UserService {
         // 사용자 조회
         User user = userRepository.findByMainCharacterName(request.getMainCharacterName())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        
+        // 넥슨 API Key 검증
+        NexonApiService.ApiKeyValidationResult apiResult = nexonApiService.validateApiKey(request.getNexonApiKey());
+        if (!apiResult.isValid()) {
+            throw new IllegalArgumentException("유효하지 않은 Nexon API Key입니다.");
+        }
+        
+        // 사용자의 암호화된 API Key와 비교 검증 (추가 보안)
+        try {
+            String decryptedApiKey = encryptionService.decrypt(user.getNexonApiKey());
+            if (!decryptedApiKey.equals(request.getNexonApiKey())) {
+                throw new IllegalArgumentException("일치하는 사용자 정보를 찾을 수 없습니다.");
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("일치하는 사용자 정보를 찾을 수 없습니다.");
+        }
                 
         // 임시 비밀번호 생성
         String temporaryPassword = generateTemporaryPassword();
@@ -310,5 +331,29 @@ public class UserService {
         
         // 업데이트된 설정 반환
         return getUserSettings();
+    }
+    
+    // Nexon API Key 검증 처리
+    public ApiKeyValidationResponseDto validateApiKey(ApiKeyValidationRequestDto request) {
+        try {
+            String apiKey = request.getNexonApiKey();
+            
+            // API Key 기본 검증 (길이, 형식 등)
+            if (apiKey == null || apiKey.trim().isEmpty()) {
+                return ApiKeyValidationResponseDto.failure("API Key가 비어있습니다.");
+            }
+            
+            // 실제 Nexon API 호출을 통한 유효성 검증
+            NexonApiService.ApiKeyValidationResult result = nexonApiService.validateApiKey(apiKey);
+            
+            if (result.isValid()) {
+                return ApiKeyValidationResponseDto.success(result.getCharacterCount());
+            } else {
+                return ApiKeyValidationResponseDto.failure(result.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            return ApiKeyValidationResponseDto.failure("API Key 검증 처리 중 오류가 발생했습니다.");
+        }
     }
 } 

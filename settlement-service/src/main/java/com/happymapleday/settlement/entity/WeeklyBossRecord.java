@@ -2,6 +2,11 @@ package com.happymapleday.settlement.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -21,6 +26,10 @@ import java.util.List;
            @Index(name = "idx_user_week", columnList = "user_id, week_start_date"),
            @Index(name = "idx_character_week", columnList = "character_id, week_start_date")
        })
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WeeklyBossRecord {
     
     @Id
@@ -77,10 +86,7 @@ public class WeeklyBossRecord {
     @OneToMany(mappedBy = "weeklyBossRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DesireItemRecord> desireItemRecords;
     
-    // 기본 생성자
-    public WeeklyBossRecord() {}
-    
-    // 생성자
+    // 생성자 (기본 필드만)
     public WeeklyBossRecord(Long settlementId, Long userId, Long characterId, Long bossId, 
                            LocalDate weekStartDate, BigInteger crystalIncome, Integer partySize) {
         this.settlementId = settlementId;
@@ -91,120 +97,20 @@ public class WeeklyBossRecord {
         this.crystalIncome = crystalIncome;
         this.partySize = partySize;
         this.totalIncome = crystalIncome;
+        this.desireItemIncome = BigInteger.ZERO;
     }
     
-    // Getter/Setter
-    public Long getId() {
-        return id;
+    // 도메인 로직 메서드 (불변 계산)
+    public BigInteger calculateTotalIncome() {
+        return crystalIncome.add(desireItemIncome != null ? desireItemIncome : BigInteger.ZERO);
     }
     
-    public Long getSettlementId() {
-        return settlementId;
-    }
-    
-    public void setSettlementId(Long settlementId) {
-        this.settlementId = settlementId;
-    }
-    
-    public Long getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-    
-    public Long getCharacterId() {
-        return characterId;
-    }
-    
-    public void setCharacterId(Long characterId) {
-        this.characterId = characterId;
-    }
-    
-    public Long getBossId() {
-        return bossId;
-    }
-    
-    public void setBossId(Long bossId) {
-        this.bossId = bossId;
-    }
-    
-    public Integer getPartySize() {
-        return partySize;
-    }
-    
-    public void setPartySize(Integer partySize) {
-        this.partySize = partySize;
-    }
-    
-    public LocalDate getWeekStartDate() {
-        return weekStartDate;
-    }
-    
-    public void setWeekStartDate(LocalDate weekStartDate) {
-        this.weekStartDate = weekStartDate;
-    }
-    
-    public BigInteger getCrystalIncome() {
-        return crystalIncome;
-    }
-    
-    public void setCrystalIncome(BigInteger crystalIncome) {
-        this.crystalIncome = crystalIncome;
-        this.calculateTotalIncome();
-    }
-    
-    public BigInteger getDesireItemIncome() {
-        return desireItemIncome;
-    }
-    
-    public void setDesireItemIncome(BigInteger desireItemIncome) {
-        this.desireItemIncome = desireItemIncome;
-        this.calculateTotalIncome();
-    }
-    
-    public BigInteger getTotalIncome() {
-        return totalIncome;
-    }
-    
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public WeeklySettlement getWeeklySettlement() {
-        return weeklySettlement;
-    }
-    
-    public void setWeeklySettlement(WeeklySettlement weeklySettlement) {
-        this.weeklySettlement = weeklySettlement;
-    }
-    
-    public List<DesireItemRecord> getDesireItemRecords() {
-        return desireItemRecords;
-    }
-    
-    public void setDesireItemRecords(List<DesireItemRecord> desireItemRecords) {
-        this.desireItemRecords = desireItemRecords;
-    }
-    
-    // 비즈니스 메서드
-    public void calculateTotalIncome() {
-        this.totalIncome = crystalIncome.add(desireItemIncome != null ? desireItemIncome : BigInteger.ZERO);
-    }
-    
-    public void calculateDesireItemIncome() {
+    public BigInteger calculateDesireItemIncome() {
         if (desireItemRecords == null || desireItemRecords.isEmpty()) {
-            this.desireItemIncome = BigInteger.ZERO;
-        } else {
-            this.desireItemIncome = desireItemRecords.stream()
-                    .map(DesireItemRecord::getSalePrice)
-                    .reduce(BigInteger.ZERO, BigInteger::add);
+            return BigInteger.ZERO;
         }
-        this.calculateTotalIncome();
+        return desireItemRecords.stream()
+                .map(DesireItemRecord::getSalePrice)
+                .reduce(BigInteger.ZERO, BigInteger::add);
     }
-} 
+}

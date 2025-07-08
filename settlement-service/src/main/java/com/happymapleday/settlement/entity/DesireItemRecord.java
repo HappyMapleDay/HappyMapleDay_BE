@@ -49,7 +49,7 @@ public class DesireItemRecord {
         this.salePrice = salePrice;
     }
     
-    // Getter/Setter
+    // Getter
     public Long getId() {
         return id;
     }
@@ -58,24 +58,12 @@ public class DesireItemRecord {
         return weeklyBossRecordId;
     }
     
-    public void setWeeklyBossRecordId(Long weeklyBossRecordId) {
-        this.weeklyBossRecordId = weeklyBossRecordId;
-    }
-    
     public Long getDesireItemId() {
         return desireItemId;
     }
     
-    public void setDesireItemId(Long desireItemId) {
-        this.desireItemId = desireItemId;
-    }
-    
     public BigInteger getSalePrice() {
         return salePrice;
-    }
-    
-    public void setSalePrice(BigInteger salePrice) {
-        this.salePrice = salePrice;
     }
     
     public LocalDateTime getAcquiredAt() {
@@ -84,9 +72,5 @@ public class DesireItemRecord {
     
     public WeeklyBossRecord getWeeklyBossRecord() {
         return weeklyBossRecord;
-    }
-    
-    public void setWeeklyBossRecord(WeeklyBossRecord weeklyBossRecord) {
-        this.weeklyBossRecord = weeklyBossRecord;
     }
 } 

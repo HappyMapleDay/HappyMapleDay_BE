@@ -28,9 +28,7 @@ public class SettlementController {
     @PostMapping
     public ResponseEntity<ApiResponse<SettlementCompleteResponse>> completeSettlement(
             @Valid @RequestBody SettlementCompleteRequest request) {
-        
         SettlementCompleteResponse response = settlementService.completeSettlement(request);
-        
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -39,9 +37,7 @@ public class SettlementController {
     public ResponseEntity<ApiResponse<SettlementModifyResponse>> modifySettlement(
             @PathVariable Long settlementId,
             @Valid @RequestBody SettlementModifyRequest request) {
-        
         SettlementModifyResponse response = settlementService.modifySettlement(settlementId, request);
-        
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -50,9 +46,7 @@ public class SettlementController {
     public ResponseEntity<ApiResponse<String>> deleteSettlement(
             @PathVariable Long settlementId,
             @RequestParam Long userId) {
-        
         settlementService.deleteSettlement(settlementId, userId);
-        
         return ResponseEntity.ok(ApiResponse.success("정산이 성공적으로 삭제되었습니다."));
     }
 
@@ -61,10 +55,8 @@ public class SettlementController {
     public ResponseEntity<ApiResponse<SettlementStatusResponse>> getSettlementStatus(
             @RequestParam Long userId,
             @RequestParam String weekStartDate) {
-        
         LocalDate startDate = LocalDate.parse(weekStartDate);
         SettlementStatusResponse response = settlementService.getSettlementStatus(userId, startDate);
-        
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -72,9 +64,7 @@ public class SettlementController {
     @GetMapping("/current-week")
     public ResponseEntity<ApiResponse<CurrentWeekStatusResponse>> getCurrentWeekStatus(
             @RequestParam Long userId) {
-        
         CurrentWeekStatusResponse response = settlementService.getCurrentWeekStatus(userId);
-        
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 } 

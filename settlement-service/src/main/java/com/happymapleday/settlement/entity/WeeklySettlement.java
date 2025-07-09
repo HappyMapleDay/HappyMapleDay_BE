@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "weekly_settlements",
@@ -127,5 +128,18 @@ public class WeeklySettlement {
                 .map(WeeklyBossRecord::getCharacterId)
                 .distinct()
                 .count();
+    }
+
+    // 결정석 제한 관련 메서드
+    public Map<Long, Integer> getCharacterCrystalCounts() {
+        return WeeklyBossRecord.getCharacterCrystalCounts(bossRecords);
+    }
+
+    public boolean isCharacterOverCrystalLimit(Long characterId) {
+        return WeeklyBossRecord.isCharacterOverCrystalLimit(bossRecords, characterId);
+    }
+
+    public boolean isWorldOverCrystalLimit() {
+        return WeeklyBossRecord.isWorldOverCrystalLimit(bossRecords);
     }
 } 

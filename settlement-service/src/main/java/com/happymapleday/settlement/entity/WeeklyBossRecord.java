@@ -14,6 +14,8 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "weekly_boss_records",
@@ -30,6 +32,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WeeklyBossRecord {
+    
+    // 결정석 판매 제한 상수
+    public static final int CHARACTER_CRYSTAL_LIMIT = 12;
+    public static final int WORLD_CRYSTAL_LIMIT = 90;
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -111,5 +117,37 @@ public class WeeklyBossRecord {
         return desireItemRecords.stream()
                 .map(DesireItemRecord::getSalePrice)
                 .reduce(BigInteger.ZERO, BigInteger::add);
+    }
+
+    // 결정석 판매 제한 검증 메서드
+    public static int getCharacterCrystalCount(List<WeeklyBossRecord> records, Long characterId) {
+        if (records == null || records.isEmpty()) {
+            return 0;
+        }
+        return (int) records.stream()
+                .filter(record -> record.getCharacterId().equals(characterId))
+                .count();
+    }
+
+    public static boolean isCharacterOverCrystalLimit(List<WeeklyBossRecord> records, Long characterId) {
+        return getCharacterCrystalCount(records, characterId) >= CHARACTER_CRYSTAL_LIMIT;
+    }
+
+    public static boolean isWorldOverCrystalLimit(List<WeeklyBossRecord> records) {
+        return records != null && records.size() >= WORLD_CRYSTAL_LIMIT;
+    }
+
+    public static Map<Long, Integer> getCharacterCrystalCounts(List<WeeklyBossRecord> records) {
+        if (records == null || records.isEmpty()) {
+            return Map.of();
+        }
+        return records.stream()
+                .collect(Collectors.groupingBy(
+                    WeeklyBossRecord::getCharacterId,
+                    Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        list -> list.size()
+                    )
+                ));
     }
 }

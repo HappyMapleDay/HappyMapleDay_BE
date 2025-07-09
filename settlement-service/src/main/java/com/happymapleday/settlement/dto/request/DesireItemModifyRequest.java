@@ -16,6 +16,10 @@ public class DesireItemModifyRequest {
     @NotNull(message = "물욕템 ID는 필수입니다.")
     @Positive(message = "물욕템 ID는 양수여야 합니다.")
     private final Long desireItemId;
+
+    @NotNull(message = "캐릭터 ID는 필수입니다.")
+    @Positive(message = "캐릭터 ID는 양수여야 합니다.")
+    private final Long characterId;
     
     @NotNull(message = "판매 가격은 필수입니다.")
     @DecimalMin(value = "1", message = "판매 가격은 1 이상이어야 합니다.")

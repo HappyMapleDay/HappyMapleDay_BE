@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "desire_item_records",
        indexes = {
-           @Index(name = "idx_weekly_boss_record", columnList = "weekly_boss_record_id")
+           @Index(name = "idx_weekly_boss_record", columnList = "weekly_boss_record_id"),
+           @Index(name = "idx_character", columnList = "character_id")
        })
 @Getter
 @Builder
@@ -30,6 +31,10 @@ public class DesireItemRecord {
     @NotNull
     @Column(name = "weekly_boss_record_id", nullable = false)
     private Long weeklyBossRecordId;
+
+    @NotNull
+    @Column(name = "character_id", nullable = false)
+    private Long characterId;
     
     @NotNull
     @Column(name = "desire_item_id", nullable = false)

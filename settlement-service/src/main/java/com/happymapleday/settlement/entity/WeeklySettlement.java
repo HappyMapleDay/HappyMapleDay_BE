@@ -80,17 +80,20 @@ public class WeeklySettlement {
     private List<WeeklyBossRecord> bossRecords;
 
     @Builder
-    public WeeklySettlement(Long userId, String worldName, LocalDate weekStartDate) {
+    public WeeklySettlement(Long userId, String worldName, LocalDate weekStartDate,
+                           BigInteger totalCrystalIncome, BigInteger totalDesireItemIncome,
+                           BigInteger totalIncome, Integer totalBossCount, Integer characterCount,
+                           Boolean isFinalized, LocalDateTime finalizedAt) {
         this.userId = userId;
         this.worldName = worldName;
         this.weekStartDate = weekStartDate;
-        this.totalCrystalIncome = BigInteger.ZERO;
-        this.totalDesireItemIncome = BigInteger.ZERO;
-        this.totalIncome = BigInteger.ZERO;
-        this.totalBossCount = 0;
-        this.characterCount = 0;
-        this.isFinalized = false;
-        this.finalizedAt = null;
+        this.totalCrystalIncome = totalCrystalIncome != null ? totalCrystalIncome : BigInteger.ZERO;
+        this.totalDesireItemIncome = totalDesireItemIncome != null ? totalDesireItemIncome : BigInteger.ZERO;
+        this.totalIncome = totalIncome != null ? totalIncome : BigInteger.ZERO;
+        this.totalBossCount = totalBossCount != null ? totalBossCount : 0;
+        this.characterCount = characterCount != null ? characterCount : 0;
+        this.isFinalized = isFinalized != null ? isFinalized : false;
+        this.finalizedAt = finalizedAt;
     }
     
     // 도메인 로직 메서드 (불변 계산)

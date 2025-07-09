@@ -93,7 +93,8 @@ public class WeeklyBossRecord {
 
     @Builder
     public WeeklyBossRecord(Long settlementId, Long userId, Long characterId, Long bossId, 
-                           LocalDate weekStartDate, BigInteger crystalIncome, Integer partySize) {
+                           LocalDate weekStartDate, BigInteger crystalIncome, Integer partySize,
+                           BigInteger desireItemIncome, BigInteger totalIncome) {
         this.settlementId = settlementId;
         this.userId = userId;
         this.characterId = characterId;
@@ -101,8 +102,8 @@ public class WeeklyBossRecord {
         this.weekStartDate = weekStartDate;
         this.crystalIncome = crystalIncome;
         this.partySize = partySize != null ? partySize : 1;
-        this.desireItemIncome = BigInteger.ZERO;
-        this.totalIncome = crystalIncome;
+        this.desireItemIncome = desireItemIncome != null ? desireItemIncome : BigInteger.ZERO;
+        this.totalIncome = totalIncome != null ? totalIncome : crystalIncome;
     }
     
     // 도메인 로직 메서드 (불변 계산)

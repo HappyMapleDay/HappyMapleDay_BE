@@ -31,7 +31,7 @@ public class BossRecordModifyRequest {
     private final Integer partySize;
     
     @NotNull(message = "결정석 수익은 필수입니다.")
-    @DecimalMin(value = "0", message = "크리스탈 수익은 0 이상이어야 합니다.")
+    @DecimalMin(value = "0", message = "결정석 수익은 0 이상이어야 합니다.")
     private final BigInteger crystalIncome;
     
     @Valid

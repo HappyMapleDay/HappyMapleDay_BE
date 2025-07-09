@@ -27,7 +27,6 @@ import java.util.List;
            @Index(name = "idx_character_week", columnList = "character_id, week_start_date")
        })
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WeeklyBossRecord {
@@ -85,8 +84,8 @@ public class WeeklyBossRecord {
     
     @OneToMany(mappedBy = "weeklyBossRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DesireItemRecord> desireItemRecords;
-    
-    // 생성자 (기본 필드만)
+
+    @Builder
     public WeeklyBossRecord(Long settlementId, Long userId, Long characterId, Long bossId, 
                            LocalDate weekStartDate, BigInteger crystalIncome, Integer partySize) {
         this.settlementId = settlementId;
@@ -95,9 +94,9 @@ public class WeeklyBossRecord {
         this.bossId = bossId;
         this.weekStartDate = weekStartDate;
         this.crystalIncome = crystalIncome;
-        this.partySize = partySize;
-        this.totalIncome = crystalIncome;
+        this.partySize = partySize != null ? partySize : 1;
         this.desireItemIncome = BigInteger.ZERO;
+        this.totalIncome = crystalIncome;
     }
     
     // 도메인 로직 메서드 (불변 계산)

@@ -25,7 +25,6 @@ import java.util.List;
            @Index(name = "idx_user_week", columnList = "user_id, week_start_date")
        })
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WeeklySettlement {
@@ -78,8 +77,8 @@ public class WeeklySettlement {
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklyBossRecord> bossRecords;
-    
-    // 생성자 (기본 필드만)
+
+    @Builder
     public WeeklySettlement(Long userId, String worldName, LocalDate weekStartDate) {
         this.userId = userId;
         this.worldName = worldName;

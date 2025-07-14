@@ -4,6 +4,7 @@ import com.happymapleday.settlement.dto.request.SettlementRequest;
 import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.dto.response.SettlementStatusResponse;
+import com.happymapleday.settlement.dto.response.SettlementDetailResponse;
 
 import java.time.LocalDate;
 
@@ -16,8 +17,11 @@ public interface SettlementService {
     // 정산 삭제 (완료 취소)
     void deleteSettlement(Long settlementId, Long userId);
     
-    // 정산 상태 조회
+    // 정산 상태 조회 (요약 정보)
     SettlementStatusResponse getSettlementStatus(Long userId, LocalDate weekStartDate);
+    
+    // 정산 상세 정보 조회
+    SettlementDetailResponse getSettlementDetail(Long userId, LocalDate weekStartDate);
     
     // 현재 주간 상태 확인
     CurrentWeekStatusResponse getCurrentWeekStatus(Long userId);

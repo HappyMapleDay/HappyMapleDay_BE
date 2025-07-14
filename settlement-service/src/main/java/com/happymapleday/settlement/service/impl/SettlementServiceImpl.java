@@ -7,6 +7,7 @@ import com.happymapleday.settlement.dto.response.BossRecordDetailResponse;
 import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.dto.response.SettlementStatusResponse;
+import com.happymapleday.settlement.dto.response.SettlementDetailResponse;
 import com.happymapleday.settlement.entity.DesireItemRecord;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.entity.WeeklySettlement;
@@ -95,19 +96,7 @@ public class SettlementServiceImpl implements SettlementService {
             bossDetails.add(detail);
         }
         
-        return SettlementStatusResponse.builder()
-                .isFinalized(true)
-                .settlementId(settlement.getId())
-                .userId(settlement.getUserId())
-                .worldName(settlement.getWorldName())
-                .weekStartDate(settlement.getWeekStartDate())
-                .totalCrystalIncome(settlement.getTotalCrystalIncome())
-                .totalDesireItemIncome(settlement.getTotalDesireItemIncome())
-                .totalIncome(settlement.getTotalIncome())
-                .totalBossCount(settlement.getTotalBossCount())
-                .characterCount(settlement.getCharacterCount())
-                .characterCrystalCounts(settlement.getCharacterCrystalCounts())
-                .build();
+        return SettlementStatusResponse.from(settlement);
     }
     
     @Override
@@ -143,6 +132,36 @@ public class SettlementServiceImpl implements SettlementService {
                 .remainingDays((int) remainingDays)
                 .nextResetDate(nextResetDate.atStartOfDay())
                 .build();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public SettlementDetailResponse getSettlementDetail(Long userId, LocalDate weekStartDate) {
+        // 사용자의 모든 정산에서 해당 주차 찾기
+        List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId)
+                .stream()
+                .filter(s -> s.getWeekStartDate().equals(weekStartDate))
+                .toList();
+        
+        if (settlements.isEmpty()) {
+            return SettlementDetailResponse.builder()
+                    .isFinalized(false)
+                    .weekStartDate(weekStartDate)
+                    .bossRecords(List.of())
+                    .build();
+        }
+        
+        WeeklySettlement settlement = settlements.get(0);
+        
+        // 보스 레코드와 물욕템 정보를 모두 가져오기
+        List<WeeklyBossRecord> bossRecords = weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlement.getId());
+        
+        // 보스 레코드 상세 정보 생성
+        List<BossRecordDetailResponse> bossDetails = bossRecords.stream()
+                .map(BossRecordDetailResponse::from)
+                .collect(Collectors.toList());
+        
+        return SettlementDetailResponse.from(settlement, bossDetails);
     }
     
     @Override

@@ -5,6 +5,7 @@ import com.happymapleday.settlement.dto.request.SettlementRequest;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementStatusResponse;
+import com.happymapleday.settlement.dto.response.SettlementDetailResponse;
 import com.happymapleday.settlement.service.SettlementService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class SettlementController {
         this.settlementService = settlementService;
     }
 
-    // 특정 주차 정산 조회
+    // 특정 주차 정산 조회 (요약 정보)
     @GetMapping("/user/{userId}/week/{weekStartDate}")
     public ResponseEntity<ApiResponse<SettlementStatusResponse>> getSettlementByWeek(
             @PathVariable Long userId,
@@ -30,7 +31,17 @@ public class SettlementController {
         LocalDate weekStart = LocalDate.parse(weekStartDate);
         SettlementStatusResponse response = settlementService.getSettlementStatus(userId, weekStart);
         return ResponseEntity.ok(ApiResponse.success(response));
-    }  
+    }
+    
+    // 특정 주차 정산 상세 조회 (상세 정보)
+    @GetMapping("/user/{userId}/week/{weekStartDate}/detail")
+    public ResponseEntity<ApiResponse<SettlementDetailResponse>> getSettlementDetailByWeek(
+            @PathVariable Long userId,
+            @PathVariable String weekStartDate) {
+        LocalDate weekStart = LocalDate.parse(weekStartDate);
+        SettlementDetailResponse response = settlementService.getSettlementDetail(userId, weekStart);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
     // 정산 데이터 생성 또는 수정
     @PutMapping("/user/{userId}/week/{weekStartDate}")

@@ -193,7 +193,7 @@ class SettlementServiceTest {
         return SettlementCompleteRequest.builder()
                 .userId(userId)
                 .worldName(worldName)
-                .weekStartDate(weekStartDate)
+                .settlementDate(weekStartDate)
                 .bossRecords(List.of(bossRecord))
                 .build();
     }
@@ -213,7 +213,7 @@ class SettlementServiceTest {
         return SettlementCompleteRequest.builder()
                 .userId(userId)
                 .worldName(worldName)
-                .weekStartDate(weekStartDate)
+                .settlementDate(weekStartDate)
                 .bossRecords(bossRecords)
                 .build();
     }
@@ -228,7 +228,7 @@ class SettlementServiceTest {
         return SettlementCompleteRequest.builder()
                 .userId(userId)
                 .worldName(worldName)
-                .weekStartDate(weekStartDate)
+                .settlementDate(weekStartDate)
                 .bossRecords(List.of(bossRecord))
                 .build();
     }

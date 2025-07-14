@@ -24,8 +24,8 @@ public class SettlementCompleteRequest {
     @Size(max = 20, message = "월드명은 20자 이하여야 합니다.")
     private final String worldName;
     
-    @NotNull(message = "주차 시작일은 필수입니다.")
-    private final LocalDate weekStartDate;
+    @NotNull(message = "정산 기준일은 필수입니다.")
+    private final LocalDate settlementDate;
     
     @NotEmpty(message = "보스 기록은 최소 1개 이상 필요합니다.")
     @Valid

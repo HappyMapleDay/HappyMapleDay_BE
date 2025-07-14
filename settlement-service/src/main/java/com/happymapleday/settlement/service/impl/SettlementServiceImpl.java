@@ -50,9 +50,12 @@ public class SettlementServiceImpl implements SettlementService {
     
     @Override
     public SettlementCompleteResponse completeSettlement(SettlementCompleteRequest request) {
+        // 정산 기준일로부터 주차 시작일 계산
+        LocalDate weekStartDate = getWeekStartDate(request.getSettlementDate());
+        
         // 중복 정산 확인
         boolean alreadyExists = weeklySettlementRepository.existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
-                request.getUserId(), request.getWorldName(), request.getWeekStartDate());
+                request.getUserId(), request.getWorldName(), weekStartDate);
         
         if (alreadyExists) {
             throw new IllegalStateException("이미 이번 주 정산이 완료되었습니다.");
@@ -63,7 +66,7 @@ public class SettlementServiceImpl implements SettlementService {
         for (BossRecordRequest bossRequest : request.getBossRecords()) {
             // 중복 보스 기록 확인
             boolean bossRecordExists = weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
-                    bossRequest.getCharacterId(), bossRequest.getBossId(), request.getWeekStartDate());
+                    bossRequest.getCharacterId(), bossRequest.getBossId(), weekStartDate);
             
             if (bossRecordExists) {
                 throw new IllegalArgumentException(
@@ -77,7 +80,7 @@ public class SettlementServiceImpl implements SettlementService {
                     .userId(request.getUserId())
                     .characterId(bossRequest.getCharacterId())
                     .bossId(bossRequest.getBossId())
-                    .weekStartDate(request.getWeekStartDate())
+                    .weekStartDate(weekStartDate)
                     .crystalIncome(bossRequest.getCrystalIncome())
                     .partySize(bossRequest.getPartySize())
                     .desireItemIncome(BigInteger.ZERO)
@@ -108,7 +111,7 @@ public class SettlementServiceImpl implements SettlementService {
         WeeklySettlement settlement = WeeklySettlement.builder()
                 .userId(request.getUserId())
                 .worldName(request.getWorldName())
-                .weekStartDate(request.getWeekStartDate())
+                .weekStartDate(weekStartDate)
                 .totalCrystalIncome(bossRecords.stream()
                         .map(WeeklyBossRecord::getCrystalIncome)
                         .reduce(BigInteger.ZERO, BigInteger::add))

@@ -3,6 +3,7 @@ package com.happymapleday.user.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpEntity;
@@ -25,6 +26,10 @@ public class NexonApiService {
     private final ObjectMapper objectMapper;
     private final CacheManager cacheManager;
     
+    // 마스터키 설정 (환경변수에서 가져옴)
+    @Value("${nexon.api.master-key:}")
+    private String masterApiKey;
+    
     // 무효한 키 임시 저장소 (30분 만료)
     private final ConcurrentHashMap<String, CachedResult> invalidKeysCache = new ConcurrentHashMap<>();
     
@@ -39,10 +44,16 @@ public class NexonApiService {
      * 넥슨 API Key 유효성 검증 (조건부 캐시 적용)
      * - 유효한 키: 1시간 캐시 (Spring Cache)
      * - 무효한 키: 30분 캐시 (메모리 Map)
+     * - 마스터키가 설정된 경우 마스터키 검증 우선
      * @param apiKey 검증할 API Key
      * @return 유효한 API Key인지 여부와 관련 정보
      */
     public ApiKeyValidationResult validateApiKey(String apiKey) {
+        // 마스터키가 설정되어 있고, 입력된 키가 마스터키와 일치하면 즉시 유효 처리
+        if (isMasterKeyEnabled() && apiKey.equals(masterApiKey)) {
+            return new ApiKeyValidationResult(true, 15, null);
+        }
+        
         // 1. 유효한 키 캐시에서 먼저 확인 (1시간)
         Cache validCache = cacheManager.getCache("apiKeyValidation");
         if (validCache != null) {
@@ -75,6 +86,13 @@ public class NexonApiService {
         }
         
         return result;
+    }
+    
+    /**
+     * 마스터키가 설정되어 있는지 확인
+     */
+    private boolean isMasterKeyEnabled() {
+        return masterApiKey != null && !masterApiKey.trim().isEmpty();
     }
     
     /**

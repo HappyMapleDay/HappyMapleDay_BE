@@ -210,6 +210,105 @@ class SettlementServiceTest {
         assertThat(response.getRemainingDays()).isGreaterThanOrEqualTo(0);
     }
 
+    @Test
+    @DisplayName("정산 상태 조회 - 정산 존재하는 경우")
+    void getSettlementStatus_Success() {
+        // given
+        WeeklySettlement settlement = createWeeklySettlement();
+        List<WeeklySettlement> settlements = List.of(settlement);
+        
+        given(weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId))
+                .willReturn(settlements);
+        
+        // when
+        SettlementStatusResponse response = settlementService.getSettlementStatus(userId, weekStartDate);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(settlement.getId());
+        assertThat(response.getUserId()).isEqualTo(settlement.getUserId());
+        assertThat(response.getWeekStartDate()).isEqualTo(settlement.getWeekStartDate());
+        assertThat(response.getIsFinalized()).isTrue();
+        assertThat(response.getTotalCrystalIncome()).isEqualTo(settlement.getTotalCrystalIncome());
+        assertThat(response.getTotalDesireItemIncome()).isEqualTo(settlement.getTotalDesireItemIncome());
+        assertThat(response.getTotalIncome()).isEqualTo(settlement.getTotalIncome());
+    }
+
+    @Test
+    @DisplayName("정산 상태 조회 - 정산 존재하지 않는 경우")
+    void getSettlementStatus_NotFound() {
+        // given
+        List<WeeklySettlement> settlements = List.of();
+        
+        given(weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId))
+                .willReturn(settlements);
+        
+        // when
+        SettlementStatusResponse response = settlementService.getSettlementStatus(userId, weekStartDate);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getIsFinalized()).isFalse();
+        assertThat(response.getWeekStartDate()).isEqualTo(weekStartDate);
+        assertThat(response.getSettlementId()).isNull();
+    }
+
+    @Test
+    @DisplayName("정산 상세 조회 - 정산 존재하는 경우")
+    void getSettlementDetail_Success() {
+        // given
+        WeeklySettlement settlement = createWeeklySettlement();
+        List<WeeklySettlement> settlements = List.of(settlement);
+        
+        WeeklyBossRecord bossRecord = createWeeklyBossRecordWithDesireItems(settlement.getId());
+        List<WeeklyBossRecord> bossRecords = List.of(bossRecord);
+        
+        given(weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId))
+                .willReturn(settlements);
+        given(weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlement.getId()))
+                .willReturn(bossRecords);
+        
+        // when
+        SettlementDetailResponse response = settlementService.getSettlementDetail(userId, weekStartDate);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(settlement.getId());
+        assertThat(response.getUserId()).isEqualTo(settlement.getUserId());
+        assertThat(response.getWeekStartDate()).isEqualTo(settlement.getWeekStartDate());
+        assertThat(response.getIsFinalized()).isTrue();
+        assertThat(response.getBossRecords()).hasSize(1);
+        
+        // 보스 레코드 상세 정보 확인
+        BossRecordDetailResponse bossRecordResponse = response.getBossRecords().get(0);
+        assertThat(bossRecordResponse.getBossRecordId()).isEqualTo(bossRecord.getId());
+        assertThat(bossRecordResponse.getCharacterId()).isEqualTo(bossRecord.getCharacterId());
+        assertThat(bossRecordResponse.getBossId()).isEqualTo(bossRecord.getBossId());
+        assertThat(bossRecordResponse.getPartySize()).isEqualTo(bossRecord.getPartySize());
+        assertThat(bossRecordResponse.getCrystalIncome()).isEqualTo(bossRecord.getCrystalIncome());
+        assertThat(bossRecordResponse.getDesireItems()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("정산 상세 조회 - 정산 존재하지 않는 경우")
+    void getSettlementDetail_NotFound() {
+        // given
+        List<WeeklySettlement> settlements = List.of();
+        
+        given(weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId))
+                .willReturn(settlements);
+        
+        // when
+        SettlementDetailResponse response = settlementService.getSettlementDetail(userId, weekStartDate);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getIsFinalized()).isFalse();
+        assertThat(response.getWeekStartDate()).isEqualTo(weekStartDate);
+        assertThat(response.getSettlementId()).isNull();
+        assertThat(response.getBossRecords()).isEmpty();
+    }
+
     private SettlementRequest createSettlementRequest() {
         BossRecordRequest bossRecord = BossRecordRequest.builder()
                 .characterId(characterId)
@@ -329,6 +428,45 @@ class SettlementServiceTest {
             java.lang.reflect.Field idField = WeeklyBossRecord.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(record, 1L);
+        } catch (Exception e) {
+            // 리플렉션 실패 시 무시
+        }
+        
+        return record;
+    }
+
+    private WeeklyBossRecord createWeeklyBossRecordWithDesireItems(Long settlementId) {
+        // 물욕템 레코드 생성
+        DesireItemRecord desireItemRecord = DesireItemRecord.builder()
+                .weeklyBossRecordId(1L)
+                .characterId(characterId)
+                .desireItemId(1L)
+                .salePrice(BigInteger.valueOf(500))
+                .build();
+        
+        // 보스 레코드 생성
+        WeeklyBossRecord record = WeeklyBossRecord.builder()
+                .settlementId(settlementId)
+                .userId(userId)
+                .characterId(characterId)
+                .bossId(1L)
+                .weekStartDate(weekStartDate)
+                .crystalIncome(BigInteger.valueOf(850))
+                .partySize(2)
+                .desireItemIncome(BigInteger.valueOf(500))
+                .totalIncome(BigInteger.valueOf(1350))
+                .build();
+        
+        // 테스트를 위해 ID 설정 (리플렉션 사용)
+        try {
+            java.lang.reflect.Field idField = WeeklyBossRecord.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(record, 1L);
+            
+            // 물욕템 레코드를 보스 레코드에 추가
+            java.lang.reflect.Field desireItemsField = WeeklyBossRecord.class.getDeclaredField("desireItemRecords");
+            desireItemsField.setAccessible(true);
+            desireItemsField.set(record, List.of(desireItemRecord));
         } catch (Exception e) {
             // 리플렉션 실패 시 무시
         }

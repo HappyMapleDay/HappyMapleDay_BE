@@ -338,8 +338,20 @@ public class SettlementServiceImpl implements SettlementService {
                 .anyMatch(WeeklySettlement::getIsFinalized);
         
         LocalDate nextWeekStart = currentWeekStart.plusWeeks(1);
-        LocalDate nextResetDate = currentWeekStart.plusDays(3); // 목요일이 리셋일
-        long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), nextResetDate);
+        
+        // 다음 리셋 날짜 계산 (목요일 기준)
+        LocalDate today = LocalDate.now();
+        LocalDate nextResetDate;
+        
+        if (today.isBefore(currentWeekStart)) {
+            // 현재 날짜가 이번 주 목요일 이전이면 → 이번 주 목요일
+            nextResetDate = currentWeekStart;
+        } else {
+            // 현재 날짜가 이번 주 목요일 이후이거나 같으면 → 다음 주 목요일
+            nextResetDate = nextWeekStart;
+        }
+        
+        long remainingDays = ChronoUnit.DAYS.between(today, nextResetDate);
         
         return CurrentWeekStatusResponse.builder()
                 .isCompleted(isCompleted)

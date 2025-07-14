@@ -180,8 +180,7 @@ class SettlementServiceTest {
         assertThat(response.getCurrentWeekStart()).isEqualTo(currentWeekStart);
         assertThat(response.getNextWeekStart()).isEqualTo(currentWeekStart.plusWeeks(1));
         assertThat(response.getIsCompleted()).isTrue(); // settlement의 weekStartDate가 currentWeekStart와 같고 isFinalized가 true이므로
-        // remainingDays는 현재 날짜와 다음 리셋일 사이의 차이이므로 음수일 수 있음
-        assertThat(response.getRemainingDays()).isNotNull();
+        assertThat(response.getRemainingDays()).isGreaterThanOrEqualTo(0);
     }
 
     private SettlementCompleteRequest createSettlementCompleteRequest() {

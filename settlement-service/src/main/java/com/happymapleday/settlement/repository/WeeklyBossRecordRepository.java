@@ -16,4 +16,4 @@ public interface WeeklyBossRecordRepository extends JpaRepository<WeeklyBossReco
     // 보스 기록 존재 여부 확인
     boolean existsByCharacterIdAndBossIdAndWeekStartDate(
             Long characterId, Long bossId, LocalDate weekStartDate);
-} 
+}

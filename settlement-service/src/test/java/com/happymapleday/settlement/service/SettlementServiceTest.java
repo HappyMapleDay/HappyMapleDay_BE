@@ -55,22 +55,22 @@ class SettlementServiceTest {
     }
 
     @Test
-    @DisplayName("정산 완료 - 성공")
-    void completeSettlement_Success() {
+    @DisplayName("정산 upsert - 새로운 정산 생성 성공")
+    void upsertSettlement_CreateNew_Success() {
         // given
-        SettlementCompleteRequest request = createSettlementCompleteRequest();
+        SettlementRequest request = createSettlementRequest();
         WeeklySettlement settlement = createWeeklySettlement();
         WeeklyBossRecord bossRecord = createWeeklyBossRecord(settlement.getId());
         
-        given(weeklySettlementRepository.existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
-                userId, worldName, weekStartDate)).willReturn(false);
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(
+                userId, worldName, weekStartDate)).willReturn(Optional.empty());
         given(weeklySettlementRepository.save(any(WeeklySettlement.class))).willReturn(settlement);
         given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
                 any(), any(), any())).willReturn(false);
         given(weeklyBossRecordRepository.save(any(WeeklyBossRecord.class))).willReturn(bossRecord);
         
         // when
-        SettlementCompleteResponse response = settlementService.completeSettlement(request);
+        SettlementCompleteResponse response = settlementService.upsertSettlement(userId, weekStartDate, request);
 
         // then
         assertThat(response).isNotNull();
@@ -81,86 +81,111 @@ class SettlementServiceTest {
     }
 
     @Test
-    @DisplayName("정산 완료 - 결정석 판매 제한 초과")
-    void completeSettlement_ExceedCrystalLimit() {
+    @DisplayName("정산 upsert - 기존 정산 수정 성공")
+    void upsertSettlement_ModifyExisting_Success() {
         // given
-        SettlementCompleteRequest request = createSettlementCompleteRequestWithExcessCrystals();
+        SettlementRequest request = createSettlementRequest();
+        WeeklySettlement existingSettlement = createWeeklySettlement();
+        WeeklyBossRecord bossRecord = createWeeklyBossRecord(existingSettlement.getId());
         
-        given(weeklySettlementRepository.existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
-                userId, worldName, weekStartDate)).willReturn(false);
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(
+                userId, worldName, weekStartDate)).willReturn(Optional.of(existingSettlement));
+        given(weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(existingSettlement.getId()))
+                .willReturn(List.of(bossRecord));
+        given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
+                any(), any(), any())).willReturn(false);
+        given(weeklyBossRecordRepository.save(any(WeeklyBossRecord.class))).willReturn(bossRecord);
+        given(weeklySettlementRepository.save(any(WeeklySettlement.class))).willReturn(existingSettlement);
+        
+        // when
+        SettlementCompleteResponse response = settlementService.upsertSettlement(userId, weekStartDate, request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(existingSettlement.getId());
+        verify(weeklyBossRecordRepository, times(1)).deleteBySettlementId(existingSettlement.getId());
+        verify(weeklyBossRecordRepository, times(1)).save(any(WeeklyBossRecord.class));
+        verify(weeklySettlementRepository, times(1)).save(any(WeeklySettlement.class));
+    }
+
+    @Test
+    @DisplayName("정산 upsert - 월드별 독립적 정산")
+    void upsertSettlement_IndependentWorlds() {
+        // given
+        String world1 = "크로아";
+        String world2 = "베라";
+        
+        SettlementRequest request1 = createSettlementRequestForWorld(world1);
+        SettlementRequest request2 = createSettlementRequestForWorld(world2);
+        
+        WeeklySettlement settlement1 = createWeeklySettlementForWorld(world1, 1L);
+        WeeklySettlement settlement2 = createWeeklySettlementForWorld(world2, 2L);
+        
+        WeeklyBossRecord bossRecord1 = createWeeklyBossRecord(settlement1.getId());
+        WeeklyBossRecord bossRecord2 = createWeeklyBossRecord(settlement2.getId());
+        
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(
+                userId, world1, weekStartDate)).willReturn(Optional.empty());
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(
+                userId, world2, weekStartDate)).willReturn(Optional.empty());
+        given(weeklySettlementRepository.save(any(WeeklySettlement.class)))
+                .willReturn(settlement1).willReturn(settlement2);
+        given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
+                any(), any(), any())).willReturn(false);
+        given(weeklyBossRecordRepository.save(any(WeeklyBossRecord.class)))
+                .willReturn(bossRecord1).willReturn(bossRecord2);
+        
+        // when
+        SettlementCompleteResponse response1 = settlementService.upsertSettlement(userId, weekStartDate, request1);
+        SettlementCompleteResponse response2 = settlementService.upsertSettlement(userId, weekStartDate, request2);
+        
+        // then
+        assertThat(response1.getSettlementId()).isEqualTo(settlement1.getId());
+        assertThat(response2.getSettlementId()).isEqualTo(settlement2.getId());
+        assertThat(response1.getSettlementId()).isNotEqualTo(response2.getSettlementId());
+        
+        verify(weeklySettlementRepository, times(2)).save(any(WeeklySettlement.class));
+        verify(weeklyBossRecordRepository, times(2)).save(any(WeeklyBossRecord.class));
+    }
+
+    @Test
+    @DisplayName("정산 upsert - 중복 보스 기록 시 예외 발생")
+    void upsertSettlement_DuplicateBossRecord_ThrowsException() {
+        // given
+        SettlementRequest request = createSettlementRequest();
+        
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(
+                userId, worldName, weekStartDate)).willReturn(Optional.empty());
+        given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
+                characterId, 1L, weekStartDate)).willReturn(true);
+        
+        // when & then
+        assertThatThrownBy(() -> settlementService.upsertSettlement(userId, weekStartDate, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("이미 이번 주에 완료된 기록이 있습니다");
+        
+        verify(weeklySettlementRepository, never()).save(any(WeeklySettlement.class));
+        verify(weeklyBossRecordRepository, never()).save(any(WeeklyBossRecord.class));
+    }
+
+    @Test
+    @DisplayName("정산 upsert - 캐릭터당 주간 제한 초과 시 예외 발생")
+    void upsertSettlement_ExcessCrystalsPerCharacter_ThrowsException() {
+        // given
+        SettlementRequest request = createSettlementRequestWithExcessCrystals();
+        
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(
+                userId, worldName, weekStartDate)).willReturn(Optional.empty());
         given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
                 any(), any(), any())).willReturn(false);
         
         // when & then
-        assertThatThrownBy(() -> settlementService.completeSettlement(request))
+        assertThatThrownBy(() -> settlementService.upsertSettlement(userId, weekStartDate, request))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("캐릭터당 주간 결정석 판매 제한을 초과했습니다.");
-    }
-
-    @Test
-    @DisplayName("정산 완료 - 월드별 독립적 정산")
-    void completeSettlement_IndependentWorlds() {
-        // given
-        String anotherWorld = "스카니아";
-        SettlementCompleteRequest request1 = createSettlementCompleteRequest();
-        SettlementCompleteRequest request2 = createSettlementCompleteRequestForWorld(anotherWorld);
+                .hasMessageContaining("캐릭터당 주간 결정석 판매 제한을 초과했습니다");
         
-        WeeklySettlement settlement1 = createWeeklySettlement();
-        WeeklySettlement settlement2 = createWeeklySettlementForWorld(anotherWorld);
-        WeeklyBossRecord bossRecord1 = createWeeklyBossRecord(settlement1.getId());
-        WeeklyBossRecord bossRecord2 = createWeeklyBossRecord(settlement2.getId());
-        
-        given(weeklySettlementRepository.existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
-                userId, worldName, weekStartDate)).willReturn(false);
-        given(weeklySettlementRepository.existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
-                userId, anotherWorld, weekStartDate)).willReturn(false);
-        given(weeklySettlementRepository.save(any(WeeklySettlement.class)))
-                .willReturn(settlement1)
-                .willReturn(settlement2);
-        given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
-                any(), any(), any())).willReturn(false);
-        given(weeklyBossRecordRepository.save(any(WeeklyBossRecord.class)))
-                .willReturn(bossRecord1)
-                .willReturn(bossRecord2);
-        
-        // when
-        SettlementCompleteResponse response1 = settlementService.completeSettlement(request1);
-        SettlementCompleteResponse response2 = settlementService.completeSettlement(request2);
-
-        // then
-        assertThat(response1.getSettlementId()).isEqualTo(settlement1.getId());
-        assertThat(response2.getSettlementId()).isEqualTo(settlement2.getId());
-        assertThat(response1.getTotalCrystalIncome()).isEqualTo(BigInteger.valueOf(850));
-        assertThat(response2.getTotalCrystalIncome()).isEqualTo(BigInteger.valueOf(850));
-    }
-
-    @Test
-    @DisplayName("정산 수정 - 성공")
-    void modifySettlement_Success() {
-        // given
-        Long settlementId = 1L;
-        WeeklySettlement settlement = createWeeklySettlement();
-        WeeklyBossRecord bossRecord = createWeeklyBossRecord(settlementId);
-        List<WeeklyBossRecord> existingBossRecords = List.of(bossRecord);
-        SettlementModifyRequest request = createSettlementModifyRequest(1L); // 하드코딩된 ID 사용
-
-        given(weeklySettlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
-        given(weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlementId))
-                .willReturn(existingBossRecords);
-        given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
-                any(Long.class), any(Long.class), any(LocalDate.class))).willReturn(false);
-        given(weeklyBossRecordRepository.save(any(WeeklyBossRecord.class))).willReturn(bossRecord);
-        given(weeklySettlementRepository.save(any(WeeklySettlement.class))).willReturn(settlement);
-
-        // when
-        SettlementModifyResponse response = settlementService.modifySettlement(settlementId, request);
-
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.getSettlementId()).isEqualTo(settlementId);
-        verify(weeklyBossRecordRepository, times(1)).deleteBySettlementId(settlementId);
-        verify(weeklyBossRecordRepository, times(1)).save(any(WeeklyBossRecord.class));
-        verify(weeklySettlementRepository, times(1)).save(any(WeeklySettlement.class));
+        verify(weeklySettlementRepository, never()).save(any(WeeklySettlement.class));
+        verify(weeklyBossRecordRepository, never()).save(any(WeeklyBossRecord.class));
     }
 
     @Test
@@ -185,22 +210,37 @@ class SettlementServiceTest {
         assertThat(response.getRemainingDays()).isGreaterThanOrEqualTo(0);
     }
 
-    private SettlementCompleteRequest createSettlementCompleteRequest() {
+    private SettlementRequest createSettlementRequest() {
         BossRecordRequest bossRecord = BossRecordRequest.builder()
                 .characterId(characterId)
                 .bossId(1L)
+                .partySize(2)
                 .crystalIncome(BigInteger.valueOf(850))
+                .desireItems(List.of())
                 .build();
 
-        return SettlementCompleteRequest.builder()
-                .userId(userId)
+        return SettlementRequest.builder()
                 .worldName(worldName)
-                .settlementDate(weekStartDate)
                 .bossRecords(List.of(bossRecord))
                 .build();
     }
 
-    private SettlementCompleteRequest createSettlementCompleteRequestWithExcessCrystals() {
+    private SettlementRequest createSettlementRequestForWorld(String worldName) {
+        BossRecordRequest bossRecord = BossRecordRequest.builder()
+                .characterId(characterId)
+                .bossId(1L)
+                .partySize(2)
+                .crystalIncome(BigInteger.valueOf(850))
+                .desireItems(List.of())
+                .build();
+
+        return SettlementRequest.builder()
+                .worldName(worldName)
+                .bossRecords(List.of(bossRecord))
+                .build();
+    }
+
+    private SettlementRequest createSettlementRequestWithExcessCrystals() {
         // 캐릭터당 주간 제한(12개)을 초과하는 13개의 보스 기록 생성
         List<BossRecordRequest> bossRecords = new ArrayList<>();
         for (int i = 0; i < 13; i++) {
@@ -209,29 +249,13 @@ class SettlementServiceTest {
                     .bossId((long) (i + 1))
                     .partySize(1)
                     .crystalIncome(BigInteger.valueOf(850))
+                    .desireItems(List.of())
                     .build());
         }
 
-        return SettlementCompleteRequest.builder()
-                .userId(userId)
+        return SettlementRequest.builder()
                 .worldName(worldName)
-                .settlementDate(weekStartDate)
                 .bossRecords(bossRecords)
-                .build();
-    }
-
-    private SettlementCompleteRequest createSettlementCompleteRequestForWorld(String worldName) {
-        BossRecordRequest bossRecord = BossRecordRequest.builder()
-                .characterId(characterId)
-                .bossId(1L)
-                .crystalIncome(BigInteger.valueOf(850))
-                .build();
-
-        return SettlementCompleteRequest.builder()
-                .userId(userId)
-                .worldName(worldName)
-                .settlementDate(weekStartDate)
-                .bossRecords(List.of(bossRecord))
                 .build();
     }
 
@@ -261,7 +285,7 @@ class SettlementServiceTest {
         return settlement;
     }
 
-    private WeeklySettlement createWeeklySettlementForWorld(String worldName) {
+    private WeeklySettlement createWeeklySettlementForWorld(String worldName, Long id) {
         WeeklySettlement settlement = WeeklySettlement.builder()
                 .userId(userId)
                 .worldName(worldName)
@@ -279,7 +303,7 @@ class SettlementServiceTest {
         try {
             java.lang.reflect.Field idField = WeeklySettlement.class.getDeclaredField("id");
             idField.setAccessible(true);
-            idField.set(settlement, 2L); // 다른 ID 사용
+            idField.set(settlement, id);
         } catch (Exception e) {
             // 리플렉션 실패 시 무시
         }
@@ -310,21 +334,6 @@ class SettlementServiceTest {
         }
         
         return record;
-    }
-
-    private SettlementModifyRequest createSettlementModifyRequest(Long bossRecordId) {
-        BossRecordRequest bossRecord = BossRecordRequest.builder()
-                .characterId(characterId)
-                .bossId(1L)
-                .partySize(2)
-                .crystalIncome(BigInteger.valueOf(900))
-                .desireItems(List.of())
-                .build();
-
-        return SettlementModifyRequest.builder()
-                .settlementDate(LocalDate.now())
-                .bossRecords(List.of(bossRecord))
-                .build();
     }
 
     private LocalDate getWeekStartDate(LocalDate date) {

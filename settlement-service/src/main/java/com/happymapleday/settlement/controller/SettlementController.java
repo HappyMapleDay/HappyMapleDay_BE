@@ -1,11 +1,9 @@
 package com.happymapleday.settlement.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
-import com.happymapleday.settlement.dto.request.SettlementCompleteRequest;
-import com.happymapleday.settlement.dto.request.SettlementModifyRequest;
+import com.happymapleday.settlement.dto.request.SettlementRequest;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
-import com.happymapleday.settlement.dto.response.SettlementModifyResponse;
 import com.happymapleday.settlement.dto.response.SettlementStatusResponse;
 import com.happymapleday.settlement.service.SettlementService;
 import jakarta.validation.Valid;
@@ -24,22 +22,18 @@ public class SettlementController {
         this.settlementService = settlementService;
     }
 
-    // 정산 완료
-    @PostMapping
-    public ResponseEntity<ApiResponse<SettlementCompleteResponse>> completeSettlement(
-            @Valid @RequestBody SettlementCompleteRequest request) {
-        SettlementCompleteResponse response = settlementService.completeSettlement(request);
+    // 정산 데이터 생성 또는 수정
+    @PutMapping("/user/{userId}/week/{weekStartDate}")
+    public ResponseEntity<ApiResponse<SettlementCompleteResponse>> upsertSettlement(
+            @PathVariable Long userId,
+            @PathVariable String weekStartDate,
+            @Valid @RequestBody SettlementRequest request) {
+        LocalDate weekStart = LocalDate.parse(weekStartDate);
+        SettlementCompleteResponse response = settlementService.upsertSettlement(userId, weekStart, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 정산 수정
-    @PutMapping("/{settlementId}")
-    public ResponseEntity<ApiResponse<SettlementModifyResponse>> modifySettlement(
-            @PathVariable Long settlementId,
-            @Valid @RequestBody SettlementModifyRequest request) {
-        SettlementModifyResponse response = settlementService.modifySettlement(settlementId, request);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
+
 
     // 정산 삭제
     @DeleteMapping("/{settlementId}")

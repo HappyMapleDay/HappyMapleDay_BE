@@ -141,13 +141,14 @@ class SettlementServiceTest {
         Long settlementId = 1L;
         WeeklySettlement settlement = createWeeklySettlement();
         WeeklyBossRecord bossRecord = createWeeklyBossRecord(settlementId);
-        List<WeeklyBossRecord> bossRecords = List.of(bossRecord);
+        List<WeeklyBossRecord> existingBossRecords = List.of(bossRecord);
         SettlementModifyRequest request = createSettlementModifyRequest(1L); // 하드코딩된 ID 사용
 
         given(weeklySettlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
-        given(weeklyBossRecordRepository.findById(1L)).willReturn(Optional.of(bossRecord));
         given(weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlementId))
-                .willReturn(bossRecords);
+                .willReturn(existingBossRecords);
+        given(weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
+                any(Long.class), any(Long.class), any(LocalDate.class))).willReturn(false);
         given(weeklyBossRecordRepository.save(any(WeeklyBossRecord.class))).willReturn(bossRecord);
         given(weeklySettlementRepository.save(any(WeeklySettlement.class))).willReturn(settlement);
 
@@ -157,6 +158,7 @@ class SettlementServiceTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getSettlementId()).isEqualTo(settlementId);
+        verify(weeklyBossRecordRepository, times(1)).deleteBySettlementId(settlementId);
         verify(weeklyBossRecordRepository, times(1)).save(any(WeeklyBossRecord.class));
         verify(weeklySettlementRepository, times(1)).save(any(WeeklySettlement.class));
     }
@@ -311,12 +313,16 @@ class SettlementServiceTest {
     }
 
     private SettlementModifyRequest createSettlementModifyRequest(Long bossRecordId) {
-        BossRecordModifyRequest bossRecord = BossRecordModifyRequest.builder()
-                .weeklyBossRecordId(bossRecordId)
+        BossRecordRequest bossRecord = BossRecordRequest.builder()
+                .characterId(characterId)
+                .bossId(1L)
+                .partySize(2)
                 .crystalIncome(BigInteger.valueOf(900))
+                .desireItems(List.of())
                 .build();
 
         return SettlementModifyRequest.builder()
+                .settlementDate(LocalDate.now())
                 .bossRecords(List.of(bossRecord))
                 .build();
     }

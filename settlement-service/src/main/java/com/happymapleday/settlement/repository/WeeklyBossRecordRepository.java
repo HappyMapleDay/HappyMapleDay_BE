@@ -13,6 +13,9 @@ public interface WeeklyBossRecordRepository extends JpaRepository<WeeklyBossReco
     // 정산별 보스 기록 조회
     List<WeeklyBossRecord> findBySettlementIdOrderByCreatedAtAsc(Long settlementId);
     
+    // 정산별 보스 기록 삭제
+    void deleteBySettlementId(Long settlementId);
+    
     // 보스 기록 존재 여부 확인
     boolean existsByCharacterIdAndBossIdAndWeekStartDate(
             Long characterId, Long bossId, LocalDate weekStartDate);

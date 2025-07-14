@@ -1,8 +1,6 @@
 package com.happymapleday.settlement.service.impl;
 
-import com.happymapleday.settlement.dto.request.BossRecordModifyRequest;
 import com.happymapleday.settlement.dto.request.BossRecordRequest;
-import com.happymapleday.settlement.dto.request.DesireItemModifyRequest;
 import com.happymapleday.settlement.dto.request.DesireItemRequest;
 import com.happymapleday.settlement.dto.request.SettlementCompleteRequest;
 import com.happymapleday.settlement.dto.request.SettlementModifyRequest;
@@ -195,72 +193,130 @@ public class SettlementServiceImpl implements SettlementService {
     
     @Override
     public SettlementModifyResponse modifySettlement(Long settlementId, SettlementModifyRequest request) {
-        // 정산 존재 확인
-        WeeklySettlement settlement = weeklySettlementRepository.findById(settlementId)
+        // 기존 정산 존재 확인
+        WeeklySettlement existingSettlement = weeklySettlementRepository.findById(settlementId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정산입니다."));
         
-        for (BossRecordModifyRequest modifyRequest : request.getBossRecords()) {
-            // 보스 기록 존재 확인
-            WeeklyBossRecord bossRecord = weeklyBossRecordRepository.findById(modifyRequest.getWeeklyBossRecordId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스 기록입니다."));
+        // 기존 정산 데이터 전체 삭제
+        List<WeeklyBossRecord> existingBossRecords = weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlementId);
+        for (WeeklyBossRecord bossRecord : existingBossRecords) {
+            desireItemRecordRepository.deleteByWeeklyBossRecordId(bossRecord.getId());
+        }
+        weeklyBossRecordRepository.deleteBySettlementId(settlementId);
+        
+        // 새로운 주차 시작일 계산
+        LocalDate newWeekStartDate = getWeekStartDate(request.getSettlementDate());
+        
+        // 새로운 보스 기록들을 먼저 생성하여 결정석 제한 검증
+        List<WeeklyBossRecord> newBossRecords = new ArrayList<>();
+        for (BossRecordRequest bossRequest : request.getBossRecords()) {
+            // 중복 보스 기록 확인 (같은 주차에 다른 정산으로 기록된 경우)
+            boolean bossRecordExists = weeklyBossRecordRepository.existsByCharacterIdAndBossIdAndWeekStartDate(
+                    bossRequest.getCharacterId(), bossRequest.getBossId(), newWeekStartDate);
             
-            // 권한 확인 (같은 정산에 속한 기록인지)
-            if (bossRecord.getSettlementId() == null || !bossRecord.getSettlementId().equals(settlementId)) {
-                throw new IllegalArgumentException("해당 보스 기록은 이 정산에 속하지 않습니다.");
+            if (bossRecordExists) {
+                throw new IllegalArgumentException(
+                        String.format("캐릭터 %d의 보스 %d는 이미 이번 주에 완료된 기록이 있습니다.", 
+                                bossRequest.getCharacterId(), bossRequest.getBossId()));
             }
             
-            // 기존 물욕템 기록 삭제
-            desireItemRecordRepository.deleteByWeeklyBossRecordId(bossRecord.getId());
+            // 보스 기록 생성 (임시로 settlementId 포함)
+            WeeklyBossRecord bossRecord = WeeklyBossRecord.builder()
+                    .settlementId(settlementId)
+                    .userId(existingSettlement.getUserId())
+                    .characterId(bossRequest.getCharacterId())
+                    .bossId(bossRequest.getBossId())
+                    .weekStartDate(newWeekStartDate)
+                    .crystalIncome(bossRequest.getCrystalIncome())
+                    .partySize(bossRequest.getPartySize())
+                    .desireItemIncome(BigInteger.ZERO)
+                    .totalIncome(bossRequest.getCrystalIncome())
+                    .build();
             
-            // 새로운 물욕템 기록 추가
+            newBossRecords.add(bossRecord);
+        }
+        
+        // 결정석 제한 검증
+        Set<Long> characterIds = newBossRecords.stream()
+                .map(WeeklyBossRecord::getCharacterId)
+                .collect(Collectors.toSet());
+        
+        for (Long characterId : characterIds) {
+            if (WeeklyBossRecord.isCharacterOverCrystalLimit(newBossRecords, characterId)) {
+                throw new IllegalStateException("캐릭터당 주간 결정석 판매 제한을 초과했습니다.");
+            }
+        }
+        
+        if (WeeklyBossRecord.isWorldOverCrystalLimit(newBossRecords)) {
+            throw new IllegalStateException("월드 전체 주간 결정석 판매 제한을 초과했습니다.");
+        }
+        
+        // 새로운 보스 기록들 저장 및 물욕템 기록 처리
+        List<WeeklyBossRecord> finalBossRecords = new ArrayList<>();
+        for (int i = 0; i < newBossRecords.size(); i++) {
+            WeeklyBossRecord bossRecord = newBossRecords.get(i);
+            BossRecordRequest bossRequest = request.getBossRecords().get(i);
+            
+            // 보스 기록 저장
+            bossRecord = weeklyBossRecordRepository.save(bossRecord);
+            
+            // 물욕템 기록들 저장
             BigInteger totalDesireItemIncome = BigInteger.ZERO;
-            if (modifyRequest.getDesireItems() != null && !modifyRequest.getDesireItems().isEmpty()) {
-                List<DesireItemRecord> newDesireItemRecords = new ArrayList<>();
-                for (DesireItemModifyRequest desireRequest : modifyRequest.getDesireItems()) {
+            if (bossRequest.getDesireItems() != null && !bossRequest.getDesireItems().isEmpty()) {
+                for (DesireItemRequest desireRequest : bossRequest.getDesireItems()) {
                     DesireItemRecord desireRecord = DesireItemRecord.builder()
                             .weeklyBossRecordId(bossRecord.getId())
                             .desireItemId(desireRequest.getDesireItemId())
                             .salePrice(desireRequest.getSalePrice())
                             .build();
-                    newDesireItemRecords.add(desireRecord);
+                    desireItemRecordRepository.save(desireRecord);
                     totalDesireItemIncome = totalDesireItemIncome.add(desireRequest.getSalePrice());
                 }
-                desireItemRecordRepository.saveAll(newDesireItemRecords);
+                
+                // 물욕템 수입 포함하여 보스 기록 업데이트
+                bossRecord = WeeklyBossRecord.builder()
+                        .settlementId(bossRecord.getSettlementId())
+                        .userId(bossRecord.getUserId())
+                        .characterId(bossRecord.getCharacterId())
+                        .bossId(bossRecord.getBossId())
+                        .weekStartDate(bossRecord.getWeekStartDate())
+                        .crystalIncome(bossRecord.getCrystalIncome())
+                        .partySize(bossRecord.getPartySize())
+                        .desireItemIncome(totalDesireItemIncome)
+                        .totalIncome(bossRecord.getCrystalIncome().add(totalDesireItemIncome))
+                        .build();
+                bossRecord = weeklyBossRecordRepository.save(bossRecord);
             }
             
-            // 보스 기록 새 객체로 교체
-            bossRecord = WeeklyBossRecord.builder()
-                    .settlementId(bossRecord.getSettlementId())
-                    .userId(bossRecord.getUserId())
-                    .characterId(bossRecord.getCharacterId())
-                    .bossId(bossRecord.getBossId())
-                    .weekStartDate(bossRecord.getWeekStartDate())
-                    .crystalIncome(bossRecord.getCrystalIncome())
-                    .partySize(bossRecord.getPartySize())
-                    .desireItemIncome(totalDesireItemIncome)
-                    .totalIncome(bossRecord.getCrystalIncome().add(totalDesireItemIncome))
-                    .build();
-            bossRecord = weeklyBossRecordRepository.save(bossRecord);
+            finalBossRecords.add(bossRecord);
         }
         
-        // 정산 총계 재계산 (불변 객체로 새로 생성)
-        List<WeeklyBossRecord> allBossRecords = weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlementId);
+        // 정산 메타데이터 업데이트
         WeeklySettlement updatedSettlement = WeeklySettlement.builder()
-                .userId(settlement.getUserId())
-                .worldName(settlement.getWorldName())
-                .weekStartDate(settlement.getWeekStartDate())
-                .totalCrystalIncome(settlement.calculateTotalCrystalIncome())
-                .totalDesireItemIncome(settlement.calculateTotalDesireItemIncome())
-                .totalIncome(settlement.calculateTotalIncome())
-                .totalBossCount(settlement.calculateTotalBossCount())
-                .characterCount(settlement.calculateCharacterCount())
-                .isFinalized(settlement.getIsFinalized())
-                .finalizedAt(settlement.getFinalizedAt())
+                .userId(existingSettlement.getUserId())
+                .worldName(existingSettlement.getWorldName())
+                .weekStartDate(newWeekStartDate)
+                .totalCrystalIncome(finalBossRecords.stream()
+                        .map(WeeklyBossRecord::getCrystalIncome)
+                        .reduce(BigInteger.ZERO, BigInteger::add))
+                .totalDesireItemIncome(finalBossRecords.stream()
+                        .map(WeeklyBossRecord::getDesireItemIncome)
+                        .reduce(BigInteger.ZERO, BigInteger::add))
+                .totalIncome(finalBossRecords.stream()
+                        .map(WeeklyBossRecord::getTotalIncome)
+                        .reduce(BigInteger.ZERO, BigInteger::add))
+                .totalBossCount(finalBossRecords.size())
+                .characterCount((int) finalBossRecords.stream()
+                        .map(WeeklyBossRecord::getCharacterId)
+                        .distinct()
+                        .count())
+                .isFinalized(existingSettlement.getIsFinalized())
+                .finalizedAt(existingSettlement.getFinalizedAt())
                 .build();
         weeklySettlementRepository.save(updatedSettlement);
         
         return SettlementModifyResponse.builder()
-                .settlementId(settlementId) // 파라미터로 받은 settlementId 사용
+                .settlementId(settlementId)
                 .updatedTotalIncome(updatedSettlement.getTotalIncome())
                 .updatedDesireItemIncome(updatedSettlement.getTotalDesireItemIncome())
                 .modifiedAt(LocalDateTime.now())

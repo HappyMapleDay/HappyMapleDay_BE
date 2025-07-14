@@ -44,10 +44,6 @@ public class SettlementServiceImpl implements SettlementService {
         this.desireItemRecordRepository = desireItemRecordRepository;
     }
     
-
-    
-
-    
     @Override
     public void deleteSettlement(Long settlementId, Long userId) {
         // 정산 존재 확인

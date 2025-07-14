@@ -114,35 +114,9 @@ public class WeeklySettlement {
                 .map(WeeklyBossRecord::getDesireItemIncome)
                 .reduce(BigInteger.ZERO, BigInteger::add);
     }
-    
-    public BigInteger calculateTotalIncome() {
-        return calculateTotalCrystalIncome().add(calculateTotalDesireItemIncome());
-    }
-    
-    public Integer calculateTotalBossCount() {
-        return bossRecords != null ? bossRecords.size() : 0;
-    }
-    
-    public Integer calculateCharacterCount() {
-        if (bossRecords == null || bossRecords.isEmpty()) {
-            return 0;
-        }
-        return (int) bossRecords.stream()
-                .map(WeeklyBossRecord::getCharacterId)
-                .distinct()
-                .count();
-    }
 
     // 결정석 제한 관련 메서드
     public Map<Long, Integer> getCharacterCrystalCounts() {
         return WeeklyBossRecord.getCharacterCrystalCounts(bossRecords);
-    }
-
-    public boolean isCharacterOverCrystalLimit(Long characterId) {
-        return WeeklyBossRecord.isCharacterOverCrystalLimit(bossRecords, characterId);
-    }
-
-    public boolean isWorldOverCrystalLimit() {
-        return WeeklyBossRecord.isWorldOverCrystalLimit(bossRecords);
     }
 } 

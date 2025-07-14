@@ -105,21 +105,6 @@ public class WeeklyBossRecord {
         this.desireItemIncome = desireItemIncome != null ? desireItemIncome : BigInteger.ZERO;
         this.totalIncome = totalIncome != null ? totalIncome : crystalIncome;
     }
-    
-    // 도메인 로직 메서드 (불변 계산)
-    public BigInteger calculateTotalIncome() {
-        return crystalIncome.add(desireItemIncome != null ? desireItemIncome : BigInteger.ZERO);
-    }
-    
-    public BigInteger calculateDesireItemIncome() {
-        if (desireItemRecords == null || desireItemRecords.isEmpty()) {
-            return BigInteger.ZERO;
-        }
-        return desireItemRecords.stream()
-                .map(DesireItemRecord::getSalePrice)
-                .reduce(BigInteger.ZERO, BigInteger::add);
-    }
-
     // 결정석 판매 제한 검증 메서드
     public static int getCharacterCrystalCount(List<WeeklyBossRecord> records, Long characterId) {
         if (records == null || records.isEmpty()) {

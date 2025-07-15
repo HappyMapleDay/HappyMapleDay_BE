@@ -1,8 +1,11 @@
 package com.happymapleday.character.service;
 
 import com.happymapleday.character.dto.request.CharacterCreateRequest;
+import com.happymapleday.character.dto.request.CharacterBulkCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
+import com.happymapleday.character.dto.response.CharacterBulkCreateResponse;
 import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
+import com.happymapleday.character.dto.response.MainCharacterResponse;
 import com.happymapleday.character.entity.Character;
 import com.happymapleday.character.repository.CharacterRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,7 +145,7 @@ class CharacterServiceTest {
         Character character = new Character(1L, "새캐릭터", "new-ocid-123", false);
         character.setId(3L);
 
-        given(characterRepository.findByUserIdAndOcid(request.getUserId(), request.getOcid()))
+        given(characterRepository.findByOcid(request.getOcid()))
                 .willReturn(java.util.Optional.empty());
         given(characterRepository.save(org.mockito.ArgumentMatchers.any(Character.class))).willReturn(character);
 
@@ -153,7 +156,7 @@ class CharacterServiceTest {
         assertThat(result.getCharacterName()).isEqualTo("새캐릭터");
         assertThat(result.getOcid()).isEqualTo("new-ocid-123");
         assertThat(result.getIsMain()).isFalse();
-        verify(characterRepository).findByUserIdAndOcid(request.getUserId(), request.getOcid());
+        verify(characterRepository).findByOcid(request.getOcid());
         verify(characterRepository).save(org.mockito.ArgumentMatchers.any(Character.class));
     }
 
@@ -170,7 +173,7 @@ class CharacterServiceTest {
         Character character = new Character(1L, "본캐릭터", "main-ocid-456", true);
         character.setId(4L);
 
-        given(characterRepository.findByUserIdAndOcid(request.getUserId(), request.getOcid()))
+        given(characterRepository.findByOcid(request.getOcid()))
                 .willReturn(java.util.Optional.empty());
         given(characterRepository.save(org.mockito.ArgumentMatchers.any(Character.class))).willReturn(character);
 
@@ -181,7 +184,7 @@ class CharacterServiceTest {
         assertThat(result.getCharacterName()).isEqualTo("본캐릭터");
         assertThat(result.getOcid()).isEqualTo("main-ocid-456");
         assertThat(result.getIsMain()).isTrue();
-        verify(characterRepository).findByUserIdAndOcid(request.getUserId(), request.getOcid());
+        verify(characterRepository).findByOcid(request.getOcid());
         verify(characterRepository).save(org.mockito.ArgumentMatchers.any(Character.class));
     }
 
@@ -212,14 +215,14 @@ class CharacterServiceTest {
         Character existingCharacter = new Character(1L, "중복캐릭터", "duplicate-ocid", false);
         existingCharacter.setId(5L);
 
-        given(characterRepository.findByUserIdAndOcid(request.getUserId(), request.getOcid()))
+        given(characterRepository.findByOcid(request.getOcid()))
                 .willReturn(java.util.Optional.of(existingCharacter));
 
         // when & then
         assertThatThrownBy(() -> characterService.createCharacter(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("이미 등록된 캐릭터입니다.");
-        verify(characterRepository).findByUserIdAndOcid(request.getUserId(), request.getOcid());
+        verify(characterRepository).findByOcid(request.getOcid());
     }
 
     // ==================== 2.4 캐릭터 삭제 테스트 ====================
@@ -368,5 +371,84 @@ class CharacterServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("본캐가 설정되지 않았습니다.");
         verify(characterRepository).findByUserIdAndIsMainTrue(userId);
+    }
+
+    // ==================== 2.8 여러 캐릭터 저장 서비스 테스트 ====================
+
+    @Test
+    @DisplayName("2.8 여러 캐릭터 저장 성공")
+    void createCharactersBulk_Success() {
+        // given
+        CharacterBulkCreateRequest request = new CharacterBulkCreateRequest();
+        request.setUserId(1L);
+        
+        List<CharacterCreateRequest> characters = Arrays.asList(
+                createCharacterRequest("캐릭터1", "ocid-1", false),
+                createCharacterRequest("캐릭터2", "ocid-2", false),
+                createCharacterRequest("캐릭터3", "ocid-3", true)
+        );
+        request.setCharacters(characters);
+
+        Character character1 = new Character(1L, "캐릭터1", "ocid-1", false);
+        character1.setId(1L);
+        Character character2 = new Character(1L, "캐릭터2", "ocid-2", false);
+        character2.setId(2L);
+        Character character3 = new Character(1L, "캐릭터3", "ocid-3", true);
+        character3.setId(3L);
+
+        given(characterRepository.findByOcid("ocid-1")).willReturn(java.util.Optional.empty());
+        given(characterRepository.findByOcid("ocid-2")).willReturn(java.util.Optional.empty());
+        given(characterRepository.findByOcid("ocid-3")).willReturn(java.util.Optional.empty());
+        given(characterRepository.save(org.mockito.ArgumentMatchers.any(Character.class))).willReturn(character1, character2, character3);
+
+        // when
+        CharacterBulkCreateResponse result = characterService.createCharactersBulk(request);
+
+        // then
+        assertThat(result.getSavedCharacters()).hasSize(3);
+        assertThat(result.getTotalCount()).isEqualTo(3);
+        assertThat(result.getSuccessCount()).isEqualTo(3);
+        assertThat(result.getFailureCount()).isEqualTo(0);
+        assertThat(result.getErrors()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("2.8 여러 캐릭터 저장 - 일부 실패")
+    void createCharactersBulk_PartialFailure() {
+        // given
+        CharacterBulkCreateRequest request = new CharacterBulkCreateRequest();
+        request.setUserId(1L);
+        
+        List<CharacterCreateRequest> characters = Arrays.asList(
+                createCharacterRequest("캐릭터1", "ocid-1", false),
+                createCharacterRequest("캐릭터2", "ocid-2", false)
+        );
+        request.setCharacters(characters);
+
+        Character character1 = new Character(1L, "캐릭터1", "ocid-1", false);
+        character1.setId(1L);
+
+        given(characterRepository.findByOcid("ocid-1")).willReturn(java.util.Optional.empty());
+        given(characterRepository.findByOcid("ocid-2")).willReturn(java.util.Optional.of(character1)); // 중복된 OCID
+        given(characterRepository.save(org.mockito.ArgumentMatchers.any(Character.class))).willReturn(character1);
+
+        // when
+        CharacterBulkCreateResponse result = characterService.createCharactersBulk(request);
+
+        // then
+        assertThat(result.getSavedCharacters()).hasSize(1);
+        assertThat(result.getTotalCount()).isEqualTo(2);
+        assertThat(result.getSuccessCount()).isEqualTo(1);
+        assertThat(result.getFailureCount()).isEqualTo(1);
+        assertThat(result.getErrors()).hasSize(1);
+        assertThat(result.getErrors().get(0)).contains("캐릭터 '캐릭터2' 저장 실패");
+    }
+
+    private CharacterCreateRequest createCharacterRequest(String characterName, String ocid, Boolean isMain) {
+        CharacterCreateRequest request = new CharacterCreateRequest();
+        request.setCharacterName(characterName);
+        request.setOcid(ocid);
+        request.setIsMain(isMain);
+        return request;
     }
 } 

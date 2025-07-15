@@ -1,7 +1,9 @@
 package com.happymapleday.character.service;
 
 import com.happymapleday.character.dto.request.CharacterCreateRequest;
+import com.happymapleday.character.dto.request.CharacterBulkCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
+import com.happymapleday.character.dto.response.CharacterBulkCreateResponse;
 import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
 import com.happymapleday.character.dto.response.MainCharacterResponse;
 import com.happymapleday.character.entity.Character;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -45,8 +48,8 @@ public class CharacterService {
             throw new IllegalArgumentException("필수 정보가 누락되었습니다.");
         }
         
-        // 중복 캐릭터 검증 (OCID 기준)
-        if (characterRepository.findByUserIdAndOcid(request.getUserId(), request.getOcid()).isPresent()) {
+        // 중복 캐릭터 검증 (OCID 기준 - 전역)
+        if (characterRepository.findByOcid(request.getOcid()).isPresent()) {
             throw new IllegalArgumentException("이미 등록된 캐릭터입니다.");
         }
         
@@ -113,5 +116,49 @@ public class CharacterService {
         Character mainCharacter = characterRepository.findByUserIdAndIsMainTrue(userId)
                 .orElseThrow(() -> new IllegalArgumentException("본캐가 설정되지 않았습니다."));
         return MainCharacterResponse.from(mainCharacter);
+    }
+
+    /**
+     * 2.8 여러 캐릭터 저장 (회원가입용)
+     */
+    @Transactional
+    public CharacterBulkCreateResponse createCharactersBulk(CharacterBulkCreateRequest request) {
+        List<CharacterResponse> savedCharacters = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        
+        // 필수 정보 검증
+        if (request.getUserId() == null || request.getCharacters() == null || request.getCharacters().isEmpty()) {
+            throw new IllegalArgumentException("필수 정보가 누락되었습니다.");
+        }
+        
+        int totalCount = request.getCharacters().size();
+        int successCount = 0;
+        int failureCount = 0;
+        
+        // 각 캐릭터를 순차적으로 저장
+        for (CharacterCreateRequest characterRequest : request.getCharacters()) {
+            try {
+                // userId 설정
+                characterRequest.setUserId(request.getUserId());
+                
+                // 단일 캐릭터 저장
+                CharacterResponse savedCharacter = createCharacter(characterRequest);
+                savedCharacters.add(savedCharacter);
+                successCount++;
+                
+            } catch (Exception e) {
+                failureCount++;
+                errors.add(String.format("캐릭터 '%s' 저장 실패: %s", 
+                    characterRequest.getCharacterName(), e.getMessage()));
+            }
+        }
+        
+        return CharacterBulkCreateResponse.builder()
+                .savedCharacters(savedCharacters)
+                .totalCount(totalCount)
+                .successCount(successCount)
+                .failureCount(failureCount)
+                .errors(errors)
+                .build();
     }
 } 

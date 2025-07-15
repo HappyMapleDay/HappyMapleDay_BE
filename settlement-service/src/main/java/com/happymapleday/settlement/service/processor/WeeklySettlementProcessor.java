@@ -32,16 +32,16 @@ public class WeeklySettlementProcessor {
         // 결정석 제한 검증
         crystalLimitValidator.validateCrystalLimits(bossRecords);
         
-        // 정산 메타데이터 생성
-        WeeklySettlement settlement = createSettlementMetadata(userId, weekStartDate, request, bossRecords);
+        // 초기 정산 메타데이터 생성 및 저장
+        WeeklySettlement settlement = createInitialSettlementMetadata(userId, weekStartDate, request, bossRecords);
         settlement = weeklySettlementRepository.save(settlement);
         
         // 보스 기록 저장 및 물욕템 처리
         List<WeeklyBossRecord> savedBossRecords = bossRecordProcessor.saveBossRecordsWithDesireItems(
                 settlement.getId(), bossRecords, request.getBossRecords());
         
-        // 정산 메타데이터 업데이트
-        updateSettlementMetadata(settlement, savedBossRecords);
+        // 최종 정산 메타데이터 업데이트 (물욕템 수입 포함)
+        settlement = updateSettlementWithFinalData(settlement, savedBossRecords);
         
         return createSettlementResponse(settlement);
     }
@@ -63,23 +63,25 @@ public class WeeklySettlementProcessor {
         List<WeeklyBossRecord> savedBossRecords = bossRecordProcessor.saveBossRecordsWithDesireItems(
                 settlementId, bossRecords, request.getBossRecords());
         
-        // 정산 메타데이터 업데이트
-        WeeklySettlement settlement = updateSettlementMetadata(settlementId, userId, weekStartDate, 
-                request, savedBossRecords);
+        // 정산 메타데이터 완전 업데이트
+        WeeklySettlement settlement = createCompleteSettlementMetadata(
+                settlementId, userId, weekStartDate, request, savedBossRecords);
         
         return createSettlementResponse(settlement);
     }
     
-    // 정산 메타데이터 생성
-    private WeeklySettlement createSettlementMetadata(Long userId, LocalDate weekStartDate, 
-                                                      SettlementRequest request, List<WeeklyBossRecord> bossRecords) {
+    // 초기 정산 메타데이터 생성 (결정석 수입만 계산)
+    private WeeklySettlement createInitialSettlementMetadata(Long userId, LocalDate weekStartDate, 
+                                                            SettlementRequest request, List<WeeklyBossRecord> bossRecords) {
+        BigInteger totalCrystalIncome = calculateTotalCrystalIncome(bossRecords);
+        
         return WeeklySettlement.builder()
                 .userId(userId)
                 .worldName(request.getWorldName())
                 .weekStartDate(weekStartDate)
-                .totalCrystalIncome(calculateTotalCrystalIncome(bossRecords))
+                .totalCrystalIncome(totalCrystalIncome)
                 .totalDesireItemIncome(BigInteger.ZERO)
-                .totalIncome(calculateTotalCrystalIncome(bossRecords))
+                .totalIncome(totalCrystalIncome)
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
                 .isFinalized(true)
@@ -87,41 +89,47 @@ public class WeeklySettlementProcessor {
                 .build();
     }
     
-    // 정산 메타데이터 업데이트
-    private void updateSettlementMetadata(WeeklySettlement settlement, List<WeeklyBossRecord> bossRecords) {
+    // 최종 정산 메타데이터 업데이트 (물욕템 수입 포함)
+    private WeeklySettlement updateSettlementWithFinalData(WeeklySettlement settlement, 
+                                                           List<WeeklyBossRecord> savedBossRecords) {
+        BigInteger totalCrystalIncome = calculateTotalCrystalIncome(savedBossRecords);
+        BigInteger totalDesireItemIncome = calculateTotalDesireItemIncome(savedBossRecords);
+        BigInteger totalIncome = calculateTotalIncome(savedBossRecords);
+        
         WeeklySettlement updatedSettlement = WeeklySettlement.builder()
                 .userId(settlement.getUserId())
                 .worldName(settlement.getWorldName())
                 .weekStartDate(settlement.getWeekStartDate())
-                .totalCrystalIncome(calculateTotalCrystalIncome(bossRecords))
-                .totalDesireItemIncome(calculateTotalDesireItemIncome(bossRecords))
-                .totalIncome(calculateTotalIncome(bossRecords))
-                .totalBossCount(bossRecords.size())
-                .characterCount(calculateCharacterCount(bossRecords))
-                .isFinalized(true)
-                .finalizedAt(LocalDateTime.now())
-                .build();
-        
-        weeklySettlementRepository.save(updatedSettlement);
-    }
-    
-    // 정산 메타데이터 업데이트 (ID로)
-    private WeeklySettlement updateSettlementMetadata(Long settlementId, Long userId, LocalDate weekStartDate, 
-                                                      SettlementRequest request, List<WeeklyBossRecord> bossRecords) {
-        WeeklySettlement updatedSettlement = WeeklySettlement.builder()
-                .userId(userId)
-                .worldName(request.getWorldName())
-                .weekStartDate(weekStartDate)
-                .totalCrystalIncome(calculateTotalCrystalIncome(bossRecords))
-                .totalDesireItemIncome(calculateTotalDesireItemIncome(bossRecords))
-                .totalIncome(calculateTotalIncome(bossRecords))
-                .totalBossCount(bossRecords.size())
-                .characterCount(calculateCharacterCount(bossRecords))
+                .totalCrystalIncome(totalCrystalIncome)
+                .totalDesireItemIncome(totalDesireItemIncome)
+                .totalIncome(totalIncome)
+                .totalBossCount(savedBossRecords.size())
+                .characterCount(calculateCharacterCount(savedBossRecords))
                 .isFinalized(true)
                 .finalizedAt(LocalDateTime.now())
                 .build();
         
         return weeklySettlementRepository.save(updatedSettlement);
+    }
+    
+    // 완전한 정산 메타데이터 생성 (수정시 사용)
+    private WeeklySettlement createCompleteSettlementMetadata(Long settlementId, Long userId, 
+                                                             LocalDate weekStartDate, SettlementRequest request, 
+                                                             List<WeeklyBossRecord> bossRecords) {
+        WeeklySettlement settlement = WeeklySettlement.builder()
+                .userId(userId)
+                .worldName(request.getWorldName())
+                .weekStartDate(weekStartDate)
+                .totalCrystalIncome(calculateTotalCrystalIncome(bossRecords))
+                .totalDesireItemIncome(calculateTotalDesireItemIncome(bossRecords))
+                .totalIncome(calculateTotalIncome(bossRecords))
+                .totalBossCount(bossRecords.size())
+                .characterCount(calculateCharacterCount(bossRecords))
+                .isFinalized(true)
+                .finalizedAt(LocalDateTime.now())
+                .build();
+        
+        return weeklySettlementRepository.save(settlement);
     }
     
     // 응답 생성

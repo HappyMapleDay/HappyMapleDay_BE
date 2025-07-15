@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,52 +34,39 @@ public class SettlementServiceImpl implements SettlementService {
     
     @Override
     public void deleteSettlement(Long settlementId, Long userId) {
-        // 정산 존재 확인
-        WeeklySettlement settlement = weeklySettlementRepository.findById(settlementId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정산입니다."));
-        
-        // 권한 확인
-        if (!settlement.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("다른 사용자의 정산은 삭제할 수 없습니다.");
-        }
-        
-        // 연관된 데이터들이 CASCADE로 자동 삭제됨
+        WeeklySettlement settlement = findSettlementById(settlementId);
+        validateUserOwnership(settlement, userId);
         weeklySettlementRepository.delete(settlement);
     }
     
     @Override
     @Transactional(readOnly = true)
     public SettlementStatusResponse getSettlementStatus(Long userId, LocalDate weekStartDate) {
-        // 사용자의 해당 주차 정산 찾기
-        List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId)
-                .stream()
-                .filter(s -> s.getWeekStartDate().equals(weekStartDate))
-                .toList();
+        Optional<WeeklySettlement> settlement = findSettlementByUserAndWeek(userId, weekStartDate);
         
-        if (settlements.isEmpty()) {
+        if (settlement.isEmpty()) {
             return SettlementStatusResponse.builder()
                     .isFinalized(false)
                     .weekStartDate(weekStartDate)
                     .build();
         }
         
-        WeeklySettlement settlement = settlements.get(0);
-        return SettlementStatusResponse.from(settlement);
+        return SettlementStatusResponse.from(settlement.get());
     }
     
     @Override
     @Transactional(readOnly = true)
     public CurrentWeekStatusResponse getCurrentWeekStatus(Long userId) {
-        List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId);
-        LocalDate currentWeekStart = weekCalculator.getWeekStartDate(LocalDate.now());
+        LocalDate today = LocalDate.now();
+        LocalDate currentWeekStart = weekCalculator.getWeekStartDate(today);
         
-        // 현재 주차 완료 여부 확인
-        boolean isCompleted = settlements.stream()
-                .filter(s -> s.getWeekStartDate().equals(currentWeekStart))
-                .anyMatch(WeeklySettlement::getIsFinalized);
+        // 현재 주차 완료 여부 확인 (효율적인 조회)
+        Optional<WeeklySettlement> currentWeekSettlement = findSettlementByUserAndWeek(userId, currentWeekStart);
+        boolean isCompleted = currentWeekSettlement
+                .map(WeeklySettlement::getIsFinalized)
+                .orElse(false);
         
         LocalDate nextWeekStart = currentWeekStart.plusWeeks(1);
-        LocalDate today = LocalDate.now();
         LocalDate nextResetDate = weekCalculator.getNextResetDate(today);
         int remainingDays = weekCalculator.getRemainingDays(today);
         
@@ -94,13 +82,9 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     @Transactional(readOnly = true)
     public SettlementDetailResponse getSettlementDetail(Long userId, LocalDate weekStartDate) {
-        // 사용자의 해당 주차 정산 찾기
-        List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdOrderByWeekStartDateDesc(userId)
-                .stream()
-                .filter(s -> s.getWeekStartDate().equals(weekStartDate))
-                .toList();
+        Optional<WeeklySettlement> settlement = findSettlementByUserAndWeek(userId, weekStartDate);
         
-        if (settlements.isEmpty()) {
+        if (settlement.isEmpty()) {
             return SettlementDetailResponse.builder()
                     .isFinalized(false)
                     .weekStartDate(weekStartDate)
@@ -108,32 +92,45 @@ public class SettlementServiceImpl implements SettlementService {
                     .build();
         }
         
-        WeeklySettlement settlement = settlements.get(0);
+        WeeklySettlement weeklySettlement = settlement.get();
+        List<WeeklyBossRecord> bossRecords = weeklyBossRecordRepository
+                .findBySettlementIdOrderByCreatedAtAsc(weeklySettlement.getId());
         
-        // 보스 레코드 정보 가져오기
-        List<WeeklyBossRecord> bossRecords = weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlement.getId());
-        
-        // 보스 레코드 상세 정보 생성
         List<BossRecordDetailResponse> bossDetails = bossRecords.stream()
                 .map(BossRecordDetailResponse::from)
                 .collect(Collectors.toList());
         
-        return SettlementDetailResponse.from(settlement, bossDetails);
+        return SettlementDetailResponse.from(weeklySettlement, bossDetails);
     }
     
     @Override
     public SettlementCompleteResponse upsertSettlement(Long userId, LocalDate weekStartDate, SettlementRequest request) {
-        // 기존 정산 확인
-        WeeklySettlement existingSettlement = weeklySettlementRepository
-                .findByUserIdAndWorldNameAndWeekStartDate(userId, request.getWorldName(), weekStartDate)
-                .orElse(null);
+        Optional<WeeklySettlement> existingSettlement = weeklySettlementRepository
+                .findByUserIdAndWorldNameAndWeekStartDate(userId, request.getWorldName(), weekStartDate);
         
-        if (existingSettlement != null) {
+        if (existingSettlement.isPresent()) {
             // 기존 정산이 있으면 수정
-            return settlementProcessor.updateSettlement(existingSettlement.getId(), userId, weekStartDate, request);
+            return settlementProcessor.updateSettlement(
+                    existingSettlement.get().getId(), userId, weekStartDate, request);
         } else {
             // 기존 정산이 없으면 새로 생성
             return settlementProcessor.createSettlement(userId, weekStartDate, request);
         }
+    }
+    
+    // 공통 메서드들
+    private WeeklySettlement findSettlementById(Long settlementId) {
+        return weeklySettlementRepository.findById(settlementId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정산입니다."));
+    }
+    
+    private void validateUserOwnership(WeeklySettlement settlement, Long userId) {
+        if (!settlement.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("다른 사용자의 정산은 삭제할 수 없습니다.");
+        }
+    }
+    
+    private Optional<WeeklySettlement> findSettlementByUserAndWeek(Long userId, LocalDate weekStartDate) {
+        return weeklySettlementRepository.findFirstByUserIdAndWeekStartDateOrderByCreatedAtDesc(userId, weekStartDate);
     }
 } 

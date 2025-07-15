@@ -28,18 +28,7 @@ public class BossRecordProcessor {
             validateBossRecordNotExists(bossRequest.getCharacterId(), bossRequest.getBossId(), weekStartDate);
             
             // 보스 기록 생성
-            WeeklyBossRecord bossRecord = WeeklyBossRecord.builder()
-                    .settlementId(null) // 나중에 설정
-                    .userId(userId)
-                    .characterId(bossRequest.getCharacterId())
-                    .bossId(bossRequest.getBossId())
-                    .weekStartDate(weekStartDate)
-                    .crystalIncome(bossRequest.getCrystalIncome())
-                    .partySize(bossRequest.getPartySize())
-                    .desireItemIncome(BigInteger.ZERO)
-                    .totalIncome(bossRequest.getCrystalIncome())
-                    .build();
-            
+            WeeklyBossRecord bossRecord = createBossRecord(userId, weekStartDate, bossRequest, null);
             bossRecords.add(bossRecord);
         }
         
@@ -56,44 +45,22 @@ public class BossRecordProcessor {
             WeeklyBossRecord bossRecord = bossRecords.get(i);
             BossRecordRequest bossRequest = bossRequests.get(i);
             
-            // settlementId 설정
-            bossRecord = WeeklyBossRecord.builder()
-                    .settlementId(settlementId)
-                    .userId(bossRecord.getUserId())
-                    .characterId(bossRecord.getCharacterId())
-                    .bossId(bossRecord.getBossId())
-                    .weekStartDate(bossRecord.getWeekStartDate())
-                    .crystalIncome(bossRecord.getCrystalIncome())
-                    .partySize(bossRecord.getPartySize())
-                    .desireItemIncome(BigInteger.ZERO)
-                    .totalIncome(bossRecord.getCrystalIncome())
-                    .build();
+            // 물욕템 수입 미리 계산
+            BigInteger desireItemIncome = calculateDesireItemIncome(bossRequest);
+            
+            // 완전한 보스 기록 생성 (settlementId 포함)
+            WeeklyBossRecord completeBossRecord = createCompleteBossRecord(
+                    bossRecord, settlementId, desireItemIncome);
             
             // 보스 기록 저장
-            bossRecord = weeklyBossRecordRepository.save(bossRecord);
+            WeeklyBossRecord savedRecord = weeklyBossRecordRepository.save(completeBossRecord);
             
-            // 물욕템 처리
-            BigInteger desireItemIncome = desireItemProcessor.processDesireItems(
-                    bossRecord.getId(), bossRequest.getDesireItems());
-            
-            // 물욕템 수입 포함하여 보스 기록 업데이트
+            // 물욕템 처리 (물욕템이 있는 경우에만)
             if (desireItemIncome.compareTo(BigInteger.ZERO) > 0) {
-                bossRecord = WeeklyBossRecord.builder()
-                        .settlementId(bossRecord.getSettlementId())
-                        .userId(bossRecord.getUserId())
-                        .characterId(bossRecord.getCharacterId())
-                        .bossId(bossRecord.getBossId())
-                        .weekStartDate(bossRecord.getWeekStartDate())
-                        .crystalIncome(bossRecord.getCrystalIncome())
-                        .partySize(bossRecord.getPartySize())
-                        .desireItemIncome(desireItemIncome)
-                        .totalIncome(bossRecord.getCrystalIncome().add(desireItemIncome))
-                        .build();
-                
-                bossRecord = weeklyBossRecordRepository.save(bossRecord);
+                desireItemProcessor.processDesireItems(savedRecord.getId(), bossRequest.getDesireItems());
             }
             
-            savedRecords.add(bossRecord);
+            savedRecords.add(savedRecord);
         }
         
         return savedRecords;
@@ -101,13 +68,60 @@ public class BossRecordProcessor {
     
     // 기존 보스 기록 삭제
     public void deleteExistingBossRecords(Long settlementId) {
-        List<WeeklyBossRecord> existingBossRecords = weeklyBossRecordRepository.findBySettlementIdOrderByCreatedAtAsc(settlementId);
+        List<WeeklyBossRecord> existingBossRecords = weeklyBossRecordRepository
+                .findBySettlementIdOrderByCreatedAtAsc(settlementId);
         
-        for (WeeklyBossRecord bossRecord : existingBossRecords) {
-            desireItemProcessor.deleteDesireItemsByBossRecordId(bossRecord.getId());
+        // 물욕템 기록 삭제
+        existingBossRecords.forEach(bossRecord -> 
+                desireItemProcessor.deleteDesireItemsByBossRecordId(bossRecord.getId()));
+        
+        // 보스 기록 삭제
+        weeklyBossRecordRepository.deleteBySettlementId(settlementId);
+    }
+    
+    // 보스 기록 생성 헬퍼 메서드
+    private WeeklyBossRecord createBossRecord(Long userId, LocalDate weekStartDate, 
+                                              BossRecordRequest bossRequest, Long settlementId) {
+        return WeeklyBossRecord.builder()
+                .settlementId(settlementId)
+                .userId(userId)
+                .characterId(bossRequest.getCharacterId())
+                .bossId(bossRequest.getBossId())
+                .weekStartDate(weekStartDate)
+                .crystalIncome(bossRequest.getCrystalIncome())
+                .partySize(bossRequest.getPartySize())
+                .desireItemIncome(BigInteger.ZERO)
+                .totalIncome(bossRequest.getCrystalIncome())
+                .build();
+    }
+    
+    // 완전한 보스 기록 생성 (물욕템 수입 포함)
+    private WeeklyBossRecord createCompleteBossRecord(WeeklyBossRecord bossRecord, Long settlementId, 
+                                                      BigInteger desireItemIncome) {
+        BigInteger totalIncome = bossRecord.getCrystalIncome().add(desireItemIncome);
+        
+        return WeeklyBossRecord.builder()
+                .settlementId(settlementId)
+                .userId(bossRecord.getUserId())
+                .characterId(bossRecord.getCharacterId())
+                .bossId(bossRecord.getBossId())
+                .weekStartDate(bossRecord.getWeekStartDate())
+                .crystalIncome(bossRecord.getCrystalIncome())
+                .partySize(bossRecord.getPartySize())
+                .desireItemIncome(desireItemIncome)
+                .totalIncome(totalIncome)
+                .build();
+    }
+    
+    // 물욕템 수입 미리 계산
+    private BigInteger calculateDesireItemIncome(BossRecordRequest bossRequest) {
+        if (bossRequest.getDesireItems() == null || bossRequest.getDesireItems().isEmpty()) {
+            return BigInteger.ZERO;
         }
         
-        weeklyBossRecordRepository.deleteBySettlementId(settlementId);
+        return bossRequest.getDesireItems().stream()
+                .map(desireItem -> desireItem.getSalePrice())
+                .reduce(BigInteger.ZERO, BigInteger::add);
     }
     
     // 중복 보스 기록 검증

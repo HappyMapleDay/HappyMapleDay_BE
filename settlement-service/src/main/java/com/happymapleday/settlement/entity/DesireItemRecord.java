@@ -6,10 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigInteger;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "desire_item_records",
@@ -42,10 +40,6 @@ public class DesireItemRecord {
     @NotNull
     @Column(name = "sale_price", nullable = false)
     private BigInteger salePrice;
-    
-    @CreationTimestamp
-    @Column(name = "acquired_at")
-    private LocalDateTime acquiredAt;
     
     // 연관관계
     @ManyToOne(fetch = FetchType.LAZY)

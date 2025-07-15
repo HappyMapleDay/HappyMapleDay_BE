@@ -6,12 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -61,24 +58,9 @@ public class WeeklySettlement {
     @Column(name = "character_count")
     private Integer characterCount = 0;
     
-    @Column(name = "is_finalized")
-    private Boolean isFinalized = false;
-    
-    @Column(name = "finalized_at")
-    private LocalDateTime finalizedAt;
-    
-    @CreationTimestamp
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-    
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklyBossRecord> bossRecords;
-
 
     // 결정석 제한 관련 메서드
     public Map<Long, Integer> getCharacterCrystalCounts() {

@@ -69,7 +69,7 @@ public class BossRecordProcessor {
     // 기존 보스 기록 삭제
     public void deleteExistingBossRecords(Long settlementId) {
         List<WeeklyBossRecord> existingBossRecords = weeklyBossRecordRepository
-                .findBySettlementIdOrderByCreatedAtAsc(settlementId);
+                .findBySettlementId(settlementId);
         
         // 물욕템 기록 삭제
         existingBossRecords.forEach(bossRecord -> 

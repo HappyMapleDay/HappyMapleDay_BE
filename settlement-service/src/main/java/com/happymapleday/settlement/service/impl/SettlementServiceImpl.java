@@ -46,7 +46,6 @@ public class SettlementServiceImpl implements SettlementService {
         
         if (settlement.isEmpty()) {
             return SettlementStatusResponse.builder()
-                    .isFinalized(false)
                     .weekStartDate(weekStartDate)
                     .build();
         }
@@ -60,11 +59,9 @@ public class SettlementServiceImpl implements SettlementService {
         LocalDate today = LocalDate.now();
         LocalDate currentWeekStart = weekCalculator.getWeekStartDate(today);
         
-        // 현재 주차 완료 여부 확인 (효율적인 조회)
+        // 현재 주차 완료 여부 확인 (정산 존재 여부로 판단)
         Optional<WeeklySettlement> currentWeekSettlement = findSettlementByUserAndWeek(userId, currentWeekStart);
-        boolean isCompleted = currentWeekSettlement
-                .map(WeeklySettlement::getIsFinalized)
-                .orElse(false);
+        boolean isCompleted = currentWeekSettlement.isPresent();
         
         LocalDate nextWeekStart = currentWeekStart.plusWeeks(1);
         LocalDate nextResetDate = weekCalculator.getNextResetDate(today);
@@ -86,7 +83,6 @@ public class SettlementServiceImpl implements SettlementService {
         
         if (settlement.isEmpty()) {
             return SettlementDetailResponse.builder()
-                    .isFinalized(false)
                     .weekStartDate(weekStartDate)
                     .bossRecords(List.of())
                     .build();
@@ -94,7 +90,7 @@ public class SettlementServiceImpl implements SettlementService {
         
         WeeklySettlement weeklySettlement = settlement.get();
         List<WeeklyBossRecord> bossRecords = weeklyBossRecordRepository
-                .findBySettlementIdOrderByCreatedAtAsc(weeklySettlement.getId());
+                .findBySettlementId(weeklySettlement.getId());
         
         List<BossRecordDetailResponse> bossDetails = bossRecords.stream()
                 .map(BossRecordDetailResponse::from)
@@ -131,6 +127,7 @@ public class SettlementServiceImpl implements SettlementService {
     }
     
     private Optional<WeeklySettlement> findSettlementByUserAndWeek(Long userId, LocalDate weekStartDate) {
-        return weeklySettlementRepository.findFirstByUserIdAndWeekStartDateOrderByCreatedAtDesc(userId, weekStartDate);
+        List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdAndWeekStartDate(userId, weekStartDate);
+        return settlements.isEmpty() ? Optional.empty() : Optional.of(settlements.get(0));
     }
 } 

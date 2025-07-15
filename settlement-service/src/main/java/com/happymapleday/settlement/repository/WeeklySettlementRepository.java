@@ -19,10 +19,4 @@ public interface WeeklySettlementRepository extends JpaRepository<WeeklySettleme
     
     // 특정 사용자의 특정 주차 정산 데이터 조회 (월드 구분 없이)
     List<WeeklySettlement> findByUserIdAndWeekStartDate(Long userId, LocalDate weekStartDate);
-    
-    // 특정 사용자의 특정 주차 정산 데이터 조회 (월드 구분 없이, 단일 결과)
-    Optional<WeeklySettlement> findFirstByUserIdAndWeekStartDateOrderByCreatedAtDesc(Long userId, LocalDate weekStartDate);
-    
-    boolean existsByUserIdAndWorldNameAndWeekStartDateAndIsFinalizedTrue(
-            Long userId, String worldName, LocalDate weekStartDate);
 } 

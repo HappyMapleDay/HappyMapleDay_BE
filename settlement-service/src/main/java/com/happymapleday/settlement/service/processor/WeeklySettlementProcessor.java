@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -84,8 +83,6 @@ public class WeeklySettlementProcessor {
                 .totalIncome(totalCrystalIncome)
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
-                .isFinalized(true)
-                .finalizedAt(LocalDateTime.now())
                 .build();
     }
     
@@ -105,8 +102,6 @@ public class WeeklySettlementProcessor {
                 .totalIncome(totalIncome)
                 .totalBossCount(savedBossRecords.size())
                 .characterCount(calculateCharacterCount(savedBossRecords))
-                .isFinalized(true)
-                .finalizedAt(LocalDateTime.now())
                 .build();
         
         return weeklySettlementRepository.save(updatedSettlement);
@@ -125,8 +120,6 @@ public class WeeklySettlementProcessor {
                 .totalIncome(calculateTotalIncome(bossRecords))
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
-                .isFinalized(true)
-                .finalizedAt(LocalDateTime.now())
                 .build();
         
         return weeklySettlementRepository.save(settlement);
@@ -142,7 +135,6 @@ public class WeeklySettlementProcessor {
                 .totalIncome(settlement.getTotalIncome())
                 .totalBossCount(settlement.getTotalBossCount())
                 .characterCount(settlement.getCharacterCount())
-                .finalizedAt(settlement.getFinalizedAt())
                 .build();
     }
     

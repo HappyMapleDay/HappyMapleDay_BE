@@ -53,6 +53,17 @@ public class SettlementController {
         SettlementCompleteResponse response = settlementService.upsertSettlement(userId, weekStart, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    // 자동 저장용 API (PENDING 상태로 저장)
+    @PostMapping("/user/{userId}/week/{weekStartDate}/auto-save")
+    public ResponseEntity<ApiResponse<SettlementCompleteResponse>> autoSaveSettlement(
+            @PathVariable Long userId,
+            @PathVariable String weekStartDate,
+            @Valid @RequestBody SettlementRequest request) {
+        LocalDate weekStart = LocalDate.parse(weekStartDate);
+        SettlementCompleteResponse response = settlementService.autoSaveSettlement(userId, weekStart, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
  
     // 정산 삭제
     @DeleteMapping("/user/{userId}/settlement/{settlementId}")
@@ -68,15 +79,6 @@ public class SettlementController {
     public ResponseEntity<ApiResponse<CurrentWeekStatusResponse>> getCurrentWeekStatus(
             @PathVariable Long userId) {
         CurrentWeekStatusResponse response = settlementService.getCurrentWeekStatus(userId);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-    
-    // 정산 완료 처리 (PENDING → COMPLETED)
-    @PostMapping("/user/{userId}/settlement/{settlementId}/complete")
-    public ResponseEntity<ApiResponse<SettlementCompleteResponse>> completeSettlement(
-            @PathVariable Long userId,
-            @PathVariable Long settlementId) {
-        SettlementCompleteResponse response = settlementService.completeSettlement(settlementId, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 } 

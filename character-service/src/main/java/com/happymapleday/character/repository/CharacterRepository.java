@@ -16,28 +16,22 @@ public interface CharacterRepository extends JpaRepository<Character, Long> {
     // 유저별 캐릭터 목록 조회
     List<Character> findByUserIdOrderByCreatedAtDesc(Long userId);
     
-    // 서버별 캐릭터 목록 조회
-    List<Character> findByUserIdAndServerNameOrderByCreatedAtDesc(Long userId, String serverName);
-    
     // 유저의 본캐 조회
-    Optional<Character> findByUserIdAndIsMainCharacterTrue(Long userId);
+    Optional<Character> findByUserIdAndIsMainTrue(Long userId);
     
-    // 캐릭터명과 서버명으로 조회
-    Optional<Character> findByUserIdAndCharacterNameAndServerName(Long userId, String characterName, String serverName);
+    // OCID로 캐릭터 조회
+    Optional<Character> findByUserIdAndOcid(Long userId, String ocid);
     
     // 유저의 모든 본캐 해제
     @Modifying
-    @Query("UPDATE Character c SET c.isMainCharacter = false WHERE c.userId = :userId")
+    @Query("UPDATE Character c SET c.isMain = false WHERE c.userId = :userId")
     void unsetAllMainCharactersByUserId(@Param("userId") Long userId);
     
     // 유저의 특정 캐릭터를 본캐로 설정
     @Modifying
-    @Query("UPDATE Character c SET c.isMainCharacter = true WHERE c.id = :characterId")
+    @Query("UPDATE Character c SET c.isMain = true WHERE c.id = :characterId")
     void setMainCharacterById(@Param("characterId") Long characterId);
     
     // 유저의 캐릭터 수 조회
     long countByUserId(Long userId);
-    
-    // 서버별 캐릭터 수 조회
-    long countByUserIdAndServerName(Long userId, String serverName);
 } 

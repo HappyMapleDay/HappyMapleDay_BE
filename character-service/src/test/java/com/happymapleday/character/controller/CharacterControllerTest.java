@@ -45,85 +45,16 @@ class CharacterControllerTest {
         objectMapper = new ObjectMapper();
 
         // 테스트 데이터 설정
-        testCharacter1 = new Character(1L, "테스트캐릭터1", "test-ocid-1", "스카니아");
+        testCharacter1 = new Character(1L, "테스트캐릭터1", "test-ocid-1");
         testCharacter1.setId(1L);
         testCharacter1.setAsMainCharacter();
 
-        testCharacter2 = new Character(1L, "테스트캐릭터2", "test-ocid-2", "스카니아");
+        testCharacter2 = new Character(1L, "테스트캐릭터2", "test-ocid-2");
         testCharacter2.setId(2L);
 
         CharacterResponse response1 = CharacterResponse.from(testCharacter1);
         CharacterResponse response2 = CharacterResponse.from(testCharacter2);
         characterResponseList = Arrays.asList(response1, response2);
-    }
-
-    // ==================== 2.1 서버별 캐릭터 목록 조회 테스트 ====================
-
-    @Test
-    @DisplayName("2.1 서버별 캐릭터 목록 조회 성공")
-    void getCharactersByServer_Success() throws Exception {
-        // given
-        Long userId = 1L;
-        String serverName = "스카니아";
-        given(characterService.getCharactersByServer(userId, serverName))
-                .willReturn(characterResponseList);
-
-        // when & then
-        mockMvc.perform(get("/api/characters/server/{serverName}", serverName)
-                        .param("userId", userId.toString())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-    }
-
-    @Test
-    @DisplayName("2.1 서버별 캐릭터 목록 조회 실패 - 해당 서버에 캐릭터 없음")
-    void getCharactersByServer_EmptyList_Returns404() throws Exception {
-        // given
-        Long userId = 1L;
-        String serverName = "베라";
-        given(characterService.getCharactersByServer(userId, serverName))
-                .willThrow(new IllegalArgumentException("해당 서버에 등록된 캐릭터가 없습니다."));
-
-        // when & then
-        mockMvc.perform(get("/api/characters/server/{serverName}", serverName)
-                        .param("userId", userId.toString())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("2.1 서버별 캐릭터 목록 조회 - 단일 캐릭터")
-    void getCharactersByServer_SingleCharacter() throws Exception {
-        // given
-        Long userId = 1L;
-        String serverName = "스카니아";
-        List<CharacterResponse> singleResponseList = Collections.singletonList(CharacterResponse.from(testCharacter1));
-        given(characterService.getCharactersByServer(userId, serverName))
-                .willReturn(singleResponseList);
-
-        // when & then
-        mockMvc.perform(get("/api/characters/server/{serverName}", serverName)
-                        .param("userId", userId.toString())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-    }
-
-    @Test
-    @DisplayName("2.1 서버별 캐릭터 목록 조회 - 서비스 예외 발생")
-    void getCharactersByServer_ServiceException_Returns500() throws Exception {
-        // given
-        Long userId = 1L;
-        String serverName = "스카니아";
-        given(characterService.getCharactersByServer(userId, serverName))
-                .willThrow(new RuntimeException("데이터베이스 연결 실패"));
-
-        // when & then
-        mockMvc.perform(get("/api/characters/server/{serverName}", serverName)
-                        .param("userId", userId.toString())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
     }
 
     // ==================== 2.2 전체 캐릭터 조회 테스트 ====================
@@ -137,7 +68,7 @@ class CharacterControllerTest {
                 .willReturn(characterResponseList);
 
         // when & then
-        mockMvc.perform(get("/api/characters/user/{userId}", userId)
+        mockMvc.perform(get("/api/characters/{userId}", userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
@@ -152,7 +83,7 @@ class CharacterControllerTest {
                 .willThrow(new IllegalArgumentException("등록된 캐릭터가 없습니다."));
 
         // when & then
-        mockMvc.perform(get("/api/characters/user/{userId}", userId)
+        mockMvc.perform(get("/api/characters/{userId}", userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -167,7 +98,7 @@ class CharacterControllerTest {
                 .willReturn(singleResponseList);
 
         // when & then
-        mockMvc.perform(get("/api/characters/user/{userId}", userId)
+        mockMvc.perform(get("/api/characters/{userId}", userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
@@ -182,7 +113,7 @@ class CharacterControllerTest {
                 .willThrow(new RuntimeException("데이터베이스 연결 실패"));
 
         // when & then
-        mockMvc.perform(get("/api/characters/user/{userId}", userId)
+        mockMvc.perform(get("/api/characters/{userId}", userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
     }

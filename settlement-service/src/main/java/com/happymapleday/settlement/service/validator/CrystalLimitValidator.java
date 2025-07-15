@@ -12,6 +12,10 @@ public class CrystalLimitValidator {
     
     // 결정석 제한 검증
     public void validateCrystalLimits(List<WeeklyBossRecord> bossRecords) {
+        if (bossRecords == null || bossRecords.isEmpty()) {
+            return;
+        }
+        
         Set<Long> characterIds = bossRecords.stream()
                 .map(WeeklyBossRecord::getCharacterId)
                 .collect(Collectors.toSet());

@@ -6,6 +6,7 @@ import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.dto.response.SettlementStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementDetailResponse;
+import com.happymapleday.settlement.entity.SettlementStatus;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.entity.WeeklySettlement;
 import com.happymapleday.settlement.repository.WeeklyBossRecordRepository;
@@ -111,6 +112,21 @@ public class SettlementServiceImpl implements SettlementService {
         } else {
             // 기존 정산이 없으면 새로 생성
             return settlementProcessor.createSettlement(userId, weekStartDate, request);
+        }
+    }
+
+    @Override
+    public SettlementCompleteResponse autoSaveSettlement(Long userId, LocalDate weekStartDate, SettlementRequest request) {
+        Optional<WeeklySettlement> existingSettlement = weeklySettlementRepository
+                .findByUserIdAndWorldNameAndWeekStartDate(userId, request.getWorldName(), weekStartDate);
+        
+        if (existingSettlement.isPresent()) {
+            // 기존 정산이 있으면 수정 (PENDING 상태로)
+            return settlementProcessor.updateSettlementPending(
+                    existingSettlement.get().getId(), userId, weekStartDate, request);
+        } else {
+            // 기존 정산이 없으면 새로 생성 (PENDING 상태로)
+            return settlementProcessor.createSettlementPending(userId, weekStartDate, request);
         }
     }
     

@@ -16,7 +16,7 @@ public class DesireItemProcessor {
     private final DesireItemRecordRepository desireItemRecordRepository;
     
     // 물욕템 기록 처리 및 총 수입 계산
-    public BigInteger processDesireItems(Long bossRecordId, List<DesireItemRequest> desireItems) {
+    public BigInteger processDesireItems(Long bossRecordId, Long characterId, List<DesireItemRequest> desireItems) {
         if (desireItems == null || desireItems.isEmpty()) {
             return BigInteger.ZERO;
         }
@@ -26,6 +26,7 @@ public class DesireItemProcessor {
         for (DesireItemRequest desireRequest : desireItems) {
             DesireItemRecord desireRecord = DesireItemRecord.builder()
                     .weeklyBossRecordId(bossRecordId)
+                    .characterId(characterId)
                     .desireItemId(desireRequest.getDesireItemId())
                     .salePrice(desireRequest.getSalePrice())
                     .build();

@@ -14,6 +14,9 @@ public interface SettlementService {
     // 정산 데이터 생성 또는 수정 (통합)
     SettlementCompleteResponse upsertSettlement(Long userId, LocalDate weekStartDate, SettlementRequest request);
     
+    // 자동 저장용 (PENDING 상태로 저장)
+    SettlementCompleteResponse autoSaveSettlement(Long userId, LocalDate weekStartDate, SettlementRequest request);
+    
     // 정산 삭제 (완료 취소)
     void deleteSettlement(Long settlementId, Long userId);
     

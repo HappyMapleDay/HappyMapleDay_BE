@@ -55,7 +55,7 @@ public class WeeklyBossRecord {
     private Long bossId;
     
     @Column(name = "party_size")
-    private Integer partySize = 1;
+    private Integer partySize;
     
     @NotNull
     @Column(name = "week_start_date", nullable = false)
@@ -66,7 +66,7 @@ public class WeeklyBossRecord {
     private BigInteger crystalIncome;
     
     @Column(name = "desire_item_income")
-    private BigInteger desireItemIncome = BigInteger.ZERO;
+    private BigInteger desireItemIncome;
     
     @NotNull
     @Column(name = "total_income", nullable = false)

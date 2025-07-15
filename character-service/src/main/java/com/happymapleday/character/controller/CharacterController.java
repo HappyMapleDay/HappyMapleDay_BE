@@ -3,6 +3,7 @@ package com.happymapleday.character.controller;
 import com.happymapleday.common.dto.ApiResponse;
 import com.happymapleday.character.dto.request.CharacterCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
+import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
 import com.happymapleday.character.service.CharacterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +86,29 @@ public class CharacterController {
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("캐릭터 삭제 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 2.6 본캐 설정
+     */
+    @PutMapping("/{characterId}/main")
+    public ResponseEntity<ApiResponse<MainCharacterSettingResponse>> setMainCharacter(
+            @PathVariable Long characterId) {
+        try {
+            MainCharacterSettingResponse response = characterService.setMainCharacter(characterId);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("캐릭터를 찾을 수 없습니다")) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("본캐 설정 중 오류가 발생했습니다."));
         }
     }
 } 

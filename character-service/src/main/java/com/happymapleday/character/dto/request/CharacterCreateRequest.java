@@ -11,4 +11,5 @@ public class CharacterCreateRequest {
     private Long userId;
     private String characterName;
     private String ocid;
+    private Boolean isMain;
 } 

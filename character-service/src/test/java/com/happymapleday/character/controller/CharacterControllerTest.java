@@ -45,11 +45,11 @@ class CharacterControllerTest {
         objectMapper = new ObjectMapper();
 
         // 테스트 데이터 설정
-        testCharacter1 = new Character(1L, "테스트캐릭터1", "test-ocid-1");
+        testCharacter1 = new Character(1L, "테스트캐릭터1", "test-ocid-1", false);
         testCharacter1.setId(1L);
         testCharacter1.setAsMainCharacter();
 
-        testCharacter2 = new Character(1L, "테스트캐릭터2", "test-ocid-2");
+        testCharacter2 = new Character(1L, "테스트캐릭터2", "test-ocid-2", false);
         testCharacter2.setId(2L);
 
         CharacterResponse response1 = CharacterResponse.from(testCharacter1);

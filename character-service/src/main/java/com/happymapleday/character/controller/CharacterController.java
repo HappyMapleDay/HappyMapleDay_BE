@@ -61,4 +61,30 @@ public class CharacterController {
                     .body(ApiResponse.error("캐릭터 추가 중 오류가 발생했습니다."));
         }
     }
+    
+    /**
+     * 2.4 캐릭터 삭제
+     */
+    @DeleteMapping("/{characterId}")
+    public ResponseEntity<ApiResponse<String>> deleteCharacter(
+            @PathVariable Long characterId) {
+        try {
+            characterService.deleteCharacter(characterId);
+            return ResponseEntity.ok(ApiResponse.success("캐릭터가 삭제되었습니다."));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("본캐는 삭제할 수 없습니다")) {
+                return ResponseEntity.status(403)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else if (e.getMessage().contains("캐릭터를 찾을 수 없습니다")) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("캐릭터 삭제 중 오류가 발생했습니다."));
+        }
+    }
 } 

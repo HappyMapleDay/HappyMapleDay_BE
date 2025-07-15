@@ -38,11 +38,11 @@ public class Character {
     private LocalDateTime updatedAt;
     
     // 생성자
-    public Character(Long userId, String characterName, String ocid) {
+    public Character(Long userId, String characterName, String ocid, Boolean isMain) {
         this.userId = userId;
         this.characterName = characterName;
         this.ocid = ocid;
-        this.isMain = false;
+        this.isMain = isMain != null ? isMain : false;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

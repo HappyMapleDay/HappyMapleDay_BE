@@ -1,6 +1,7 @@
 package com.happymapleday.character.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.character.dto.request.CharacterCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
 import com.happymapleday.character.service.CharacterService;
 import lombok.RequiredArgsConstructor;
@@ -17,28 +18,9 @@ public class CharacterController {
     private final CharacterService characterService;
     
     /**
-     * 2.1 서버별 캐릭터 목록 조회
-     */
-    @GetMapping("/server/{serverName}")
-    public ResponseEntity<ApiResponse<List<CharacterResponse>>> getCharactersByServer(
-            @PathVariable String serverName,
-            @RequestParam Long userId) {
-        try {
-            List<CharacterResponse> characters = characterService.getCharactersByServer(userId, serverName);
-            return ResponseEntity.ok(ApiResponse.success(characters));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404)
-                    .body(ApiResponse.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body(ApiResponse.error("서버별 캐릭터 목록 조회 중 오류가 발생했습니다."));
-        }
-    }
-    
-    /**
      * 2.2 전체 캐릭터 조회 (유저별)
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<List<CharacterResponse>>> getAllCharactersByUserId(
             @PathVariable Long userId) {
         try {
@@ -50,6 +32,33 @@ public class CharacterController {
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("전체 캐릭터 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 2.3 캐릭터 추가
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<CharacterResponse>> createCharacter(
+            @RequestBody CharacterCreateRequest request) {
+        try {
+            CharacterResponse character = characterService.createCharacter(request);
+            return ResponseEntity.status(201)
+                    .body(ApiResponse.success(character));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("필수 정보가 누락")) {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else if (e.getMessage().contains("이미 등록된 캐릭터")) {
+                return ResponseEntity.status(409)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("캐릭터 추가 중 오류가 발생했습니다."));
         }
     }
 } 

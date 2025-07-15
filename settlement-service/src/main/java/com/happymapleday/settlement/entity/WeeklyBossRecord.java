@@ -14,6 +14,8 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "weekly_boss_records",
@@ -27,10 +29,13 @@ import java.util.List;
            @Index(name = "idx_character_week", columnList = "character_id, week_start_date")
        })
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WeeklyBossRecord {
+    
+    // 결정석 판매 제한 상수
+    public static final int CHARACTER_CRYSTAL_LIMIT = 12;
+    public static final int WORLD_CRYSTAL_LIMIT = 90;
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -85,32 +90,50 @@ public class WeeklyBossRecord {
     
     @OneToMany(mappedBy = "weeklyBossRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DesireItemRecord> desireItemRecords;
-    
-    // 생성자 (기본 필드만)
+
+    @Builder
     public WeeklyBossRecord(Long settlementId, Long userId, Long characterId, Long bossId, 
-                           LocalDate weekStartDate, BigInteger crystalIncome, Integer partySize) {
+                           LocalDate weekStartDate, BigInteger crystalIncome, Integer partySize,
+                           BigInteger desireItemIncome, BigInteger totalIncome) {
         this.settlementId = settlementId;
         this.userId = userId;
         this.characterId = characterId;
         this.bossId = bossId;
         this.weekStartDate = weekStartDate;
         this.crystalIncome = crystalIncome;
-        this.partySize = partySize;
-        this.totalIncome = crystalIncome;
-        this.desireItemIncome = BigInteger.ZERO;
+        this.partySize = partySize != null ? partySize : 1;
+        this.desireItemIncome = desireItemIncome != null ? desireItemIncome : BigInteger.ZERO;
+        this.totalIncome = totalIncome != null ? totalIncome : crystalIncome;
     }
-    
-    // 도메인 로직 메서드 (불변 계산)
-    public BigInteger calculateTotalIncome() {
-        return crystalIncome.add(desireItemIncome != null ? desireItemIncome : BigInteger.ZERO);
-    }
-    
-    public BigInteger calculateDesireItemIncome() {
-        if (desireItemRecords == null || desireItemRecords.isEmpty()) {
-            return BigInteger.ZERO;
+    // 결정석 판매 제한 검증 메서드
+    public static int getCharacterCrystalCount(List<WeeklyBossRecord> records, Long characterId) {
+        if (records == null || records.isEmpty()) {
+            return 0;
         }
-        return desireItemRecords.stream()
-                .map(DesireItemRecord::getSalePrice)
-                .reduce(BigInteger.ZERO, BigInteger::add);
+        return (int) records.stream()
+                .filter(record -> record.getCharacterId().equals(characterId))
+                .count();
+    }
+
+    public static boolean isCharacterOverCrystalLimit(List<WeeklyBossRecord> records, Long characterId) {
+        return getCharacterCrystalCount(records, characterId) >= CHARACTER_CRYSTAL_LIMIT;
+    }
+
+    public static boolean isWorldOverCrystalLimit(List<WeeklyBossRecord> records) {
+        return records != null && records.size() >= WORLD_CRYSTAL_LIMIT;
+    }
+
+    public static Map<Long, Integer> getCharacterCrystalCounts(List<WeeklyBossRecord> records) {
+        if (records == null || records.isEmpty()) {
+            return Map.of();
+        }
+        return records.stream()
+                .collect(Collectors.groupingBy(
+                    WeeklyBossRecord::getCharacterId,
+                    Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        list -> list.size()
+                    )
+                ));
     }
 }

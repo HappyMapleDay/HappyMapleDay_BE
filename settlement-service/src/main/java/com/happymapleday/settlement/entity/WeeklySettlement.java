@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "weekly_settlements",
@@ -25,7 +26,6 @@ import java.util.List;
            @Index(name = "idx_user_week", columnList = "user_id, week_start_date")
        })
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WeeklySettlement {
@@ -78,19 +78,22 @@ public class WeeklySettlement {
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklyBossRecord> bossRecords;
-    
-    // 생성자 (기본 필드만)
-    public WeeklySettlement(Long userId, String worldName, LocalDate weekStartDate) {
+
+    @Builder
+    public WeeklySettlement(Long userId, String worldName, LocalDate weekStartDate,
+                           BigInteger totalCrystalIncome, BigInteger totalDesireItemIncome,
+                           BigInteger totalIncome, Integer totalBossCount, Integer characterCount,
+                           Boolean isFinalized, LocalDateTime finalizedAt) {
         this.userId = userId;
         this.worldName = worldName;
         this.weekStartDate = weekStartDate;
-        this.totalCrystalIncome = BigInteger.ZERO;
-        this.totalDesireItemIncome = BigInteger.ZERO;
-        this.totalIncome = BigInteger.ZERO;
-        this.totalBossCount = 0;
-        this.characterCount = 0;
-        this.isFinalized = false;
-        this.finalizedAt = null;
+        this.totalCrystalIncome = totalCrystalIncome != null ? totalCrystalIncome : BigInteger.ZERO;
+        this.totalDesireItemIncome = totalDesireItemIncome != null ? totalDesireItemIncome : BigInteger.ZERO;
+        this.totalIncome = totalIncome != null ? totalIncome : BigInteger.ZERO;
+        this.totalBossCount = totalBossCount != null ? totalBossCount : 0;
+        this.characterCount = characterCount != null ? characterCount : 0;
+        this.isFinalized = isFinalized != null ? isFinalized : false;
+        this.finalizedAt = finalizedAt;
     }
     
     // 도메인 로직 메서드 (불변 계산)
@@ -111,22 +114,9 @@ public class WeeklySettlement {
                 .map(WeeklyBossRecord::getDesireItemIncome)
                 .reduce(BigInteger.ZERO, BigInteger::add);
     }
-    
-    public BigInteger calculateTotalIncome() {
-        return calculateTotalCrystalIncome().add(calculateTotalDesireItemIncome());
-    }
-    
-    public Integer calculateTotalBossCount() {
-        return bossRecords != null ? bossRecords.size() : 0;
-    }
-    
-    public Integer calculateCharacterCount() {
-        if (bossRecords == null || bossRecords.isEmpty()) {
-            return 0;
-        }
-        return (int) bossRecords.stream()
-                .map(WeeklyBossRecord::getCharacterId)
-                .distinct()
-                .count();
+
+    // 결정석 제한 관련 메서드
+    public Map<Long, Integer> getCharacterCrystalCounts() {
+        return WeeklyBossRecord.getCharacterCrystalCounts(bossRecords);
     }
 } 

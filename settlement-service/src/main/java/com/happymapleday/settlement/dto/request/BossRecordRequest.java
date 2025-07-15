@@ -23,13 +23,13 @@ public class BossRecordRequest {
     @Positive(message = "보스 ID는 양수여야 합니다.")
     private final Long bossId;
     
-    @NotNull(message = "파티 크기는 필수입니다.")
-    @Min(value = 1, message = "파티 크기는 최소 1명입니다.")
-    @Max(value = 6, message = "파티 크기는 최대 6명입니다.")
+    @NotNull(message = "클리어 인원은 필수값입니다.")
+    @Min(value = 1, message = "클리어 인원은 최소 1명입니다.")
+    @Max(value = 6, message = "클리어 인원은 최대 6명입니다.")
     private final Integer partySize;
     
-    @NotNull(message = "크리스탈 수익은 필수입니다.")
-    @DecimalMin(value = "0", message = "크리스탈 수익은 0 이상이어야 합니다.")
+    @NotNull(message = "결정석 수익은 필수입니다.")
+    @DecimalMin(value = "0", message = "결정석 수익은 0 이상이어야 합니다.")
     private final BigInteger crystalIncome;
     
     @Valid

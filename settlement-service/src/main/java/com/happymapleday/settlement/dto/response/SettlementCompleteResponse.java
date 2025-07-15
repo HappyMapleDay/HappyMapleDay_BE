@@ -5,7 +5,6 @@ import lombok.Getter;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -17,5 +16,4 @@ public class SettlementCompleteResponse {
     private final BigInteger totalIncome;
     private final Integer totalBossCount;
     private final Integer characterCount;
-    private final LocalDateTime finalizedAt;
 } 

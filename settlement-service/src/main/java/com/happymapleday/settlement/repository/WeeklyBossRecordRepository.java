@@ -11,7 +11,7 @@ import java.util.List;
 public interface WeeklyBossRecordRepository extends JpaRepository<WeeklyBossRecord, Long> {
     
     // 정산별 보스 기록 조회
-    List<WeeklyBossRecord> findBySettlementIdOrderByCreatedAtAsc(Long settlementId);
+    List<WeeklyBossRecord> findBySettlementId(Long settlementId);
     
     // 정산별 보스 기록 삭제
     void deleteBySettlementId(Long settlementId);

@@ -2,15 +2,12 @@ package com.happymapleday.settlement.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigInteger;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "desire_item_records",
@@ -21,7 +18,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class DesireItemRecord {
     
     @Id
@@ -43,10 +40,6 @@ public class DesireItemRecord {
     @NotNull
     @Column(name = "sale_price", nullable = false)
     private BigInteger salePrice;
-    
-    @CreationTimestamp
-    @Column(name = "acquired_at")
-    private LocalDateTime acquiredAt;
     
     // 연관관계
     @ManyToOne(fetch = FetchType.LAZY)

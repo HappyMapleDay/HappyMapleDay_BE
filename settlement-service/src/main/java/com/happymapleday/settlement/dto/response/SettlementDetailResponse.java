@@ -22,7 +22,6 @@ public class SettlementDetailResponse {
     private final BigInteger totalIncome;
     private final Integer totalBossCount;
     private final Integer characterCount;
-    private final Boolean isFinalized;
     private final Map<Long, Integer> characterCrystalCounts;
     
     // 상세 정보
@@ -39,7 +38,6 @@ public class SettlementDetailResponse {
                 .totalIncome(settlement.getTotalIncome())
                 .totalBossCount(settlement.getTotalBossCount())
                 .characterCount(settlement.getCharacterCount())
-                .isFinalized(settlement.getIsFinalized())
                 .characterCrystalCounts(settlement.getCharacterCrystalCounts())
                 .bossRecords(bossRecords)
                 .build();

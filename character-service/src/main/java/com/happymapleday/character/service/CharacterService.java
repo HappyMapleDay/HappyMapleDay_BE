@@ -2,6 +2,7 @@ package com.happymapleday.character.service;
 
 import com.happymapleday.character.dto.request.CharacterCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
+import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
 import com.happymapleday.character.entity.Character;
 import com.happymapleday.character.repository.CharacterRepository;
 import lombok.RequiredArgsConstructor;
@@ -76,5 +77,30 @@ public class CharacterService {
         
         // 캐릭터 삭제
         characterRepository.delete(character);
+    }
+    
+    /**
+     * 본캐 설정
+     */
+    @Transactional
+    public MainCharacterSettingResponse setMainCharacter(Long characterId) {
+        // 캐릭터 존재 여부 확인
+        Character character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
+        
+        // 현재 본캐 조회
+        Character previousMainCharacter = characterRepository.findByUserIdAndIsMainTrue(character.getUserId()).orElse(null);
+        
+        // 기존 본캐가 있다면 해제
+        if (previousMainCharacter != null && !previousMainCharacter.getId().equals(characterId)) {
+            previousMainCharacter.unsetAsMainCharacter();
+            characterRepository.save(previousMainCharacter);
+        }
+        
+        // 새로운 본캐 설정
+        character.setAsMainCharacter();
+        Character savedCharacter = characterRepository.save(character);
+        
+        return MainCharacterSettingResponse.from(savedCharacter, previousMainCharacter);
     }
 } 

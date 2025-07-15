@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.happymapleday.character.dto.response.MainCharacterResponse;
 
 @RestController
 @RequestMapping("/api/characters")
@@ -109,6 +110,28 @@ public class CharacterController {
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("본캐 설정 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 2.7 본캐 조회
+     */
+    @GetMapping("/{userId}/main")
+    public ResponseEntity<ApiResponse<MainCharacterResponse>> getMainCharacter(@PathVariable Long userId) {
+        try {
+            MainCharacterResponse response = characterService.getMainCharacter(userId);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("본캐가 설정되지 않았습니다")) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("본캐 조회 중 오류가 발생했습니다."));
         }
     }
 } 

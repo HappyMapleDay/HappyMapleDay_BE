@@ -336,4 +336,37 @@ class CharacterServiceTest {
                 .hasMessage("캐릭터를 찾을 수 없습니다.");
         verify(characterRepository).findById(characterId);
     }
+
+    // ==================== 2.7 본캐 조회 테스트 ====================
+
+    @Test
+    @DisplayName("2.7 본캐 조회 성공")
+    void getMainCharacter_Success() {
+        // given
+        Long userId = 1L;
+        given(characterRepository.findByUserIdAndIsMainTrue(userId)).willReturn(java.util.Optional.of(testCharacter1));
+
+        // when
+        var result = characterService.getMainCharacter(userId);
+
+        // then
+        assertThat(result.getId()).isEqualTo(testCharacter1.getId());
+        assertThat(result.getCharacterName()).isEqualTo(testCharacter1.getCharacterName());
+        assertThat(result.getIsMain()).isTrue();
+        verify(characterRepository).findByUserIdAndIsMainTrue(userId);
+    }
+
+    @Test
+    @DisplayName("2.7 본캐 조회 실패 - 본캐가 설정되지 않음")
+    void getMainCharacter_NotSet_ThrowsException() {
+        // given
+        Long userId = 1L;
+        given(characterRepository.findByUserIdAndIsMainTrue(userId)).willReturn(java.util.Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> characterService.getMainCharacter(userId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("본캐가 설정되지 않았습니다.");
+        verify(characterRepository).findByUserIdAndIsMainTrue(userId);
+    }
 } 

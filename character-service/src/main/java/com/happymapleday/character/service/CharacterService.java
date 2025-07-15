@@ -3,6 +3,7 @@ package com.happymapleday.character.service;
 import com.happymapleday.character.dto.request.CharacterCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
 import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
+import com.happymapleday.character.dto.response.MainCharacterResponse;
 import com.happymapleday.character.entity.Character;
 import com.happymapleday.character.repository.CharacterRepository;
 import lombok.RequiredArgsConstructor;
@@ -102,5 +103,15 @@ public class CharacterService {
         Character savedCharacter = characterRepository.save(character);
         
         return MainCharacterSettingResponse.from(savedCharacter, previousMainCharacter);
+    }
+
+    /**
+     * 2.7 본캐 조회
+     */
+    @Transactional(readOnly = true)
+    public MainCharacterResponse getMainCharacter(Long userId) {
+        Character mainCharacter = characterRepository.findByUserIdAndIsMainTrue(userId)
+                .orElseThrow(() -> new IllegalArgumentException("본캐가 설정되지 않았습니다."));
+        return MainCharacterResponse.from(mainCharacter);
     }
 } 

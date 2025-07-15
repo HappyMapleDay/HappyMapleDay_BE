@@ -17,6 +17,8 @@ import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
 import com.happymapleday.user.dto.UserSettingsResponseDto;
 import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
 import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
+import com.happymapleday.user.dto.PasswordChangeRequestDto;
+import com.happymapleday.user.dto.PasswordChangeResponseDto;
 import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
@@ -77,6 +79,7 @@ class UserServiceTest {
     private RefreshTokenRequestDto refreshTokenRequest;
     private LogoutRequestDto logoutRequest;
     private PasswordResetRequestDto passwordResetRequest;
+    private PasswordChangeRequestDto passwordChangeRequest;
     private User savedUser;
 
     @BeforeEach
@@ -94,6 +97,7 @@ class UserServiceTest {
         refreshTokenRequest = new RefreshTokenRequestDto("valid-refresh-token");
         logoutRequest = new LogoutRequestDto("valid-refresh-token");
         passwordResetRequest = new PasswordResetRequestDto("testCharacter", "test_api_key_12345");
+        passwordChangeRequest = new PasswordChangeRequestDto("testCharacter", "newPassword123");
 
         savedUser = new User("testCharacter", "encodedPassword", "encryptedApiKey");
         // 리플렉션을 사용하여 ID와 생성시간 설정
@@ -1086,6 +1090,126 @@ class UserServiceTest {
         assertThat(response.getMessage()).isNull();
         
         verify(nexonApiService).validateApiKey(boundaryApiKey);
+    }
+
+    // ==================== 비밀번호 변경 API 테스트 ====================
+
+    @Test
+    @DisplayName("비밀번호 변경 성공")
+    void changePassword_Success() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            // when
+            PasswordChangeResponseDto response = userService.changePassword(passwordChangeRequest);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMessage()).isEqualTo("비밀번호가 성공적으로 변경되었습니다.");
+
+            verify(userRepository).findById(1L);
+            verify(passwordEncoder).encode("newPassword123");
+            verify(userRepository).save(savedUser);
+            verify(secureRefreshTokenService).invalidateAllTokens(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 사용자를 찾을 수 없음")
+    void changePassword_UserNotFound_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> userService.changePassword(passwordChangeRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자를 찾을 수 없습니다.");
+
+            verify(userRepository).findById(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 본캐명 불일치")
+    void changePassword_MainCharacterNameMismatch_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+
+            PasswordChangeRequestDto mismatchRequest = new PasswordChangeRequestDto("differentCharacter", "newPassword123");
+
+            // when & then
+            assertThatThrownBy(() -> userService.changePassword(mismatchRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("본캐명이 일치하지 않습니다.");
+
+            verify(userRepository).findById(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 - 비밀번호 암호화 확인")
+    void changePassword_PasswordEncryption() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            // when
+            userService.changePassword(passwordChangeRequest);
+
+            // then - 새 비밀번호가 암호화되어 저장되는지 확인
+            verify(passwordEncoder).encode("newPassword123");
+            verify(userRepository).save(savedUser);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 - Refresh Token 무효화 확인")
+    void changePassword_RefreshTokenInvalidation() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            // when
+            userService.changePassword(passwordChangeRequest);
+
+            // then - 보안상 해당 사용자의 모든 토큰이 무효화되어야 함
+            verify(secureRefreshTokenService).invalidateAllTokens(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 데이터베이스 저장 실패")
+    void changePassword_DatabaseSaveError_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willThrow(new RuntimeException("데이터베이스 연결 실패"));
+
+            // when & then
+            assertThatThrownBy(() -> userService.changePassword(passwordChangeRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("데이터베이스 연결 실패");
+
+            verify(userRepository).findById(1L);
+            verify(passwordEncoder).encode("newPassword123");
+            verify(userRepository).save(savedUser);
+        }
     }
 
     // 리플렉션을 사용하여 private 필드 설정하는 헬퍼 메서드

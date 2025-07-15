@@ -17,6 +17,8 @@ import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
 import com.happymapleday.user.dto.UserSettingsResponseDto;
 import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
 import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
+import com.happymapleday.user.dto.PasswordChangeRequestDto;
+import com.happymapleday.user.dto.PasswordChangeResponseDto;
 import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
@@ -331,6 +333,34 @@ public class UserService {
         
         // 업데이트된 설정 반환
         return getUserSettings();
+    }
+    
+    // 비밀번호 변경 처리
+    @Transactional
+    public PasswordChangeResponseDto changePassword(PasswordChangeRequestDto request) {
+        // 현재 인증된 사용자 ID 가져오기
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        
+        // 사용자 조회
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        
+        // 요청의 mainCharacterName과 현재 사용자의 mainCharacterName 일치 확인
+        if (!user.getMainCharacterName().equals(request.getMainCharacterName())) {
+            throw new IllegalArgumentException("본캐명이 일치하지 않습니다.");
+        }
+        
+        // 새 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        
+        // 비밀번호 업데이트
+        user.updatePassword(encodedPassword);
+        userRepository.save(user);
+        
+        // 보안상 모든 Refresh Token 무효화
+        secureRefreshTokenService.invalidateAllTokens(currentUserId);
+        
+        return PasswordChangeResponseDto.success();
     }
     
     // Nexon API Key 검증 처리

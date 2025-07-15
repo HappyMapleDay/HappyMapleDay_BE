@@ -2,15 +2,17 @@ package com.happymapleday.character.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
 import com.happymapleday.character.dto.request.CharacterCreateRequest;
+import com.happymapleday.character.dto.request.CharacterBulkCreateRequest;
 import com.happymapleday.character.dto.response.CharacterResponse;
+import com.happymapleday.character.dto.response.CharacterBulkCreateResponse;
 import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
+import com.happymapleday.character.dto.response.MainCharacterResponse;
 import com.happymapleday.character.service.CharacterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import com.happymapleday.character.dto.response.MainCharacterResponse;
 
 @RestController
 @RequestMapping("/api/characters")
@@ -132,6 +134,30 @@ public class CharacterController {
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("본캐 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 2.8 여러 캐릭터 저장 (회원가입용)
+     */
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<CharacterBulkCreateResponse>> createCharactersBulk(
+            @RequestBody CharacterBulkCreateRequest request) {
+        try {
+            CharacterBulkCreateResponse response = characterService.createCharactersBulk(request);
+            return ResponseEntity.status(201)
+                    .body(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("필수 정보가 누락")) {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("캐릭터 저장 중 오류가 발생했습니다."));
         }
     }
 } 

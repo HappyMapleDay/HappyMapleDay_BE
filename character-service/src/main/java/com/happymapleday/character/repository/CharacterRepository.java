@@ -22,6 +22,9 @@ public interface CharacterRepository extends JpaRepository<Character, Long> {
     // OCID로 캐릭터 조회
     Optional<Character> findByUserIdAndOcid(Long userId, String ocid);
     
+    // OCID로 캐릭터 조회 (전역)
+    Optional<Character> findByOcid(String ocid);
+    
     // 유저의 모든 본캐 해제
     @Modifying
     @Query("UPDATE Character c SET c.isMain = false WHERE c.userId = :userId")

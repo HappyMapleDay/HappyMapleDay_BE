@@ -87,7 +87,6 @@ class UserServiceTest {
         signupRequest = new SignupRequestDto(
             "test-api-key",
             "testCharacter",
-            null,
             "password123",
             "password123",
             true

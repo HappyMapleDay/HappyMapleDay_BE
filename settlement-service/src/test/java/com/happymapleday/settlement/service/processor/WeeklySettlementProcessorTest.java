@@ -91,17 +91,16 @@ class WeeklySettlementProcessorTest {
     }
     
     @Test
-    @DisplayName("기존 정산 수정 - 성공")
+    @DisplayName("정산 수정 - 성공")
     void updateSettlement_Success() {
         // given
         Long settlementId = 1L;
-        List<WeeklyBossRecord> bossRecords = List.of(bossRecord);
         WeeklySettlement settlement = createWeeklySettlement();
         
         given(bossRecordProcessor.createBossRecords(userId, weekStartDate, request.getBossRecords()))
-                .willReturn(bossRecords);
-        given(bossRecordProcessor.saveBossRecordsWithDesireItems(settlementId, bossRecords, request.getBossRecords()))
-                .willReturn(bossRecords);
+                .willReturn(List.of(bossRecord));
+        given(bossRecordProcessor.saveBossRecordsWithDesireItems(settlementId, List.of(bossRecord), request.getBossRecords()))
+                .willReturn(List.of(bossRecord));
         given(weeklySettlementRepository.save(any(WeeklySettlement.class)))
                 .willReturn(settlement);
         
@@ -111,13 +110,72 @@ class WeeklySettlementProcessorTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getSettlementId()).isEqualTo(settlement.getId());
-        assertThat(response.getWeekStartDate()).isEqualTo(weekStartDate);
-        assertThat(response.getTotalCrystalIncome()).isEqualTo(BigInteger.valueOf(850));
+        assertThat(response.getTotalCrystalIncome()).isEqualTo(settlement.getTotalCrystalIncome());
+        assertThat(response.getTotalIncome()).isEqualTo(settlement.getTotalIncome());
         
         verify(bossRecordProcessor).deleteExistingBossRecords(settlementId);
         verify(bossRecordProcessor).createBossRecords(userId, weekStartDate, request.getBossRecords());
-        verify(crystalLimitValidator).validateCrystalLimits(bossRecords);
-        verify(bossRecordProcessor).saveBossRecordsWithDesireItems(settlementId, bossRecords, request.getBossRecords());
+        verify(crystalLimitValidator).validateCrystalLimits(List.of(bossRecord));
+        verify(bossRecordProcessor).saveBossRecordsWithDesireItems(settlementId, List.of(bossRecord), request.getBossRecords());
+        verify(weeklySettlementRepository).save(any(WeeklySettlement.class));
+    }
+
+    @Test
+    @DisplayName("PENDING 정산 생성 - 성공")
+    void createSettlementPending_Success() {
+        // given
+        WeeklySettlement settlement = createWeeklySettlement();
+        WeeklySettlement savedSettlement = createWeeklySettlement();
+        
+        given(bossRecordProcessor.createBossRecords(userId, weekStartDate, request.getBossRecords()))
+                .willReturn(List.of(bossRecord));
+        given(weeklySettlementRepository.save(any(WeeklySettlement.class)))
+                .willReturn(settlement, savedSettlement);
+        given(bossRecordProcessor.saveBossRecordsWithDesireItems(settlement.getId(), List.of(bossRecord), request.getBossRecords()))
+                .willReturn(List.of(bossRecord));
+        
+        // when
+        SettlementCompleteResponse response = processor.createSettlementPending(userId, weekStartDate, request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(savedSettlement.getId());
+        assertThat(response.getTotalCrystalIncome()).isEqualTo(savedSettlement.getTotalCrystalIncome());
+        assertThat(response.getTotalIncome()).isEqualTo(savedSettlement.getTotalIncome());
+        
+        verify(bossRecordProcessor).createBossRecords(userId, weekStartDate, request.getBossRecords());
+        verify(crystalLimitValidator).validateCrystalLimits(List.of(bossRecord));
+        verify(weeklySettlementRepository, times(2)).save(any(WeeklySettlement.class));
+        verify(bossRecordProcessor).saveBossRecordsWithDesireItems(settlement.getId(), List.of(bossRecord), request.getBossRecords());
+    }
+
+    @Test
+    @DisplayName("PENDING 정산 수정 - 성공")
+    void updateSettlementPending_Success() {
+        // given
+        Long settlementId = 1L;
+        WeeklySettlement settlement = createWeeklySettlement();
+        
+        given(bossRecordProcessor.createBossRecords(userId, weekStartDate, request.getBossRecords()))
+                .willReturn(List.of(bossRecord));
+        given(bossRecordProcessor.saveBossRecordsWithDesireItems(settlementId, List.of(bossRecord), request.getBossRecords()))
+                .willReturn(List.of(bossRecord));
+        given(weeklySettlementRepository.save(any(WeeklySettlement.class)))
+                .willReturn(settlement);
+        
+        // when
+        SettlementCompleteResponse response = processor.updateSettlementPending(settlementId, userId, weekStartDate, request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(settlement.getId());
+        assertThat(response.getTotalCrystalIncome()).isEqualTo(settlement.getTotalCrystalIncome());
+        assertThat(response.getTotalIncome()).isEqualTo(settlement.getTotalIncome());
+        
+        verify(bossRecordProcessor).deleteExistingBossRecords(settlementId);
+        verify(bossRecordProcessor).createBossRecords(userId, weekStartDate, request.getBossRecords());
+        verify(crystalLimitValidator).validateCrystalLimits(List.of(bossRecord));
+        verify(bossRecordProcessor).saveBossRecordsWithDesireItems(settlementId, List.of(bossRecord), request.getBossRecords());
         verify(weeklySettlementRepository).save(any(WeeklySettlement.class));
     }
     

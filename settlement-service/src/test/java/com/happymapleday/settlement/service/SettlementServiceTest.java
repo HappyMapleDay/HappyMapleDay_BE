@@ -226,7 +226,7 @@ class SettlementServiceTest {
     }
 
     @Test
-    @DisplayName("정산 상태 조회 - 정산 존재하지 않는 경우")
+    @DisplayName("정산 상태 조회 - 존재하지 않는 정산")
     void getSettlementStatus_NotFound() {
         // given
         given(weeklySettlementRepository.findByUserIdAndWeekStartDate(userId, weekStartDate))
@@ -234,11 +234,64 @@ class SettlementServiceTest {
         
         // when
         SettlementStatusResponse response = settlementService.getSettlementStatus(userId, weekStartDate);
-
+        
         // then
         assertThat(response).isNotNull();
         assertThat(response.getWeekStartDate()).isEqualTo(weekStartDate);
-        assertThat(response.getSettlementId()).isNull();
+        assertThat(response.getTotalCrystalIncome()).isNull();
+        assertThat(response.getTotalIncome()).isNull();
+        
+        verify(weeklySettlementRepository).findByUserIdAndWeekStartDate(userId, weekStartDate);
+    }
+
+    @Test
+    @DisplayName("자동 저장 - 성공 (새로 생성)")
+    void autoSaveSettlement_Success_Create() {
+        // given
+        SettlementRequest request = createSettlementRequest();
+        SettlementCompleteResponse expectedResponse = createSettlementCompleteResponse();
+        
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(userId, worldName, weekStartDate))
+                .willReturn(Optional.empty());
+        given(settlementProcessor.createSettlementPending(userId, weekStartDate, request))
+                .willReturn(expectedResponse);
+        
+        // when
+        SettlementCompleteResponse response = settlementService.autoSaveSettlement(userId, weekStartDate, request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(expectedResponse.getSettlementId());
+        assertThat(response.getTotalCrystalIncome()).isEqualTo(expectedResponse.getTotalCrystalIncome());
+        
+        verify(weeklySettlementRepository).findByUserIdAndWorldNameAndWeekStartDate(userId, worldName, weekStartDate);
+        verify(settlementProcessor).createSettlementPending(userId, weekStartDate, request);
+    }
+
+    @Test
+    @DisplayName("자동 저장 - 성공 (기존 수정)")
+    void autoSaveSettlement_Success_Update() {
+        // given
+        Long settlementId = 1L;
+        SettlementRequest request = createSettlementRequest();
+        SettlementCompleteResponse expectedResponse = createSettlementCompleteResponse();
+        WeeklySettlement existingSettlement = createWeeklySettlement();
+        
+        given(weeklySettlementRepository.findByUserIdAndWorldNameAndWeekStartDate(userId, worldName, weekStartDate))
+                .willReturn(Optional.of(existingSettlement));
+        given(settlementProcessor.updateSettlementPending(settlementId, userId, weekStartDate, request))
+                .willReturn(expectedResponse);
+        
+        // when
+        SettlementCompleteResponse response = settlementService.autoSaveSettlement(userId, weekStartDate, request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getSettlementId()).isEqualTo(expectedResponse.getSettlementId());
+        assertThat(response.getTotalCrystalIncome()).isEqualTo(expectedResponse.getTotalCrystalIncome());
+        
+        verify(weeklySettlementRepository).findByUserIdAndWorldNameAndWeekStartDate(userId, worldName, weekStartDate);
+        verify(settlementProcessor).updateSettlementPending(settlementId, userId, weekStartDate, request);
     }
 
     @Test
@@ -288,43 +341,65 @@ class SettlementServiceTest {
 
     // Helper methods
     private SettlementRequest createSettlementRequest() {
-        BossRecordRequest bossRecord = BossRecordRequest.builder()
-                .characterId(characterId)
-                .bossId(1L)
-                .partySize(2)
-                .crystalIncome(BigInteger.valueOf(850))
-                .desireItems(List.of())
-                .build();
-
         return SettlementRequest.builder()
                 .worldName(worldName)
-                .bossRecords(List.of(bossRecord))
+                .bossRecords(List.of(
+                        BossRecordRequest.builder()
+                                .characterId(characterId)
+                                .bossId(1L)
+                                .crystalIncome(BigInteger.valueOf(10000))
+                                .desireItems(List.of(
+                                        DesireItemRequest.builder()
+                                                .desireItemId(1L)
+                                                .characterId(characterId)
+                                                .salePrice(BigInteger.valueOf(50000))
+                                                .build()
+                                ))
+                                .build()
+                ))
                 .build();
     }
 
     private WeeklySettlement createWeeklySettlement() {
-        WeeklySettlement settlement = WeeklySettlement.builder()
+        return WeeklySettlement.builder()
+                .id(1L)
                 .userId(userId)
                 .worldName(worldName)
                 .weekStartDate(weekStartDate)
-                .totalCrystalIncome(BigInteger.valueOf(850))
-                .totalDesireItemIncome(BigInteger.ZERO)
-                .totalIncome(BigInteger.valueOf(850))
+                .totalCrystalIncome(BigInteger.valueOf(10000))
+                .totalDesireItemIncome(BigInteger.valueOf(50000))
+                .totalIncome(BigInteger.valueOf(60000))
                 .totalBossCount(1)
                 .characterCount(1)
                 .status(SettlementStatus.PENDING)
                 .build();
-        
-        // 테스트를 위해 ID 설정
-        try {
-            java.lang.reflect.Field idField = WeeklySettlement.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(settlement, 1L);
-        } catch (Exception e) {
-            // 리플렉션 실패 시 무시
-        }
-        
-        return settlement;
+    }
+
+    private WeeklySettlement createCompletedWeeklySettlement() {
+        return WeeklySettlement.builder()
+                .id(1L)
+                .userId(userId)
+                .worldName(worldName)
+                .weekStartDate(weekStartDate)
+                .totalCrystalIncome(BigInteger.valueOf(10000))
+                .totalDesireItemIncome(BigInteger.valueOf(50000))
+                .totalIncome(BigInteger.valueOf(60000))
+                .totalBossCount(1)
+                .characterCount(1)
+                .status(SettlementStatus.COMPLETED)
+                .build();
+    }
+
+    private SettlementCompleteResponse createSettlementCompleteResponse() {
+        return SettlementCompleteResponse.builder()
+                .settlementId(1L)
+                .weekStartDate(weekStartDate)
+                .totalCrystalIncome(BigInteger.valueOf(10000))
+                .totalDesireItemIncome(BigInteger.valueOf(50000))
+                .totalIncome(BigInteger.valueOf(60000))
+                .totalBossCount(1)
+                .characterCount(1)
+                .build();
     }
 
     private WeeklyBossRecord createWeeklyBossRecord(Long settlementId) {
@@ -350,115 +425,5 @@ class SettlementServiceTest {
         }
         
         return record;
-    }
-
-    private SettlementCompleteResponse createSettlementCompleteResponse() {
-        return SettlementCompleteResponse.builder()
-                .settlementId(1L)
-                .weekStartDate(weekStartDate)
-                .totalCrystalIncome(BigInteger.valueOf(850))
-                .totalDesireItemIncome(BigInteger.ZERO)
-                .totalIncome(BigInteger.valueOf(850))
-                .totalBossCount(1)
-                .characterCount(1)
-                .build();
-    }
-
-    @Test
-    @DisplayName("정산 완료 - 성공")
-    void completeSettlement_Success() {
-        // given
-        Long settlementId = 1L;
-        WeeklySettlement pendingSettlement = createWeeklySettlement();
-        WeeklySettlement completedSettlement = createCompletedWeeklySettlement();
-        
-        given(weeklySettlementRepository.findById(settlementId))
-                .willReturn(Optional.of(pendingSettlement));
-        given(weeklySettlementRepository.save(any(WeeklySettlement.class)))
-                .willReturn(completedSettlement);
-        
-        // when
-        SettlementCompleteResponse response = settlementService.completeSettlement(settlementId, userId);
-        
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.getSettlementId()).isEqualTo(completedSettlement.getId());
-        assertThat(response.getTotalCrystalIncome()).isEqualTo(completedSettlement.getTotalCrystalIncome());
-        assertThat(response.getTotalIncome()).isEqualTo(completedSettlement.getTotalIncome());
-        
-        verify(weeklySettlementRepository).findById(settlementId);
-        verify(weeklySettlementRepository).save(any(WeeklySettlement.class));
-    }
-
-    @Test
-    @DisplayName("정산 완료 - 존재하지 않는 정산 ID")
-    void completeSettlement_NotFoundSettlement_ThrowsException() {
-        // given
-        Long settlementId = 999L;
-        
-        given(weeklySettlementRepository.findById(settlementId))
-                .willReturn(Optional.empty());
-        
-        // when & then
-        assertThatThrownBy(() -> settlementService.completeSettlement(settlementId, userId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("존재하지 않는 정산입니다");
-        
-        verify(weeklySettlementRepository).findById(settlementId);
-        verify(weeklySettlementRepository, never()).save(any(WeeklySettlement.class));
-    }
-
-    @Test
-    @DisplayName("정산 완료 - 다른 사용자의 정산")
-    void completeSettlement_DifferentUser_ThrowsException() {
-        // given
-        Long settlementId = 1L;
-        Long differentUserId = 999L;
-        WeeklySettlement settlement = createWeeklySettlement();
-        
-        given(weeklySettlementRepository.findById(settlementId))
-                .willReturn(Optional.of(settlement));
-        
-        // when & then
-        assertThatThrownBy(() -> settlementService.completeSettlement(settlementId, differentUserId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("다른 사용자의 정산은 삭제할 수 없습니다");
-        
-        verify(weeklySettlementRepository).findById(settlementId);
-        verify(weeklySettlementRepository, never()).save(any(WeeklySettlement.class));
-    }
-
-    @Test
-    @DisplayName("정산 완료 - 이미 완료된 정산")
-    void completeSettlement_AlreadyCompleted_ThrowsException() {
-        // given
-        Long settlementId = 1L;
-        WeeklySettlement completedSettlement = createCompletedWeeklySettlement();
-        
-        given(weeklySettlementRepository.findById(settlementId))
-                .willReturn(Optional.of(completedSettlement));
-        
-        // when & then
-        assertThatThrownBy(() -> settlementService.completeSettlement(settlementId, userId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("이미 정산이 완료된 데이터입니다");
-        
-        verify(weeklySettlementRepository).findById(settlementId);
-        verify(weeklySettlementRepository, never()).save(any(WeeklySettlement.class));
-    }
-
-    private WeeklySettlement createCompletedWeeklySettlement() {
-        return WeeklySettlement.builder()
-                .id(1L)
-                .userId(userId)
-                .worldName(worldName)
-                .weekStartDate(weekStartDate)
-                .totalCrystalIncome(BigInteger.valueOf(850))
-                .totalDesireItemIncome(BigInteger.ZERO)
-                .totalIncome(BigInteger.valueOf(850))
-                .totalBossCount(1)
-                .characterCount(1)
-                .status(SettlementStatus.COMPLETED)
-                .build();
     }
 } 

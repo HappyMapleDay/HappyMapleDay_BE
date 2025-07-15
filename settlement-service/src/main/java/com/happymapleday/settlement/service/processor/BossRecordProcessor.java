@@ -57,7 +57,7 @@ public class BossRecordProcessor {
             
             // 물욕템 처리 (물욕템이 있는 경우에만)
             if (desireItemIncome.compareTo(BigInteger.ZERO) > 0) {
-                desireItemProcessor.processDesireItems(savedRecord.getId(), bossRequest.getDesireItems());
+                desireItemProcessor.processDesireItems(savedRecord.getId(), bossRequest.getCharacterId(), bossRequest.getDesireItems());
             }
             
             savedRecords.add(savedRecord);
@@ -89,7 +89,7 @@ public class BossRecordProcessor {
                 .bossId(bossRequest.getBossId())
                 .weekStartDate(weekStartDate)
                 .crystalIncome(bossRequest.getCrystalIncome())
-                .partySize(bossRequest.getPartySize())
+                .partySize(bossRequest.getPartySize() != null ? bossRequest.getPartySize() : 1)
                 .desireItemIncome(BigInteger.ZERO)
                 .totalIncome(bossRequest.getCrystalIncome())
                 .build();

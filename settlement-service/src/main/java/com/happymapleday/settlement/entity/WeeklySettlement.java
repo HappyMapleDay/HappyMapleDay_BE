@@ -44,23 +44,23 @@ public class WeeklySettlement {
     private LocalDate weekStartDate;
     
     @Column(name = "total_crystal_income")
-    private BigInteger totalCrystalIncome = BigInteger.ZERO;
+    private BigInteger totalCrystalIncome;
     
     @Column(name = "total_desire_item_income")
-    private BigInteger totalDesireItemIncome = BigInteger.ZERO;
+    private BigInteger totalDesireItemIncome;
     
     @Column(name = "total_income")
-    private BigInteger totalIncome = BigInteger.ZERO;
+    private BigInteger totalIncome;
     
     @Column(name = "total_boss_count")
-    private Integer totalBossCount = 0;
+    private Integer totalBossCount;
     
     @Column(name = "character_count")
-    private Integer characterCount = 0;
+    private Integer characterCount;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "settlement_status", nullable = false)
-    private SettlementStatus status = SettlementStatus.PENDING;
+    private SettlementStatus status;
     
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)

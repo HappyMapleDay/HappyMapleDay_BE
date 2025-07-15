@@ -162,7 +162,7 @@ class BossRecordProcessorTest {
         assertThat(result).hasSize(1);
         
         verify(weeklyBossRecordRepository).save(any(WeeklyBossRecord.class));
-        verify(desireItemProcessor).processDesireItems(1L, List.of(desireItemRequest));
+        verify(desireItemProcessor).processDesireItems(1L, 1L, List.of(desireItemRequest));
     }
     
     @Test

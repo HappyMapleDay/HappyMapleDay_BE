@@ -25,4 +25,7 @@ public interface SettlementService {
     
     // 현재 주간 상태 확인
     CurrentWeekStatusResponse getCurrentWeekStatus(Long userId);
+    
+    // 정산 완료 처리 (PENDING → COMPLETED)
+    SettlementCompleteResponse completeSettlement(Long settlementId, Long userId);
 } 

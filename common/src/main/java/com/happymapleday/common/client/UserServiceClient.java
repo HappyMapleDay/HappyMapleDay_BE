@@ -18,4 +18,7 @@ public interface UserServiceClient {
     
     @GetMapping("/api/user/{userId}")
     ApiResponse<Object> getUserInfo(@PathVariable Long userId);
+    
+    @GetMapping("/api/user/auto-settlement-enabled")
+    ApiResponse<Object> getAutoSettlementEnabledUsers();
 } 

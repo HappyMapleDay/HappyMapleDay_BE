@@ -70,4 +70,13 @@ public class SettlementController {
         CurrentWeekStatusResponse response = settlementService.getCurrentWeekStatus(userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+    
+    // 정산 완료 처리 (PENDING → COMPLETED)
+    @PostMapping("/user/{userId}/settlement/{settlementId}/complete")
+    public ResponseEntity<ApiResponse<SettlementCompleteResponse>> completeSettlement(
+            @PathVariable Long userId,
+            @PathVariable Long settlementId) {
+        SettlementCompleteResponse response = settlementService.completeSettlement(settlementId, userId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 } 

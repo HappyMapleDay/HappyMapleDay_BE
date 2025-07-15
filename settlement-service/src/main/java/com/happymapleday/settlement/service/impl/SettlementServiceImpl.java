@@ -6,6 +6,7 @@ import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.dto.response.SettlementStatusResponse;
 import com.happymapleday.settlement.dto.response.SettlementDetailResponse;
+import com.happymapleday.settlement.entity.SettlementStatus;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.entity.WeeklySettlement;
 import com.happymapleday.settlement.repository.WeeklyBossRecordRepository;
@@ -129,5 +130,41 @@ public class SettlementServiceImpl implements SettlementService {
     private Optional<WeeklySettlement> findSettlementByUserAndWeek(Long userId, LocalDate weekStartDate) {
         List<WeeklySettlement> settlements = weeklySettlementRepository.findByUserIdAndWeekStartDate(userId, weekStartDate);
         return settlements.isEmpty() ? Optional.empty() : Optional.of(settlements.get(0));
+    }
+    
+    @Override
+    public SettlementCompleteResponse completeSettlement(Long settlementId, Long userId) {
+        WeeklySettlement settlement = findSettlementById(settlementId);
+        validateUserOwnership(settlement, userId);
+        
+        if (settlement.getStatus() == SettlementStatus.COMPLETED) {
+            throw new IllegalStateException("이미 정산이 완료된 데이터입니다.");
+        }
+        
+        WeeklySettlement completedSettlement = WeeklySettlement.builder()
+                .id(settlement.getId())
+                .userId(settlement.getUserId())
+                .worldName(settlement.getWorldName())
+                .weekStartDate(settlement.getWeekStartDate())
+                .totalCrystalIncome(settlement.getTotalCrystalIncome())
+                .totalDesireItemIncome(settlement.getTotalDesireItemIncome())
+                .totalIncome(settlement.getTotalIncome())
+                .totalBossCount(settlement.getTotalBossCount())
+                .characterCount(settlement.getCharacterCount())
+                .status(SettlementStatus.COMPLETED)
+                .bossRecords(settlement.getBossRecords())
+                .build();
+        
+        WeeklySettlement savedSettlement = weeklySettlementRepository.save(completedSettlement);
+        
+        return SettlementCompleteResponse.builder()
+                .settlementId(savedSettlement.getId())
+                .weekStartDate(savedSettlement.getWeekStartDate())
+                .totalCrystalIncome(savedSettlement.getTotalCrystalIncome())
+                .totalDesireItemIncome(savedSettlement.getTotalDesireItemIncome())
+                .totalIncome(savedSettlement.getTotalIncome())
+                .totalBossCount(savedSettlement.getTotalBossCount())
+                .characterCount(savedSettlement.getCharacterCount())
+                .build();
     }
 } 

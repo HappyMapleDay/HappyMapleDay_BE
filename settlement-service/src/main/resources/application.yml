@@ -29,7 +29,7 @@ spring:
 # 스케줄링 설정
 scheduling:
   weekly-settlement:
-    cron: "0 0 0 * * MON"  # 매주 월요일 자정
+    cron: "0 0 0 * * THU"  # 매주 목요일 자정
 
 # 다른 서비스 URL 설정
 services:

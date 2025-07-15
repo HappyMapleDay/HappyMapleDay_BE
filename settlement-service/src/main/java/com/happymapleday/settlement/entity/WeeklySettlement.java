@@ -58,6 +58,10 @@ public class WeeklySettlement {
     @Column(name = "character_count")
     private Integer characterCount = 0;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "settlement_status", nullable = false)
+    private SettlementStatus status = SettlementStatus.PENDING;
+    
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklyBossRecord> bossRecords;

@@ -2,6 +2,7 @@ package com.happymapleday.settlement.service.processor;
 
 import com.happymapleday.settlement.dto.request.SettlementRequest;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
+import com.happymapleday.settlement.entity.SettlementStatus;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.entity.WeeklySettlement;
 import com.happymapleday.settlement.repository.WeeklySettlementRepository;
@@ -83,6 +84,7 @@ public class WeeklySettlementProcessor {
                 .totalIncome(totalCrystalIncome)
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
+                .status(SettlementStatus.PENDING)
                 .build();
     }
     
@@ -94,6 +96,7 @@ public class WeeklySettlementProcessor {
         BigInteger totalIncome = calculateTotalIncome(savedBossRecords);
         
         WeeklySettlement updatedSettlement = WeeklySettlement.builder()
+                .id(settlement.getId())
                 .userId(settlement.getUserId())
                 .worldName(settlement.getWorldName())
                 .weekStartDate(settlement.getWeekStartDate())
@@ -102,6 +105,7 @@ public class WeeklySettlementProcessor {
                 .totalIncome(totalIncome)
                 .totalBossCount(savedBossRecords.size())
                 .characterCount(calculateCharacterCount(savedBossRecords))
+                .status(SettlementStatus.PENDING)
                 .build();
         
         return weeklySettlementRepository.save(updatedSettlement);
@@ -112,6 +116,7 @@ public class WeeklySettlementProcessor {
                                                              LocalDate weekStartDate, SettlementRequest request, 
                                                              List<WeeklyBossRecord> bossRecords) {
         WeeklySettlement settlement = WeeklySettlement.builder()
+                .id(settlementId)
                 .userId(userId)
                 .worldName(request.getWorldName())
                 .weekStartDate(weekStartDate)
@@ -120,6 +125,7 @@ public class WeeklySettlementProcessor {
                 .totalIncome(calculateTotalIncome(bossRecords))
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
+                .status(SettlementStatus.PENDING)
                 .build();
         
         return weeklySettlementRepository.save(settlement);

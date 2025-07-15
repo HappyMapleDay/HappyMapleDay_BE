@@ -1,10 +1,11 @@
-package com.happymapleday.settlement.service;
+package com.happymapleday.settlement.service.processor;
 
 import com.happymapleday.settlement.dto.request.SettlementRequest;
 import com.happymapleday.settlement.dto.response.SettlementCompleteResponse;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.entity.WeeklySettlement;
 import com.happymapleday.settlement.repository.WeeklySettlementRepository;
+import com.happymapleday.settlement.service.validator.CrystalLimitValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

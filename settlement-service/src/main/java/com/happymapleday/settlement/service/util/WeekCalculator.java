@@ -1,4 +1,4 @@
-package com.happymapleday.settlement.service;
+package com.happymapleday.settlement.service.util;
 
 import org.springframework.stereotype.Component;
 

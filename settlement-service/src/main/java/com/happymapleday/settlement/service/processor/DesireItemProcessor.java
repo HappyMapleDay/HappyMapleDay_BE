@@ -1,4 +1,4 @@
-package com.happymapleday.settlement.service;
+package com.happymapleday.settlement.service.processor;
 
 import com.happymapleday.settlement.dto.request.DesireItemRequest;
 import com.happymapleday.settlement.entity.DesireItemRecord;

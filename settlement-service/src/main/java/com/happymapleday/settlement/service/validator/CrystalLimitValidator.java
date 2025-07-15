@@ -1,4 +1,4 @@
-package com.happymapleday.settlement.service;
+package com.happymapleday.settlement.service.validator;
 
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import org.springframework.stereotype.Component;

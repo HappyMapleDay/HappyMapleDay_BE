@@ -1,4 +1,4 @@
-package com.happymapleday.settlement.service;
+package com.happymapleday.settlement.service.processor;
 
 import com.happymapleday.settlement.dto.request.BossRecordRequest;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;

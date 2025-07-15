@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.AccessLevel;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -26,8 +25,9 @@ import java.util.Map;
            @Index(name = "idx_user_week", columnList = "user_id, week_start_date")
        })
 @Getter
+@Builder
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class WeeklySettlement {
     
     @Id
@@ -79,41 +79,6 @@ public class WeeklySettlement {
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklyBossRecord> bossRecords;
 
-    @Builder
-    public WeeklySettlement(Long userId, String worldName, LocalDate weekStartDate,
-                           BigInteger totalCrystalIncome, BigInteger totalDesireItemIncome,
-                           BigInteger totalIncome, Integer totalBossCount, Integer characterCount,
-                           Boolean isFinalized, LocalDateTime finalizedAt) {
-        this.userId = userId;
-        this.worldName = worldName;
-        this.weekStartDate = weekStartDate;
-        this.totalCrystalIncome = totalCrystalIncome != null ? totalCrystalIncome : BigInteger.ZERO;
-        this.totalDesireItemIncome = totalDesireItemIncome != null ? totalDesireItemIncome : BigInteger.ZERO;
-        this.totalIncome = totalIncome != null ? totalIncome : BigInteger.ZERO;
-        this.totalBossCount = totalBossCount != null ? totalBossCount : 0;
-        this.characterCount = characterCount != null ? characterCount : 0;
-        this.isFinalized = isFinalized != null ? isFinalized : false;
-        this.finalizedAt = finalizedAt;
-    }
-    
-    // 도메인 로직 메서드 (불변 계산)
-    public BigInteger calculateTotalCrystalIncome() {
-        if (bossRecords == null || bossRecords.isEmpty()) {
-            return BigInteger.ZERO;
-        }
-        return bossRecords.stream()
-                .map(WeeklyBossRecord::getCrystalIncome)
-                .reduce(BigInteger.ZERO, BigInteger::add);
-    }
-    
-    public BigInteger calculateTotalDesireItemIncome() {
-        if (bossRecords == null || bossRecords.isEmpty()) {
-            return BigInteger.ZERO;
-        }
-        return bossRecords.stream()
-                .map(WeeklyBossRecord::getDesireItemIncome)
-                .reduce(BigInteger.ZERO, BigInteger::add);
-    }
 
     // 결정석 제한 관련 메서드
     public Map<Long, Integer> getCharacterCrystalCounts() {

@@ -52,10 +52,29 @@ public class CharacterService {
         Character character = new Character(
                 request.getUserId(),
                 request.getCharacterName(),
-                request.getOcid()
+                request.getOcid(),
+                request.getIsMain()
         );
         
         Character savedCharacter = characterRepository.save(character);
         return CharacterResponse.from(savedCharacter);
+    }
+    
+    /**
+     * 캐릭터 삭제
+     */
+    @Transactional
+    public void deleteCharacter(Long characterId) {
+        // 캐릭터 존재 여부 확인
+        Character character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
+        
+        // 본캐 삭제 방지
+        if (character.getIsMain()) {
+            throw new IllegalArgumentException("본캐는 삭제할 수 없습니다.");
+        }
+        
+        // 캐릭터 삭제
+        characterRepository.delete(character);
     }
 } 

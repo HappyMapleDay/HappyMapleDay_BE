@@ -36,11 +36,11 @@ class CharacterServiceTest {
     @BeforeEach
     void setUp() {
         // 테스트 데이터 설정
-        testCharacter1 = new Character(1L, "테스트캐릭터1", "test-ocid-1");
+        testCharacter1 = new Character(1L, "테스트캐릭터1", "test-ocid-1", false);
         testCharacter1.setId(1L);
         testCharacter1.setAsMainCharacter();
 
-        testCharacter2 = new Character(1L, "테스트캐릭터2", "test-ocid-2");
+        testCharacter2 = new Character(1L, "테스트캐릭터2", "test-ocid-2", false);
         testCharacter2.setId(2L);
 
         characterList = Arrays.asList(testCharacter1, testCharacter2);
@@ -107,7 +107,7 @@ class CharacterServiceTest {
     void getAllCharactersByUserId_MultipleCharacters() {
         // given
         Long userId = 1L;
-        Character character3 = new Character(1L, "테스트캐릭터3", "test-ocid-3");
+        Character character3 = new Character(1L, "테스트캐릭터3", "test-ocid-3", false);
         character3.setId(3L);
         List<Character> multipleCharacterList = Arrays.asList(testCharacter1, testCharacter2, character3);
         given(characterRepository.findByUserIdOrderByCreatedAtDesc(userId))

@@ -128,14 +128,11 @@ public class CrystalLimitManager {
                         // BossSelection으로 변환
                         BossSelection bossSelection = BossSelection.builder()
                                 .bossId(targetBoss.getId())
-                                .bossName(targetBoss.getBossName())
-                                .difficulty(targetBoss.getDifficulty())
-                                .crystalPrice(targetBoss.getCrystalPrice())
-                                .partySize(targetBoss.getMaxPartySize())
+                                .partySize(requestedBoss.getPartySize())
                                 .build();
                         
                         BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(
-                                bossSelection, true, false, true);
+                                bossSelection, targetBoss, true, false, true);
                         
                         characterRecommendations.computeIfAbsent(selection.getCharacterId(), k -> new ArrayList<>())
                                 .add(recommendation);
@@ -159,7 +156,7 @@ public class CrystalLimitManager {
         }
         
         // 수익 기준으로 정렬 (높은 순)
-        candidates.sort(Comparator.comparingLong(c -> c.boss.getCrystalPrice()));
+        candidates.sort(Comparator.comparingLong(c -> c.getBoss().getCrystalPrice()));
         Collections.reverse(candidates);
         
         // 이미 배정된 파티 보스 개수 계산
@@ -171,7 +168,7 @@ public class CrystalLimitManager {
                 break;
             }
             
-            Long characterId = candidate.characterId;
+            Long characterId = candidate.getCharacterId();
             List<BossRecommendation> characterRecs = characterRecommendations.get(characterId);
             
             // 캐릭터별 12개 제한 확인 (필수는 아니지만 참고)
@@ -181,22 +178,20 @@ public class CrystalLimitManager {
             
             // BossSelection으로 변환
             BossSelection bossSelection = BossSelection.builder()
-                    .bossId(candidate.boss.getId())
-                    .bossName(candidate.boss.getBossName())
-                    .difficulty(candidate.boss.getDifficulty())
-                    .crystalPrice(candidate.boss.getCrystalPrice())
-                    .partySize(candidate.boss.getMaxPartySize())
+                    .bossId(candidate.getBoss().getId())
+                    .partySize(1) // 솔로 보스
                     .build();
             
             BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(
-                    bossSelection, false, 
-                    candidate.boss.getId().equals(highestDifficultySoloBossId), 
+                    bossSelection, candidate.getBoss(),
+                    false, 
+                    candidate.getBoss().getId().equals(highestDifficultySoloBossId), 
                     true);
             
             characterRecommendations.computeIfAbsent(characterId, k -> new ArrayList<>())
                     .add(recommendation);
             
-            usedBossIds.add(candidate.boss.getId());
+            usedBossIds.add(candidate.getBoss().getId());
             totalAssigned++;
         }
         
@@ -256,17 +251,6 @@ public class CrystalLimitManager {
                         .partyBossIds(new ArrayList<>())
                         .build())
                 .collect(Collectors.toList());
-    }
-    
-    // 보스 후보 클래스
-    private static class BossCandidate {
-        final BossResponse boss;
-        final Long characterId;
-        
-        BossCandidate(BossResponse boss, Long characterId) {
-            this.boss = boss;
-            this.characterId = characterId;
-        }
     }
     
     // 캐릭터별 결정석 제한 체크

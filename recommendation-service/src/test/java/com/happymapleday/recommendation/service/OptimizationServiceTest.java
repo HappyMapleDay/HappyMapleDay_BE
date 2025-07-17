@@ -219,7 +219,7 @@ class OptimizationServiceTest {
     }
 
     @Test
-    @DisplayName("크리스탈 카운트 누적 테스트")
+    @DisplayName("결정석 개수 누적 테스트")
     void optimizeRecommendations_CrystalCountAccumulation() {
         // given
         CharacterRecommendation rec1 = CharacterRecommendation.builder()

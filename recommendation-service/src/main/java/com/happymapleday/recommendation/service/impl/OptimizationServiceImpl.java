@@ -42,13 +42,23 @@ public class OptimizationServiceImpl implements OptimizationService {
     private CharacterRecommendation createCharacterRecommendation(CharacterBossSelection selection, int currentGlobalCrystalCount) {
         List<BossSelection> bossSelections = selection.getBossSelections();
         
+        // 같은 보스 이름에서 가장 높은 수익을 가진 난이도만 선택
+        Map<String, BossSelection> uniqueBossMap = bossSelections.stream()
+                .collect(Collectors.toMap(
+                        BossSelection::getBossName,
+                        boss -> boss,
+                        (existing, replacement) -> existing.getCrystalPrice() >= replacement.getCrystalPrice() ? existing : replacement
+                ));
+        
+        List<BossSelection> filteredBossSelections = new ArrayList<>(uniqueBossMap.values());
+        
         // 파티 보스 찾기 (반드시 포함)
-        List<BossSelection> partyBosses = bossSelections.stream()
+        List<BossSelection> partyBosses = filteredBossSelections.stream()
                 .filter(BossSelection::isPartyBoss)
                 .collect(Collectors.toList());
         
         // 솔로 보스 찾기 (난이도 기준 정렬)
-        List<BossSelection> soloBosses = bossSelections.stream()
+        List<BossSelection> soloBosses = filteredBossSelections.stream()
                 .filter(BossSelection::isSoloBoss)
                 .sorted(Comparator.comparingLong(BossSelection::getCrystalPrice).reversed())
                 .collect(Collectors.toList());

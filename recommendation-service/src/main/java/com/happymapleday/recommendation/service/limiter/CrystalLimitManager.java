@@ -28,17 +28,12 @@ public class CrystalLimitManager {
     // 90개 제한 내에서 가장 수익이 높은 조합 찾기
     public List<CharacterRecommendation> optimizeGlobalRecommendations(List<CharacterBossSelection> characterBossSelections) {
         try {
-            log.info("전체 최적화 시작");
-            
             // 1. 전체 보스 목록 가져오기
             ApiResponse<List<BossResponse>> response = bossServiceClient.getBossList();
             if (!response.getStatus().equals("success") || response.getData() == null) {
-                log.error("보스 목록 조회 실패: status={}, data={}", response.getStatus(), response.getData());
                 return fallbackToOriginalLogic(characterBossSelections);
             }
-            
-            log.info("보스 목록 조회 성공: {} 개", response.getData().size());
-            
+
             List<BossResponse> allBosses = response.getData();
             
             // 2. 솔로 보스 중 가장 어려운 보스 찾기 (결정석 가격이 가장 높은 솔로 보스)
@@ -48,29 +43,10 @@ public class CrystalLimitManager {
             Map<Long, List<BossResponse>> characterClearableBosses = createCharacterClearableBosses(
                     characterBossSelections, allBosses, highestDifficultySoloBossId);
             
-            log.info("캐릭터별 클리어 가능 보스 개수: {}", 
-                    characterClearableBosses.entrySet().stream()
-                            .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    entry -> entry.getValue().size()
-                            ))
-            );
-            
             // 4. 최적화된 보스 조합 찾기
-            List<CharacterRecommendation> result = findOptimalCombination(characterBossSelections, characterClearableBosses, highestDifficultySoloBossId);
-            
-            log.info("최적화 결과: 캐릭터별 크리스탈 개수 {}",
-                    result.stream()
-                            .collect(Collectors.toMap(
-                                    CharacterRecommendation::getCharacterName,
-                                    CharacterRecommendation::getCrystalCount
-                            ))
-            );
-            
-            return result;
+            return findOptimalCombination(characterBossSelections, characterClearableBosses, highestDifficultySoloBossId);
                     
         } catch (Exception e) {
-            log.error("최적화 중 오류 발생, 기본 로직으로 폴백", e);
             return fallbackToOriginalLogic(characterBossSelections);
         }
     }
@@ -93,8 +69,6 @@ public class CrystalLimitManager {
         Map<Long, List<BossResponse>> characterClearableBosses = new HashMap<>();
         
         for (CharacterBossSelection selection : characterBossSelections) {
-            log.info("캐릭터 {} 처리 시작: 선택한 보스 개수 {}", 
-                    selection.getCharacterName(), selection.getBossSelections().size());
             List<BossResponse> clearableBosses = new ArrayList<>();
             
             // 1. 사용자가 요청한 파티 보스들 (2명 이상으로 클리어한다고 작성한 것들)
@@ -109,22 +83,14 @@ public class CrystalLimitManager {
                     .collect(Collectors.toList()));
             
             // 2. 각 캐릭터가 선택한 솔로 보스들 중에서 가장 어려운 보스 찾기 (partySize == 1)
-            log.info("캐릭터 {} 전체 선택 보스 partySize 확인:", selection.getCharacterName());
-            selection.getBossSelections().forEach(boss -> 
-                log.info("  - 보스 ID: {}, partySize: {}, isPartyBoss: {}", 
-                    boss.getBossId(), boss.getPartySize(), boss.isPartyBoss()));
-            
             List<BossSelection> soloBossSelections = selection.getBossSelections().stream()
                     .filter(boss -> boss.getPartySize() == 1) // 솔로로 가기로 선택한 보스들
                     .collect(Collectors.toList());
-            
-            log.info("캐릭터 {} 솔로로 가기로 선택한 보스 개수: {}", selection.getCharacterName(), soloBossSelections.size());
             
             // 단계별로 확인
             List<Long> selectedBossIds = soloBossSelections.stream()
                     .map(BossSelection::getBossId)
                     .collect(Collectors.toList());
-            log.info("캐릭터 {} 선택한 보스 ID들: {}", selection.getCharacterName(), selectedBossIds);
             
             List<BossResponse> foundBosses = selectedBossIds.stream()
                     .map(bossId -> allBosses.stream()
@@ -133,7 +99,6 @@ public class CrystalLimitManager {
                             .orElse(null))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            log.info("캐릭터 {} 찾은 보스 개수: {}", selection.getCharacterName(), foundBosses.size());
             
             // 솔로로 가기로 선택한 보스들의 실제 정보 가져오기
             List<BossResponse> soloBossResponses = foundBosses.stream()
@@ -141,17 +106,10 @@ public class CrystalLimitManager {
                             .anyMatch(soloBossSelection -> soloBossSelection.getBossId().equals(bossResponse.getId())))
                     .collect(Collectors.toList());
             
-            log.info("캐릭터 {} 솔로로 가기로 선택한 보스 정보:", selection.getCharacterName());
-            soloBossResponses.forEach(boss -> 
-                log.info("  - 보스 ID: {}, 이름: {}, 가격: {}", 
-                    boss.getId(), boss.getBossName(), boss.getCrystalPrice()));
-            
             Long characterHighestDifficultySoloBossId = soloBossResponses.stream()
                     .max(Comparator.comparingLong(BossResponse::getCrystalPrice))
                     .map(BossResponse::getId)
                     .orElse(null);
-            
-            log.info("캐릭터 {} 가장 어려운 솔로 보스 ID: {}", selection.getCharacterName(), characterHighestDifficultySoloBossId);
             
             // 3. 모든 보스는 클리어 가능하되, 솔로 보스는 해당 캐릭터의 가장 어려운 솔로 보스보다 결정석 가격이 낮거나 같은 것만 클리어 가능
             if (characterHighestDifficultySoloBossId != null) {
@@ -166,18 +124,9 @@ public class CrystalLimitManager {
                             .collect(Collectors.toList());
                     
                     clearableBosses.addAll(availableBosses);
-                    
-                    log.info("캐릭터 {} 클리어 가능 보스 개수: {} (기준 가격: {})", 
-                            selection.getCharacterName(), 
-                            availableBosses.size(), 
-                            characterHighestDifficultySoloBoss.getCrystalPrice());
                 }
-            } else {
-                // 솔로로 가기로 선택한 보스가 없는 경우, 파티로 가기로 선택한 보스들만 클리어 가능
-                log.info("캐릭터 {} 솔로로 가기로 선택한 보스 없음", selection.getCharacterName());
             }
             
-            log.info("캐릭터 {} 총 클리어 가능 보스 개수: {}", selection.getCharacterName(), clearableBosses.size());
             characterClearableBosses.put(selection.getCharacterId(), clearableBosses);
         }
         

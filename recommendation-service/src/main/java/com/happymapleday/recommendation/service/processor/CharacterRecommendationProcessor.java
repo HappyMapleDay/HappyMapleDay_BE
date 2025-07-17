@@ -37,7 +37,6 @@ public class CharacterRecommendationProcessor {
         // 보스 정보 조회
         ApiResponse<List<BossResponse>> response = bossServiceClient.getBossList();
         if (!"success".equals(response.getStatus()) || response.getData() == null) {
-            log.error("보스 목록 조회 실패");
             throw new RuntimeException("보스 정보를 가져올 수 없습니다.");
         }
         
@@ -67,8 +66,7 @@ public class CharacterRecommendationProcessor {
             
             BossResponse bossInfo = bossInfoMap.get(boss.getBossId());
             if (bossInfo == null) {
-                log.warn("보스 정보를 찾을 수 없음: {}", boss.getBossId());
-                continue;
+                throw new RuntimeException("보스 정보를 가져올 수 없습니다.");
             }
             
             BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(boss, bossInfo, true, false, true);
@@ -87,8 +85,7 @@ public class CharacterRecommendationProcessor {
             
             BossResponse bossInfo = bossInfoMap.get(boss.getBossId());
             if (bossInfo == null) {
-                log.warn("보스 정보를 찾을 수 없음: {}", boss.getBossId());
-                continue;
+                throw new RuntimeException("보스 정보를 가져올 수 없습니다.");
             }
             
             boolean isHighestDifficulty = boss.getBossId().equals(highestDifficultySoloBossId);

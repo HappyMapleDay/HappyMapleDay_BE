@@ -47,11 +47,7 @@ class RecommendationControllerTest {
         // 테스트 데이터 준비
         BossSelection bossSelection = BossSelection.builder()
                 .bossId(1L)
-                .bossName("자쿰")
-                .difficulty("이지")
-                .crystalPrice(10000L)
                 .partySize(1)
-                .maxPartySize(6)
                 .build();
 
         CharacterBossSelection characterBossSelection = CharacterBossSelection.builder()

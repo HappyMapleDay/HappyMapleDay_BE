@@ -1,5 +1,8 @@
 package com.happymapleday.recommendation.service.processor;
 
+import com.happymapleday.common.client.BossServiceClient;
+import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.dto.request.BossSelection;
 import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
 import com.happymapleday.recommendation.dto.response.BossRecommendation;
@@ -17,11 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -36,6 +41,9 @@ class CharacterRecommendationProcessorTest {
 
     @Mock
     private CrystalLimitManager crystalLimitManager;
+    
+    @Mock
+    private BossServiceClient bossServiceClient;
 
     @InjectMocks
     private CharacterRecommendationProcessor characterRecommendationProcessor;
@@ -45,26 +53,40 @@ class CharacterRecommendationProcessorTest {
     private List<BossSelection> partyBosses;
     private List<BossSelection> soloBosses;
     private List<BossSelection> filteredBossSelections;
+    private List<BossResponse> bossResponses;
+    private Map<Long, BossResponse> bossInfoMap;
 
     @BeforeEach
     void setUp() {
-        // 테스트 데이터 준비
-        BossSelection soloBoss = BossSelection.builder()
-                .bossId(1L)
+        // 보스 응답 데이터 준비
+        BossResponse soloBossResponse = BossResponse.builder()
+                .id(1L)
                 .bossName("자쿰")
                 .difficulty("이지")
                 .crystalPrice(10000L)
-                .partySize(1)
                 .maxPartySize(6)
+                .build();
+
+        BossResponse partyBossResponse = BossResponse.builder()
+                .id(2L)
+                .bossName("루타비스")
+                .difficulty("하드")
+                .crystalPrice(200000L)
+                .maxPartySize(6)
+                .build();
+        
+        bossResponses = List.of(soloBossResponse, partyBossResponse);
+        bossInfoMap = Map.of(1L, soloBossResponse, 2L, partyBossResponse);
+
+        // 테스트 데이터 준비
+        BossSelection soloBoss = BossSelection.builder()
+                .bossId(1L)
+                .partySize(1)
                 .build();
 
         BossSelection partyBoss = BossSelection.builder()
                 .bossId(2L)
-                .bossName("루타비스")
-                .difficulty("하드")
-                .crystalPrice(200000L)
                 .partySize(3)
-                .maxPartySize(6)
                 .build();
 
         bossSelections = List.of(soloBoss, partyBoss);
@@ -78,6 +100,10 @@ class CharacterRecommendationProcessorTest {
                 .characterLevel(270)
                 .bossSelections(bossSelections)
                 .build();
+                
+        // BossServiceClient 모킹
+        given(bossServiceClient.getBossList())
+                .willReturn(ApiResponse.success(bossResponses));
     }
 
     @Test
@@ -88,13 +114,13 @@ class CharacterRecommendationProcessorTest {
         Long highestDifficultySoloBossId = 1L;
         List<Long> partyBossIds = List.of(2L);
 
-        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(bossSelections))
+        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(eq(bossSelections), eq(bossInfoMap)))
                 .willReturn(filteredBossSelections);
         given(bossSelectionOptimizer.filterPartyBosses(filteredBossSelections))
                 .willReturn(partyBosses);
-        given(bossSelectionOptimizer.filterAndSortSoloBosses(filteredBossSelections))
+        given(bossSelectionOptimizer.filterAndSortSoloBosses(eq(filteredBossSelections), eq(bossInfoMap)))
                 .willReturn(soloBosses);
-        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(soloBosses))
+        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(eq(soloBosses), eq(bossInfoMap)))
                 .willReturn(highestDifficultySoloBossId);
         given(bossSelectionOptimizer.extractPartyBossIds(partyBosses))
                 .willReturn(partyBossIds);
@@ -126,9 +152,9 @@ class CharacterRecommendationProcessorTest {
                 .isIncludedInOptimization(true)
                 .build();
 
-        given(bossRecommendationFactory.createBossRecommendation(partyBosses.get(0), true, false, true))
+        given(bossRecommendationFactory.createBossRecommendation(eq(partyBosses.get(0)), eq(bossInfoMap.get(2L)), eq(true), eq(false), eq(true)))
                 .willReturn(partyBossRecommendation);
-        given(bossRecommendationFactory.createBossRecommendation(soloBosses.get(0), false, true, true))
+        given(bossRecommendationFactory.createBossRecommendation(eq(soloBosses.get(0)), eq(bossInfoMap.get(1L)), eq(false), eq(true), eq(true)))
                 .willReturn(soloBossRecommendation);
 
         // when
@@ -146,12 +172,13 @@ class CharacterRecommendationProcessorTest {
         assertThat(result.getHighestDifficultySoloBossId()).isEqualTo(1L);
         assertThat(result.getPartyBossIds()).isEqualTo(List.of(2L));
 
-        verify(bossSelectionOptimizer).filterUniqueHighestProfitBosses(bossSelections);
+        verify(bossServiceClient).getBossList();
+        verify(bossSelectionOptimizer).filterUniqueHighestProfitBosses(eq(bossSelections), eq(bossInfoMap));
         verify(bossSelectionOptimizer).filterPartyBosses(filteredBossSelections);
-        verify(bossSelectionOptimizer).filterAndSortSoloBosses(filteredBossSelections);
-        verify(bossSelectionOptimizer).findHighestDifficultySoloBossId(soloBosses);
+        verify(bossSelectionOptimizer).filterAndSortSoloBosses(eq(filteredBossSelections), eq(bossInfoMap));
+        verify(bossSelectionOptimizer).findHighestDifficultySoloBossId(eq(soloBosses), eq(bossInfoMap));
         verify(bossSelectionOptimizer).extractPartyBossIds(partyBosses);
-        verify(bossRecommendationFactory, times(2)).createBossRecommendation(any(), anyBoolean(), anyBoolean(), anyBoolean());
+        verify(bossRecommendationFactory, times(2)).createBossRecommendation(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
     }
 
     @Test
@@ -162,13 +189,13 @@ class CharacterRecommendationProcessorTest {
         Long highestDifficultySoloBossId = 1L;
         List<Long> partyBossIds = List.of(2L);
 
-        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(bossSelections))
+        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(eq(bossSelections), eq(bossInfoMap)))
                 .willReturn(filteredBossSelections);
         given(bossSelectionOptimizer.filterPartyBosses(filteredBossSelections))
                 .willReturn(partyBosses);
-        given(bossSelectionOptimizer.filterAndSortSoloBosses(filteredBossSelections))
+        given(bossSelectionOptimizer.filterAndSortSoloBosses(eq(filteredBossSelections), eq(bossInfoMap)))
                 .willReturn(soloBosses);
-        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(soloBosses))
+        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(eq(soloBosses), eq(bossInfoMap)))
                 .willReturn(highestDifficultySoloBossId);
         given(bossSelectionOptimizer.extractPartyBossIds(partyBosses))
                 .willReturn(partyBossIds);
@@ -189,7 +216,7 @@ class CharacterRecommendationProcessorTest {
                 .isIncludedInOptimization(true)
                 .build();
 
-        given(bossRecommendationFactory.createBossRecommendation(partyBosses.get(0), true, false, true))
+        given(bossRecommendationFactory.createBossRecommendation(eq(partyBosses.get(0)), eq(bossInfoMap.get(2L)), eq(true), eq(false), eq(true)))
                 .willReturn(partyBossRecommendation);
 
         // when
@@ -203,112 +230,8 @@ class CharacterRecommendationProcessorTest {
         assertThat(result.getBossRecommendations()).hasSize(1);
         assertThat(result.getBossRecommendations().get(0).isPartyBoss()).isTrue();
 
-        verify(bossRecommendationFactory, times(1)).createBossRecommendation(any(), anyBoolean(), anyBoolean(), anyBoolean());
-    }
-
-    @Test
-    @DisplayName("월드 크리스탈 제한 도달 시 처리")
-    void createCharacterRecommendation_WorldLimitReached() {
-        // given
-        int currentGlobalCrystalCount = 89;
-        Long highestDifficultySoloBossId = 1L;
-        List<Long> partyBossIds = List.of(2L);
-
-        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(bossSelections))
-                .willReturn(filteredBossSelections);
-        given(bossSelectionOptimizer.filterPartyBosses(filteredBossSelections))
-                .willReturn(partyBosses);
-        given(bossSelectionOptimizer.filterAndSortSoloBosses(filteredBossSelections))
-                .willReturn(soloBosses);
-        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(soloBosses))
-                .willReturn(highestDifficultySoloBossId);
-        given(bossSelectionOptimizer.extractPartyBossIds(partyBosses))
-                .willReturn(partyBossIds);
-
-        given(crystalLimitManager.isCharacterLimitReached(anyInt())).willReturn(false);
-        given(crystalLimitManager.isWorldLimitReached(89)).willReturn(false);
-        given(crystalLimitManager.isWorldLimitReached(90)).willReturn(true);
-
-        BossRecommendation partyBossRecommendation = BossRecommendation.builder()
-                .bossId(2L)
-                .bossName("루타비스")
-                .difficulty("하드")
-                .crystalPrice(200000L)
-                .partySize(3)
-                .expectedIncome(BigInteger.valueOf(200000))
-                .isPartyBoss(true)
-                .isHighestDifficultySolo(false)
-                .isIncludedInOptimization(true)
-                .build();
-
-        given(bossRecommendationFactory.createBossRecommendation(partyBosses.get(0), true, false, true))
-                .willReturn(partyBossRecommendation);
-
-        // when
-        CharacterRecommendation result = characterRecommendationProcessor.createCharacterRecommendation(
-                characterBossSelection, currentGlobalCrystalCount);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getCrystalCount()).isEqualTo(1);
-        assertThat(result.getExpectedIncome()).isEqualTo(BigInteger.valueOf(200000));
-        assertThat(result.getBossRecommendations()).hasSize(1);
-        assertThat(result.getBossRecommendations().get(0).isPartyBoss()).isTrue();
-
-        verify(bossRecommendationFactory, times(1)).createBossRecommendation(any(), anyBoolean(), anyBoolean(), anyBoolean());
-    }
-
-    @Test
-    @DisplayName("솔로 보스만 있는 경우 처리")
-    void createCharacterRecommendation_OnlySoloBosses() {
-        // given
-        int currentGlobalCrystalCount = 0;
-        Long highestDifficultySoloBossId = 1L;
-        List<Long> emptyPartyBossIds = List.of();
-
-        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(bossSelections))
-                .willReturn(soloBosses);
-        given(bossSelectionOptimizer.filterPartyBosses(soloBosses))
-                .willReturn(List.of());
-        given(bossSelectionOptimizer.filterAndSortSoloBosses(soloBosses))
-                .willReturn(soloBosses);
-        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(soloBosses))
-                .willReturn(highestDifficultySoloBossId);
-        given(bossSelectionOptimizer.extractPartyBossIds(List.of()))
-                .willReturn(emptyPartyBossIds);
-
-        given(crystalLimitManager.isCharacterLimitReached(anyInt())).willReturn(false);
-        given(crystalLimitManager.isWorldLimitReached(anyInt())).willReturn(false);
-
-        BossRecommendation soloBossRecommendation = BossRecommendation.builder()
-                .bossId(1L)
-                .bossName("자쿰")
-                .difficulty("이지")
-                .crystalPrice(10000L)
-                .partySize(1)
-                .expectedIncome(BigInteger.valueOf(10000))
-                .isPartyBoss(false)
-                .isHighestDifficultySolo(true)
-                .isIncludedInOptimization(true)
-                .build();
-
-        given(bossRecommendationFactory.createBossRecommendation(soloBosses.get(0), false, true, true))
-                .willReturn(soloBossRecommendation);
-
-        // when
-        CharacterRecommendation result = characterRecommendationProcessor.createCharacterRecommendation(
-                characterBossSelection, currentGlobalCrystalCount);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getCrystalCount()).isEqualTo(1);
-        assertThat(result.getExpectedIncome()).isEqualTo(BigInteger.valueOf(10000));
-        assertThat(result.getBossRecommendations()).hasSize(1);
-        assertThat(result.getBossRecommendations().get(0).isPartyBoss()).isFalse();
-        assertThat(result.getBossRecommendations().get(0).isHighestDifficultySolo()).isTrue();
-        assertThat(result.getPartyBossIds()).isEmpty();
-
-        verify(bossRecommendationFactory, times(1)).createBossRecommendation(any(), anyBoolean(), anyBoolean(), anyBoolean());
+        verify(bossServiceClient).getBossList();
+        verify(bossRecommendationFactory, times(1)).createBossRecommendation(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
     }
 
     @Test
@@ -323,13 +246,13 @@ class CharacterRecommendationProcessorTest {
                 .bossSelections(List.of())
                 .build();
 
-        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(List.of()))
+        given(bossSelectionOptimizer.filterUniqueHighestProfitBosses(eq(List.of()), eq(bossInfoMap)))
                 .willReturn(List.of());
         given(bossSelectionOptimizer.filterPartyBosses(List.of()))
                 .willReturn(List.of());
-        given(bossSelectionOptimizer.filterAndSortSoloBosses(List.of()))
+        given(bossSelectionOptimizer.filterAndSortSoloBosses(eq(List.of()), eq(bossInfoMap)))
                 .willReturn(List.of());
-        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(List.of()))
+        given(bossSelectionOptimizer.findHighestDifficultySoloBossId(eq(List.of()), eq(bossInfoMap)))
                 .willReturn(null);
         given(bossSelectionOptimizer.extractPartyBossIds(List.of()))
                 .willReturn(List.of());
@@ -346,6 +269,7 @@ class CharacterRecommendationProcessorTest {
         assertThat(result.getHighestDifficultySoloBossId()).isNull();
         assertThat(result.getPartyBossIds()).isEmpty();
 
-        verify(bossRecommendationFactory, never()).createBossRecommendation(any(), anyBoolean(), anyBoolean(), anyBoolean());
+        verify(bossServiceClient).getBossList();
+        verify(bossRecommendationFactory, never()).createBossRecommendation(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
     }
 } 

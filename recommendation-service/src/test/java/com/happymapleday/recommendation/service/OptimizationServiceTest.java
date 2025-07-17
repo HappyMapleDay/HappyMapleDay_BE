@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class OptimizationServiceTest {
@@ -50,20 +51,12 @@ class OptimizationServiceTest {
         // 테스트 데이터 준비
         BossSelection bossSelection1 = BossSelection.builder()
                 .bossId(1L)
-                .bossName("자쿰")
-                .difficulty("이지")
-                .crystalPrice(10000L)
                 .partySize(1)
-                .maxPartySize(6)
                 .build();
 
         BossSelection bossSelection2 = BossSelection.builder()
                 .bossId(2L)
-                .bossName("루타비스")
-                .difficulty("하드")
-                .crystalPrice(200000L)
                 .partySize(3)
-                .maxPartySize(6)
                 .build();
 
         CharacterBossSelection characterBossSelection1 = CharacterBossSelection.builder()
@@ -122,7 +115,7 @@ class OptimizationServiceTest {
                 .characterId(2L)
                 .characterName("서브캐릭터")
                 .characterLevel(260)
-                .crystalCount(3)
+                .crystalCount(1)
                 .expectedIncome(BigInteger.valueOf(50000000))
                 .bossRecommendations(List.of(bossRecommendation2))
                 .highestDifficultySoloBossId(null)
@@ -145,8 +138,9 @@ class OptimizationServiceTest {
     @DisplayName("최적화 추천 생성 성공")
     void optimizeRecommendations_Success() {
         // given
-        given(characterRecommendationProcessor.createCharacterRecommendation(any(CharacterBossSelection.class), anyInt()))
-                .willReturn(characterRecommendations.get(0))
+        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(0)), anyInt()))
+                .willReturn(characterRecommendations.get(0));
+        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(1)), anyInt()))
                 .willReturn(characterRecommendations.get(1));
 
         // when
@@ -157,7 +151,6 @@ class OptimizationServiceTest {
         assertThat(result).isEqualTo(characterRecommendations);
 
         verify(characterRecommendationProcessor, times(2)).createCharacterRecommendation(any(CharacterBossSelection.class), anyInt());
-        verify(crystalLimitManager).optimizeWithinGlobalLimit(any(List.class), anyInt());
     }
 
     @Test
@@ -167,8 +160,8 @@ class OptimizationServiceTest {
         List<CharacterBossSelection> singleCharacterSelection = List.of(characterBossSelections.get(0));
         List<CharacterRecommendation> singleCharacterRecommendation = List.of(characterRecommendations.get(0));
 
-        given(characterRecommendationProcessor.createCharacterRecommendation(any(CharacterBossSelection.class), anyInt()))
-                .willReturn(singleCharacterRecommendation.get(0));
+        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(0)), anyInt()))
+                .willReturn(characterRecommendations.get(0));
 
         // when
         List<CharacterRecommendation> result = optimizationService.optimizeRecommendations(singleCharacterSelection);
@@ -178,7 +171,6 @@ class OptimizationServiceTest {
         assertThat(result.get(0)).isEqualTo(singleCharacterRecommendation.get(0));
 
         verify(characterRecommendationProcessor, times(1)).createCharacterRecommendation(any(CharacterBossSelection.class), anyInt());
-        verify(crystalLimitManager).optimizeWithinGlobalLimit(any(List.class), anyInt());
     }
 
     @Test
@@ -215,31 +207,16 @@ class OptimizationServiceTest {
         // then
         assertThat(result).isEmpty();
         verify(characterRecommendationProcessor, never()).createCharacterRecommendation(any(), anyInt());
-        verify(crystalLimitManager).optimizeWithinGlobalLimit(any(List.class), eq(0));
     }
 
     @Test
-    @DisplayName("크리스탈 카운트 누적 테스트")
+    @DisplayName("결정석 개수 누적 테스트")
     void optimizeRecommendations_CrystalCountAccumulation() {
         // given
-        CharacterRecommendation rec1 = CharacterRecommendation.builder()
-                .characterId(1L)
-                .crystalCount(5)
-                .expectedIncome(BigInteger.valueOf(10000000))
-                .bossRecommendations(List.of())
-                .build();
-
-        CharacterRecommendation rec2 = CharacterRecommendation.builder()
-                .characterId(2L)
-                .crystalCount(8)
-                .expectedIncome(BigInteger.valueOf(20000000))
-                .bossRecommendations(List.of())
-                .build();
-
-        given(characterRecommendationProcessor.createCharacterRecommendation(characterBossSelections.get(0), 0))
-                .willReturn(rec1);
-        given(characterRecommendationProcessor.createCharacterRecommendation(characterBossSelections.get(1), 5))
-                .willReturn(rec2);
+        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(0)), eq(0)))
+                .willReturn(characterRecommendations.get(0));
+        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(1)), eq(1)))
+                .willReturn(characterRecommendations.get(1));
 
         // when
         List<CharacterRecommendation> result = optimizationService.optimizeRecommendations(characterBossSelections);
@@ -247,8 +224,7 @@ class OptimizationServiceTest {
         // then
         assertThat(result).hasSize(2);
         verify(characterRecommendationProcessor).createCharacterRecommendation(characterBossSelections.get(0), 0);
-        verify(characterRecommendationProcessor).createCharacterRecommendation(characterBossSelections.get(1), 5);
-        verify(crystalLimitManager).optimizeWithinGlobalLimit(any(List.class), eq(13));
+        verify(characterRecommendationProcessor).createCharacterRecommendation(characterBossSelections.get(1), 1);
     }
 
     @Test

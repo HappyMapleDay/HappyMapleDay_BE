@@ -41,20 +41,12 @@ class RecommendationServiceTest {
         // 테스트 데이터 준비
         BossSelection bossSelection1 = BossSelection.builder()
                 .bossId(1L)
-                .bossName("자쿰")
-                .difficulty("이지")
-                .crystalPrice(10000L)
                 .partySize(1)
-                .maxPartySize(6)
                 .build();
 
         BossSelection bossSelection2 = BossSelection.builder()
                 .bossId(2L)
-                .bossName("루타비스")
-                .difficulty("하드")
-                .crystalPrice(200000L)
                 .partySize(3)
-                .maxPartySize(6)
                 .build();
 
         CharacterBossSelection characterBossSelection1 = CharacterBossSelection.builder()
@@ -170,11 +162,7 @@ class RecommendationServiceTest {
                 .characterLevel(270)
                 .bossSelections(List.of(BossSelection.builder()
                         .bossId(1L)
-                        .bossName("자쿰")
-                        .difficulty("이지")
-                        .crystalPrice(10000L)
                         .partySize(1)
-                        .maxPartySize(6)
                         .build()))
                 .build();
 

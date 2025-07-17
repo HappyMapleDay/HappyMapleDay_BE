@@ -1,6 +1,9 @@
 package com.happymapleday.recommendation.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.happymapleday.common.client.BossServiceClient;
+import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.dto.request.BossSelection;
 import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
 import com.happymapleday.recommendation.dto.request.RecommendationRequest;
@@ -10,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -18,6 +22,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.util.List;
 
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -33,11 +38,46 @@ class RecommendationServiceIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @MockBean
+    private BossServiceClient bossServiceClient;
+
     private MockMvc mockMvc;
+    private List<BossResponse> bossResponses;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+
+        // 보스 응답 데이터 준비
+        BossResponse soloBossResponse = BossResponse.builder()
+                .id(1L)
+                .bossName("자쿰")
+                .difficulty("이지")
+                .crystalPrice(10000L)
+                .maxPartySize(6)
+                .build();
+
+        BossResponse partyBossResponse = BossResponse.builder()
+                .id(2L)
+                .bossName("루타비스")
+                .difficulty("하드")
+                .crystalPrice(200000L)
+                .maxPartySize(6)
+                .build();
+
+        BossResponse soloBoss2Response = BossResponse.builder()
+                .id(3L)
+                .bossName("힐라")
+                .difficulty("하드")
+                .crystalPrice(50000L)
+                .maxPartySize(6)
+                .build();
+
+        bossResponses = List.of(soloBossResponse, partyBossResponse, soloBoss2Response);
+
+        // BossServiceClient 모킹
+        given(bossServiceClient.getBossList())
+                .willReturn(ApiResponse.success(bossResponses));
     }
 
     @Test
@@ -46,20 +86,12 @@ class RecommendationServiceIntegrationTest {
         // given
         BossSelection soloBoss = BossSelection.builder()
                 .bossId(1L)
-                .bossName("자쿰")
-                .difficulty("이지")
-                .crystalPrice(10000L)
                 .partySize(1)
-                .maxPartySize(6)
                 .build();
 
         BossSelection partyBoss = BossSelection.builder()
                 .bossId(2L)
-                .bossName("루타비스")
-                .difficulty("하드")
-                .crystalPrice(200000L)
                 .partySize(3)
-                .maxPartySize(6)
                 .build();
 
         CharacterBossSelection characterBossSelection = CharacterBossSelection.builder()
@@ -97,20 +129,12 @@ class RecommendationServiceIntegrationTest {
         // given
         BossSelection soloBoss1 = BossSelection.builder()
                 .bossId(1L)
-                .bossName("자쿰")
-                .difficulty("이지")
-                .crystalPrice(10000L)
                 .partySize(1)
-                .maxPartySize(6)
                 .build();
 
         BossSelection soloBoss2 = BossSelection.builder()
                 .bossId(3L)
-                .bossName("힐라")
-                .difficulty("하드")
-                .crystalPrice(50000L)
                 .partySize(1)
-                .maxPartySize(6)
                 .build();
 
         CharacterBossSelection character1 = CharacterBossSelection.builder()

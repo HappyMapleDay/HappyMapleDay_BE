@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class BossSelectionOptimizer {
-    
     // 같은 보스 이름에서 가장 높은 수익을 가진 난이도만 선택
     public List<BossSelection> filterUniqueHighestProfitBosses(List<BossSelection> bossSelections, Map<Long, BossResponse> bossInfoMap) {
         Map<String, BossSelection> uniqueBossMap = new HashMap<>();

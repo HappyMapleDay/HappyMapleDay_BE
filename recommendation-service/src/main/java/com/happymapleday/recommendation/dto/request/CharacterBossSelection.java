@@ -22,8 +22,6 @@ public class CharacterBossSelection {
     
     @NotNull
     private Integer characterLevel;
-    private Integer arcaneForce;
-    private Integer authenticForce;
     
     @NotNull
     private List<BossSelection> bossSelections;

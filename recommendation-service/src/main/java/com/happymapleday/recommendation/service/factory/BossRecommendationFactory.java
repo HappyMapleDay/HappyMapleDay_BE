@@ -8,7 +8,6 @@ import java.math.BigInteger;
 
 @Component
 public class BossRecommendationFactory {
-    
     // 보스 추천 생성
     public BossRecommendation createBossRecommendation(BossSelection boss, boolean isPartyBoss, 
                                                       boolean isHighestDifficultySolo, boolean isIncluded) {

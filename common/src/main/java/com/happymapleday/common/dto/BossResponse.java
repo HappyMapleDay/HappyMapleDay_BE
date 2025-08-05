@@ -23,13 +23,5 @@ public class BossResponse {
     private Integer requiredForceAmount;
     private String fullName;
     
-    // 파티 보스 여부 판단 (maxPartySize > 1)
-    public boolean isPartyBoss() {
-        return maxPartySize != null && maxPartySize > 1;
-    }
-    
-    // 솔로 보스 여부 판단
-    public boolean isSoloBoss() {
-        return !isPartyBoss();
-    }
+
 } 

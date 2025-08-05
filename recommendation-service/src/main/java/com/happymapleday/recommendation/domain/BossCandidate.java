@@ -1,4 +1,4 @@
-package com.happymapleday.recommendation.service.limiter;
+package com.happymapleday.recommendation.domain;
 
 import com.happymapleday.common.dto.BossResponse;
 import lombok.Getter;
@@ -12,4 +12,15 @@ public class BossCandidate {
         this.boss = boss;
         this.characterId = characterId;
     }
+    
+    // 수익성 비교를 위한 메서드
+    public Long getCrystalPrice() {
+        return boss.getCrystalPrice();
+    }
+    
+    // 보스 이름 반환
+    public String getBossName() {
+        return boss.getBossName();
+    }
+    
 } 

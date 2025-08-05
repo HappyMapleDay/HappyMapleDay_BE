@@ -1,26 +1,23 @@
 package com.happymapleday.boss.admin.dto.response;
 
 import com.happymapleday.boss.entity.RandomBoxItem;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
 @Builder
 public class AdminRandomBoxItemResponse {
-    private Long id;
+    private Long adminRandomBoxItemId;
     private Long itemId;
     private String dropItemName;
+    private String dropItemNameEn;
     private Integer dropItemLevel;
 
     public static AdminRandomBoxItemResponse from(RandomBoxItem randomBoxItem) {
         return AdminRandomBoxItemResponse.builder()
-                .id(randomBoxItem.getBoxContentItem().getId())
+                .adminRandomBoxItemId(randomBoxItem.getBoxContentItem().getId())
                 .itemId(randomBoxItem.getItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
+                .dropItemNameEn(randomBoxItem.getDropItemNameEn())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())
                 .build();
     }

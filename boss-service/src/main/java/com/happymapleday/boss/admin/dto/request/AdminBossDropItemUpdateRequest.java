@@ -1,12 +1,9 @@
 package com.happymapleday.boss.admin.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
+@Getter
 public class AdminBossDropItemUpdateRequest {
     private Long bossId;
     private Long itemId;

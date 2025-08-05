@@ -1,48 +1,61 @@
 package com.happymapleday.boss.admin.dto.response;
 
 import com.happymapleday.boss.entity.BossDropItem;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+
+@Getter
 @Builder
 public class AdminBossDropItemResponse {
-    private Long id;
+    private Long adminBossDropDataId;
     private Long bossId;
     private String bossName;
+    private String bossNameEn;
     private String difficulty;
+    private String difficultyEn;
     private Long itemId;
     private String itemName;
+    private String itemNameEn;
     private Boolean isRandomBox;
     private List<AdminRandomBoxItemResponse> randomBoxItems;
 
     public static AdminBossDropItemResponse from(BossDropItem bossDropItem) {
         return AdminBossDropItemResponse.builder()
-                .id(bossDropItem.getId())
+                .adminBossDropDataId(bossDropItem.getId())
                 .bossId(bossDropItem.getBoss().getId())
                 .bossName(bossDropItem.getBoss().getBossName())
+                .bossNameEn(bossDropItem.getBoss().getBossNameEn())
                 .difficulty(bossDropItem.getBoss().getDifficulty())
+                .difficultyEn(bossDropItem.getBoss().getDifficultyEn())
                 .itemId(bossDropItem.getItem().getId())
                 .itemName(bossDropItem.getItem().getItemName())
+                .itemNameEn(bossDropItem.getItem().getItemNameEn())
                 .isRandomBox(bossDropItem.getItem().getIsRandomBox())
                 .build();
     }
 
     public static AdminBossDropItemResponse fromWithRandomBoxItems(BossDropItem bossDropItem) {
-        AdminBossDropItemResponse response = from(bossDropItem);
+        List<AdminRandomBoxItemResponse> randomBoxItems = null;
         if (bossDropItem.getItem().getIsRandomBox() && bossDropItem.getItem().getRandomBoxItems() != null) {
-            response.setRandomBoxItems(
-                    bossDropItem.getItem().getRandomBoxItems().stream()
-                            .map(AdminRandomBoxItemResponse::from)
-                            .toList()
-            );
+            randomBoxItems = bossDropItem.getItem().getRandomBoxItems().stream()
+                    .map(AdminRandomBoxItemResponse::from)
+                    .toList();
         }
-        return response;
+        
+        return AdminBossDropItemResponse.builder()
+                .adminBossDropDataId(bossDropItem.getId())
+                .bossId(bossDropItem.getBoss().getId())
+                .bossName(bossDropItem.getBoss().getBossName())
+                .bossNameEn(bossDropItem.getBoss().getBossNameEn())
+                .difficulty(bossDropItem.getBoss().getDifficulty())
+                .difficultyEn(bossDropItem.getBoss().getDifficultyEn())
+                .itemId(bossDropItem.getItem().getId())
+                .itemName(bossDropItem.getItem().getItemName())
+                .itemNameEn(bossDropItem.getItem().getItemNameEn())
+                .isRandomBox(bossDropItem.getItem().getIsRandomBox())
+                .randomBoxItems(randomBoxItems)
+                .build();
     }
 } 

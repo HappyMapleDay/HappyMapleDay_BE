@@ -1,13 +1,11 @@
 package com.happymapleday.boss.admin.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Builder
 public class AdminItemUpdateRequest {
     private String itemName;
+    private String itemNameEn;
     private Boolean isRandomBox;
 } 

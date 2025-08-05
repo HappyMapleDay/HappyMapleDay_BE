@@ -36,8 +36,14 @@ public class Boss {
     @Column(name = "boss_name", nullable = false, length = 50)
     private String bossName;
 
+    @Column(name = "boss_name_en", nullable = false, length = 50)
+    private String bossNameEn;
+
     @Column(name = "difficulty", nullable = false, length = 20)
     private String difficulty;
+
+    @Column(name = "difficulty_en", nullable = false, length = 20)
+    private String difficultyEn;
 
     @Column(name = "crystal_price", nullable = false)
     private Long crystalPrice;
@@ -69,11 +75,13 @@ public class Boss {
     private List<BossDropItem> bossDropItems = new ArrayList<>();
 
     @Builder
-    public Boss(String bossName, String difficulty, Long crystalPrice, 
+    public Boss(String bossName, String bossNameEn, String difficulty, String difficultyEn, Long crystalPrice,
                 Integer maxPartySize, Boolean isMonthly, Boolean isActive,
                 Integer minEntryLevel, Integer bossLevel, ForceType requiredForceType, Integer requiredForceAmount) {
         this.bossName = bossName;
+        this.bossNameEn = bossNameEn;
         this.difficulty = difficulty;
+        this.difficultyEn = difficultyEn;
         this.crystalPrice = crystalPrice;
         this.maxPartySize = maxPartySize != null ? maxPartySize : 6;
         this.isMonthly = isMonthly != null ? isMonthly : false;

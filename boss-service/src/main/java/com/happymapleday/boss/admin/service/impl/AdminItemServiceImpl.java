@@ -63,6 +63,7 @@ public class AdminItemServiceImpl implements AdminItemService {
         
         Item item = Item.builder()
                 .itemName(request.getItemName())
+                .itemNameEn(request.getItemNameEn())
                 .isRandomBox(request.getIsRandomBox())
                 .build();
         
@@ -83,11 +84,12 @@ public class AdminItemServiceImpl implements AdminItemService {
             throw new IllegalArgumentException("이미 존재하는 아이템 이름입니다: " + request.getItemName());
         }
         
-        // 기존 엔티티 삭제 후 새로 생성 (Item 엔티티에 setter가 없으므로)
+        // 기존 엔티티 삭제 후 새로 생성
         itemRepository.delete(item);
         
         Item newItem = Item.builder()
                 .itemName(request.getItemName())
+                .itemNameEn(request.getItemNameEn())
                 .isRandomBox(request.getIsRandomBox())
                 .build();
         

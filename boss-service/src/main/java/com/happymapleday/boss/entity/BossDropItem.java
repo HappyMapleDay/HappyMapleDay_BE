@@ -42,6 +42,10 @@ public class BossDropItem {
         return item.getItemName();
     }
 
+    public String getItemNameEn() {
+        return item.getItemNameEn();
+    }
+
     public String getFullItemName() {
         return item.getFullItemName();
     }

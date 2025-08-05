@@ -2,21 +2,18 @@ package com.happymapleday.boss.dto.response;
 
 import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.entity.ForceType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
 @Builder
 public class BossResponse {
-    private Long id;
+    private Long bossId;
     private String bossName;
+    private String bossNameEn;
     private String difficulty;
+    private String difficultyEn;
     private Long crystalPrice;
     private Integer maxPartySize;
     private Boolean isMonthly;
@@ -30,9 +27,11 @@ public class BossResponse {
 
     public static BossResponse from(Boss boss) {
         return BossResponse.builder()
-                .id(boss.getId())
+                .bossId(boss.getId())
                 .bossName(boss.getBossName())
+                .bossNameEn(boss.getBossNameEn())
                 .difficulty(boss.getDifficulty())
+                .difficultyEn(boss.getDifficultyEn())
                 .crystalPrice(boss.getCrystalPrice())
                 .maxPartySize(boss.getMaxPartySize())
                 .isMonthly(boss.getIsMonthly())
@@ -46,14 +45,29 @@ public class BossResponse {
     }
 
     public static BossResponse fromWithDesireItems(Boss boss) {
-        BossResponse response = from(boss);
+        List<DesireItemResponse> desireItems = null;
         if (boss.getBossDropItems() != null) {
-            response.setDesireItems(
-                    boss.getBossDropItems().stream()
-                            .map(DesireItemResponse::fromBossDropItem)
-                            .toList()
-            );
+            desireItems = boss.getBossDropItems().stream()
+                    .map(DesireItemResponse::fromBossDropItem)
+                    .toList();
         }
-        return response;
+        
+        return BossResponse.builder()
+                .bossId(boss.getId())
+                .bossName(boss.getBossName())
+                .bossNameEn(boss.getBossNameEn())
+                .difficulty(boss.getDifficulty())
+                .difficultyEn(boss.getDifficultyEn())
+                .crystalPrice(boss.getCrystalPrice())
+                .maxPartySize(boss.getMaxPartySize())
+                .isMonthly(boss.getIsMonthly())
+                .isActive(boss.getIsActive())
+                .minEntryLevel(boss.getMinEntryLevel())
+                .bossLevel(boss.getBossLevel())
+                .requiredForceType(boss.getRequiredForceType())
+                .requiredForceAmount(boss.getRequiredForceAmount())
+                .fullName(boss.getFullName())
+                .desireItems(desireItems)
+                .build();
     }
-} 
+}

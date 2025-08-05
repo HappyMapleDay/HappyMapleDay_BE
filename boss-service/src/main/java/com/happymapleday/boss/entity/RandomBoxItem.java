@@ -38,6 +38,10 @@ public class RandomBoxItem {
         return boxContentItem.getItemName();
     }
 
+    public String getDropItemNameEn(){
+        return boxContentItem.getItemNameEn();
+    }
+
     public Integer getDropItemLevel() {
         return boxContentItem.getItemLevel();
     }

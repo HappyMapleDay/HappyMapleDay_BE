@@ -76,14 +76,13 @@ public class CharacterCapabilityAnalyzer {
         
         for (CharacterBossSelection selection : characterBossSelections) {
             Long characterHighestDifficultySoloBossId = selection.getBossSelections().stream()
-                    .filter(boss -> !boss.isPartyBoss()) // 솔로 보스만
+                    .filter(boss -> boss.isSoloBoss()) // 솔로로 가기로 선택한 보스만
                     .map(BossSelection::getBossId)
                     .map(bossId -> characterClearableBosses.get(selection.getCharacterId()).stream()
                             .filter(boss -> boss.getId().equals(bossId))
                             .findFirst()
                             .orElse(null))
                     .filter(Objects::nonNull)
-                    .filter(BossResponse::isSoloBoss)
                     .max(Comparator.comparingLong(BossResponse::getCrystalPrice))
                     .map(BossResponse::getId)
                     .orElse(null);

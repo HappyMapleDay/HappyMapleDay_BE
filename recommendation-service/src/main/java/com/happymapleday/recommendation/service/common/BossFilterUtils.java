@@ -12,19 +12,8 @@ public class BossFilterUtils {
         // 유틸리티 클래스
     }
     
-    // 솔로 보스만 필터링
-    public static List<BossResponse> filterSoloBosses(List<BossResponse> bosses) {
-        return bosses.stream()
-                .filter(BossResponse::isSoloBoss)
-                .collect(Collectors.toList());
-    }
-    
-    // 파티 보스만 필터링
-    public static List<BossResponse> filterPartyBosses(List<BossResponse> bosses) {
-        return bosses.stream()
-                .filter(boss -> !boss.isSoloBoss())
-                .collect(Collectors.toList());
-    }
+    // 주의: BossResponse로는 솔로/파티 구분 불가 (사용자 선택에 따라 결정됨)
+    // 솔로/파티 구분은 BossSelection의 partySize를 사용해야 함
     
     // 결정석 가격 기준으로 정렬 (높은 순)
     public static List<BossResponse> sortByProfitDesc(List<BossResponse> bosses) {

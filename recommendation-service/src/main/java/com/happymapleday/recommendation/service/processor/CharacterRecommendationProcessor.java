@@ -61,7 +61,7 @@ public class CharacterRecommendationProcessor {
                 throw new BossDataException("보스 ID " + boss.getBossId() + "에 해당하는 정보를 찾을 수 없습니다.");
             }
             
-            BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(boss, bossInfo, true, false, true);
+            BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(boss, bossInfo, boss.isPartyBoss(), false, true);
             recommendations.add(recommendation);
             totalIncome = totalIncome.add(BigInteger.valueOf(bossInfo.getCrystalPrice()));
             crystalCount++;
@@ -81,7 +81,7 @@ public class CharacterRecommendationProcessor {
             }
             
             boolean isHighestDifficulty = boss.getBossId().equals(highestDifficultySoloBossId);
-            BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(boss, bossInfo, false, isHighestDifficulty, true);
+            BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(boss, bossInfo, boss.isPartyBoss(), isHighestDifficulty, true);
             recommendations.add(recommendation);
             totalIncome = totalIncome.add(BigInteger.valueOf(bossInfo.getCrystalPrice()));
             crystalCount++;

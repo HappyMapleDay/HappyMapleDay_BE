@@ -23,8 +23,4 @@ public class BossCandidate {
         return boss.getBossName();
     }
     
-    // 솔로 보스인지 확인
-    public boolean isSoloBoss() {
-        return boss.isSoloBoss();
-    }
 } 

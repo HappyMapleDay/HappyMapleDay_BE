@@ -57,8 +57,6 @@ public class CrystalLimitManager {
             throw new OptimizationException("보스 추천 최적화 중 오류가 발생했습니다.", e);
         }
     }
-
-
     
     // 캐릭터별 결정석 제한 체크
     public boolean isCharacterLimitReached(int currentCrystalCount) {

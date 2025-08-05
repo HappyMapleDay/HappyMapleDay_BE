@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @Component
 @RequiredArgsConstructor
@@ -69,7 +69,7 @@ public class GlobalOptimizationEngine {
                                 .build();
                         
                         BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(
-                                bossSelection, targetBoss, requestedBoss.getPartySize() > 1, false, true);
+                                bossSelection, targetBoss, bossSelection.isPartyBoss(), false, true);
                         
                         characterRecommendations.computeIfAbsent(selection.getCharacterId(), k -> new ArrayList<>())
                                 .add(recommendation);
@@ -137,7 +137,7 @@ public class GlobalOptimizationEngine {
             Long characterHighestDifficultySoloBossId = characterHighestDifficultySoloBossIds.get(characterId);
             BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(
                     bossSelection, candidate.getBoss(),
-                    false, // 솔로로 가는 것으로 간주
+                    bossSelection.isPartyBoss(), // 사용자 선택에 따라 결정
                     candidate.getBoss().getId().equals(characterHighestDifficultySoloBossId), 
                     true);
             

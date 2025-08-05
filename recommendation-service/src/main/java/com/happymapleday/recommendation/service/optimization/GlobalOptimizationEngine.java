@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -32,7 +33,11 @@ public class GlobalOptimizationEngine {
         // 각 캐릭터별로 사용된 보스 이름을 추적 (같은 보스 이름의 다른 난이도 방지)
         Map<Long, Set<String>> characterUsedBossNames = new HashMap<>();
         
-        // 1. 파티 보스 우선 배정
+        // 0. 클리어한 보스 우선 고정 배정
+        assignClearedBosses(characterBossSelections, characterClearableBosses,
+                characterRecommendations, usedBossIds, characterUsedBossNames);
+        
+        // 1. 파티 보스 우선 배정 (클리어하지 않은 것만)
         assignPartyBosses(characterBossSelections, characterClearableBosses, 
                 characterRecommendations, usedBossIds, characterUsedBossNames);
         
@@ -42,6 +47,52 @@ public class GlobalOptimizationEngine {
                 usedBossIds, characterUsedBossNames);
         
         return characterRecommendations;
+    }
+    
+    // 클리어한 보스 고정 배정
+    private void assignClearedBosses(
+            List<CharacterBossSelection> characterBossSelections,
+            Map<Long, List<BossResponse>> characterClearableBosses,
+            Map<Long, List<BossRecommendation>> characterRecommendations,
+            Set<Long> usedBossIds,
+            Map<Long, Set<String>> characterUsedBossNames) {
+        
+        for (CharacterBossSelection selection : characterBossSelections) {
+            for (BossSelection requestedBoss : selection.getBossSelections()) {
+                // 클리어한 보스만 처리
+                if (requestedBoss.isCleared()) {
+                    List<BossResponse> clearableBosses = characterClearableBosses.get(selection.getCharacterId());
+                    BossResponse targetBoss = clearableBosses.stream()
+                            .filter(boss -> boss.getId().equals(requestedBoss.getBossId()))
+                            .findFirst()
+                            .orElse(null);
+                    
+                    if (targetBoss != null) {
+                        // 클리어된 보스로 BossSelection 생성
+                        BossSelection clearedBossSelection = BossSelection.builder()
+                                .bossId(targetBoss.getId())
+                                .partySize(requestedBoss.getPartySize())
+                                .isCleared(true)
+                                .build();
+                        
+                        BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(
+                                clearedBossSelection, targetBoss, clearedBossSelection.isPartyBoss(), false, true);
+                        
+                        characterRecommendations.computeIfAbsent(selection.getCharacterId(), k -> new ArrayList<>())
+                                .add(recommendation);
+                        
+                        usedBossIds.add(targetBoss.getId());
+                        
+                        // 해당 캐릭터가 사용한 보스 이름 추가
+                        characterUsedBossNames.computeIfAbsent(selection.getCharacterId(), k -> new HashSet<>())
+                                .add(targetBoss.getBossName());
+                        
+                        log.debug("클리어한 보스 고정 배정: 캐릭터 ID {}, 보스 {}", 
+                                selection.getCharacterId(), targetBoss.getBossName());
+                    }
+                }
+            }
+        }
     }
     
     // 파티 보스 우선 배정
@@ -54,7 +105,8 @@ public class GlobalOptimizationEngine {
         
         for (CharacterBossSelection selection : characterBossSelections) {
             for (BossSelection requestedBoss : selection.getBossSelections()) {
-                if (requestedBoss.getPartySize() > 1) {
+                // 파티 보스이면서 아직 클리어하지 않은 보스만 처리
+                if (requestedBoss.getPartySize() > 1 && !requestedBoss.isCleared()) {
                     List<BossResponse> clearableBosses = characterClearableBosses.get(selection.getCharacterId());
                     BossResponse targetBoss = clearableBosses.stream()
                             .filter(boss -> boss.getId().equals(requestedBoss.getBossId()))
@@ -66,6 +118,7 @@ public class GlobalOptimizationEngine {
                         BossSelection bossSelection = BossSelection.builder()
                                 .bossId(targetBoss.getId())
                                 .partySize(requestedBoss.getPartySize())
+                                .isCleared(false) // 파티 보스는 아직 클리어하지 않은 것
                                 .build();
                         
                         BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(
@@ -154,7 +207,7 @@ public class GlobalOptimizationEngine {
         }
     }
     
-    // 보스 후보들 생성
+    // 보스 후보들 생성 (클리어하지 않은 솔로 보스만)
     private List<BossCandidate> createBossCandidates(
             List<CharacterBossSelection> characterBossSelections,
             Map<Long, List<BossResponse>> characterClearableBosses,
@@ -165,8 +218,15 @@ public class GlobalOptimizationEngine {
         for (CharacterBossSelection selection : characterBossSelections) {
             List<BossResponse> clearableBosses = characterClearableBosses.get(selection.getCharacterId());
             
+            // 해당 캐릭터가 선택한 솔로 보스들 중에서 클리어하지 않은 것만 추출
+            Set<Long> unclearedSoloBossIds = selection.getBossSelections().stream()
+                    .filter(boss -> boss.getPartySize() == 1 && !boss.isCleared()) // 솔로 보스이면서 클리어하지 않은 것
+                    .map(BossSelection::getBossId)
+                    .collect(Collectors.toSet());
+            
             for (BossResponse boss : clearableBosses) {
-                if (!usedBossIds.contains(boss.getId())) {
+                // 솔로 보스이면서, 클리어하지 않은 보스이면서, 아직 사용되지 않은 보스만 후보로 추가
+                if (unclearedSoloBossIds.contains(boss.getId()) && !usedBossIds.contains(boss.getId())) {
                     candidates.add(new BossCandidate(boss, selection.getCharacterId()));
                 }
             }

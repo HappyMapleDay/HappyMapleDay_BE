@@ -6,7 +6,7 @@ import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
 import com.happymapleday.recommendation.dto.response.BossRecommendation;
 import com.happymapleday.recommendation.service.constants.OptimizationConstants;
 import com.happymapleday.recommendation.service.factory.BossRecommendationFactory;
-import com.happymapleday.recommendation.service.limiter.BossCandidate;
+import com.happymapleday.recommendation.domain.BossCandidate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -99,7 +99,7 @@ public class GlobalOptimizationEngine {
                 characterBossSelections, characterClearableBosses, usedBossIds);
         
         // 수익 기준으로 정렬 (높은 순)
-        candidates.sort(Comparator.comparingLong(c -> c.getBoss().getCrystalPrice()));
+        candidates.sort(Comparator.comparingLong(BossCandidate::getCrystalPrice));
         Collections.reverse(candidates);
         
         // 이미 배정된 파티 보스 개수 계산
@@ -121,9 +121,9 @@ public class GlobalOptimizationEngine {
             
             // 해당 캐릭터가 이미 같은 보스 이름의 다른 난이도를 가지고 있는지 확인
             Set<String> usedBossNames = characterUsedBossNames.getOrDefault(characterId, new HashSet<>());
-            if (usedBossNames.contains(candidate.getBoss().getBossName())) {
+            if (usedBossNames.contains(candidate.getBossName())) {
                 log.debug("캐릭터 {} - 보스 {} 건너뜀 (이미 같은 이름의 다른 난이도 보스 보유)", 
-                        characterId, candidate.getBoss().getBossName());
+                        characterId, candidate.getBossName());
                 continue;
             }
             
@@ -148,7 +148,7 @@ public class GlobalOptimizationEngine {
             
             // 해당 캐릭터가 사용한 보스 이름 추가
             characterUsedBossNames.computeIfAbsent(characterId, k -> new HashSet<>())
-                    .add(candidate.getBoss().getBossName());
+                    .add(candidate.getBossName());
             
             totalAssigned++;
         }

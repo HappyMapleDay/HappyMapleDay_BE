@@ -3,6 +3,8 @@ package com.happymapleday.recommendation.service.optimization;
 import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.dto.request.BossSelection;
 import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
+import com.happymapleday.recommendation.service.common.BossDataFetcher;
+import com.happymapleday.recommendation.service.common.BossFilterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class CharacterCapabilityAnalyzer {
+    
+    private final BossDataFetcher bossDataFetcher;
     
     // 각 캐릭터가 클리어할 수 있는 보스 목록 생성
     public Map<Long, List<BossResponse>> createCharacterClearableBosses(
@@ -50,9 +54,8 @@ public class CharacterCapabilityAnalyzer {
                         .orElse(null);
                 
                 if (characterHighestDifficultySoloBoss != null) {
-                    List<BossResponse> availableBosses = allBosses.stream()
-                            .filter(boss -> boss.getCrystalPrice() <= characterHighestDifficultySoloBoss.getCrystalPrice())
-                            .collect(Collectors.toList());
+                    List<BossResponse> availableBosses = BossFilterUtils.filterByMaxPrice(
+                            allBosses, characterHighestDifficultySoloBoss.getCrystalPrice());
                     
                     clearableBosses.addAll(availableBosses);
                 }
@@ -95,10 +98,9 @@ public class CharacterCapabilityAnalyzer {
     private Long findCharacterHighestDifficultySoloBossId(
             CharacterBossSelection selection, List<BossResponse> allBosses) {
         
-        // 솔로로 가기로 선택한 보스들
-        List<BossSelection> soloBossSelections = selection.getBossSelections().stream()
-                .filter(boss -> boss.getPartySize() == 1)
-                .collect(Collectors.toList());
+                    // 솔로로 가기로 선택한 보스들
+        List<BossSelection> soloBossSelections = BossFilterUtils.filterSoloBossSelections(
+                selection.getBossSelections());
         
         // 선택한 보스 ID들
         List<Long> selectedBossIds = soloBossSelections.stream()
@@ -106,13 +108,7 @@ public class CharacterCapabilityAnalyzer {
                 .collect(Collectors.toList());
         
         // 실제 보스 정보 가져오기
-        List<BossResponse> foundBosses = selectedBossIds.stream()
-                .map(bossId -> allBosses.stream()
-                        .filter(boss -> boss.getId().equals(bossId))
-                        .findFirst()
-                        .orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<BossResponse> foundBosses = bossDataFetcher.findBossesByIds(allBosses, selectedBossIds);
         
         // 솔로로 가기로 선택한 보스들의 실제 정보 필터링
         List<BossResponse> soloBossResponses = foundBosses.stream()

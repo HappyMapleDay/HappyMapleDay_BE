@@ -1,15 +1,15 @@
 package com.happymapleday.recommendation.service.processor;
 
-import com.happymapleday.common.client.BossServiceClient;
-import com.happymapleday.common.dto.ApiResponse;
 import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.dto.request.BossSelection;
 import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
 import com.happymapleday.recommendation.dto.response.BossRecommendation;
 import com.happymapleday.recommendation.dto.response.CharacterRecommendation;
+import com.happymapleday.recommendation.exception.BossDataException;
+import com.happymapleday.recommendation.service.common.BossDataFetcher;
+import com.happymapleday.recommendation.service.common.BossFilterUtils;
 import com.happymapleday.recommendation.service.factory.BossRecommendationFactory;
 import com.happymapleday.recommendation.service.limiter.CrystalLimitManager;
-import com.happymapleday.recommendation.service.optimizer.BossSelectionOptimizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,39 +18,31 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CharacterRecommendationProcessor {
     
-    private final BossSelectionOptimizer bossSelectionOptimizer;
+    private final BossDataFetcher bossDataFetcher;
     private final BossRecommendationFactory bossRecommendationFactory;
     private final CrystalLimitManager crystalLimitManager;
-    private final BossServiceClient bossServiceClient;
     
     // 캐릭터별 추천 생성
     public CharacterRecommendation createCharacterRecommendation(CharacterBossSelection selection, int currentGlobalCrystalCount) {
         List<BossSelection> bossSelections = selection.getBossSelections();
         
         // 보스 정보 조회
-        ApiResponse<List<BossResponse>> response = bossServiceClient.getBossList();
-        if (!"success".equals(response.getStatus()) || response.getData() == null) {
-            throw new RuntimeException("보스 정보를 가져올 수 없습니다.");
-        }
-        
-        // 보스 ID로 빠른 조회를 위한 Map 생성
-        Map<Long, BossResponse> bossInfoMap = response.getData().stream()
-                .collect(Collectors.toMap(BossResponse::getId, boss -> boss));
+        List<BossResponse> allBosses = bossDataFetcher.fetchAllBosses();
+        Map<Long, BossResponse> bossInfoMap = bossDataFetcher.createBossInfoMap(allBosses);
         
         // 1. 보스 필터링 및 정렬
-        List<BossSelection> filteredBossSelections = bossSelectionOptimizer.filterUniqueHighestProfitBosses(bossSelections, bossInfoMap);
-        List<BossSelection> partyBosses = bossSelectionOptimizer.filterPartyBosses(filteredBossSelections);
-        List<BossSelection> soloBosses = bossSelectionOptimizer.filterAndSortSoloBosses(filteredBossSelections, bossInfoMap);
+        List<BossSelection> filteredBossSelections = BossFilterUtils.filterUniqueHighestProfitBosses(bossSelections, bossInfoMap);
+        List<BossSelection> partyBosses = BossFilterUtils.filterPartyBossSelections(filteredBossSelections);
+        List<BossSelection> soloBosses = BossFilterUtils.sortSoloBossSelectionsByProfit(filteredBossSelections, bossInfoMap);
         
         // 2. 최고 난이도 솔로 보스 찾기
-        Long highestDifficultySoloBossId = bossSelectionOptimizer.findHighestDifficultySoloBossId(soloBosses, bossInfoMap);
+        Long highestDifficultySoloBossId = BossFilterUtils.findHighestDifficultySoloBossId(soloBosses, bossInfoMap);
         
         // 3. 추천 생성
         List<BossRecommendation> recommendations = new ArrayList<>();
@@ -66,7 +58,7 @@ public class CharacterRecommendationProcessor {
             
             BossResponse bossInfo = bossInfoMap.get(boss.getBossId());
             if (bossInfo == null) {
-                throw new RuntimeException("보스 정보를 가져올 수 없습니다.");
+                throw new BossDataException("보스 ID " + boss.getBossId() + "에 해당하는 정보를 찾을 수 없습니다.");
             }
             
             BossRecommendation recommendation = bossRecommendationFactory.createBossRecommendation(boss, bossInfo, true, false, true);
@@ -85,7 +77,7 @@ public class CharacterRecommendationProcessor {
             
             BossResponse bossInfo = bossInfoMap.get(boss.getBossId());
             if (bossInfo == null) {
-                throw new RuntimeException("보스 정보를 가져올 수 없습니다.");
+                throw new BossDataException("보스 ID " + boss.getBossId() + "에 해당하는 정보를 찾을 수 없습니다.");
             }
             
             boolean isHighestDifficulty = boss.getBossId().equals(highestDifficultySoloBossId);
@@ -97,7 +89,7 @@ public class CharacterRecommendationProcessor {
         }
         
         // 4. 파티 보스 ID 목록 생성
-        List<Long> partyBossIds = bossSelectionOptimizer.extractPartyBossIds(partyBosses);
+        List<Long> partyBossIds = BossFilterUtils.extractPartyBossIds(partyBosses);
         
         return CharacterRecommendation.builder()
                 .characterId(selection.getCharacterId())

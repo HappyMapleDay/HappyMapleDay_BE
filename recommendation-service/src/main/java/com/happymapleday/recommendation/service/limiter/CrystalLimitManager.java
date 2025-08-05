@@ -4,6 +4,7 @@ import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
 import com.happymapleday.recommendation.dto.response.BossRecommendation;
 import com.happymapleday.recommendation.dto.response.CharacterRecommendation;
+import com.happymapleday.recommendation.exception.OptimizationException;
 import com.happymapleday.recommendation.service.constants.OptimizationConstants;
 import com.happymapleday.recommendation.service.optimization.BossDataProcessor;
 import com.happymapleday.recommendation.service.optimization.CharacterCapabilityAnalyzer;
@@ -13,11 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -55,27 +53,12 @@ public class CrystalLimitManager {
                     characterBossSelections, characterRecommendations, characterHighestDifficultySoloBossIds);
                     
         } catch (Exception e) {
-            log.error("최적화 중 오류 발생", e);
-            return fallbackToOriginalLogic(characterBossSelections);
+            log.error("최적화 중 예상치 못한 오류 발생", e);
+            throw new OptimizationException("보스 추천 최적화 중 오류가 발생했습니다.", e);
         }
     }
 
-    
-    // 기본 로직으로 폴백
-    private List<CharacterRecommendation> fallbackToOriginalLogic(List<CharacterBossSelection> characterBossSelections) {
-        return characterBossSelections.stream()
-                .map(selection -> CharacterRecommendation.builder()
-                        .characterId(selection.getCharacterId())
-                        .characterName(selection.getCharacterName())
-                        .characterLevel(selection.getCharacterLevel())
-                        .crystalCount(0)
-                        .expectedIncome(BigInteger.ZERO)
-                        .bossRecommendations(new ArrayList<>())
-                        .highestDifficultySoloBossId(null)
-                        .partyBossIds(new ArrayList<>())
-                        .build())
-                .collect(Collectors.toList());
-    }
+
     
     // 캐릭터별 결정석 제한 체크
     public boolean isCharacterLimitReached(int currentCrystalCount) {

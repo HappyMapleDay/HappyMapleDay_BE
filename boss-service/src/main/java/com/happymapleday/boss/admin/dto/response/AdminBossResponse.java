@@ -2,34 +2,43 @@ package com.happymapleday.boss.admin.dto.response;
 
 import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.entity.ForceType;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@Builder
 public class AdminBossResponse {
     
-    private final Long id;
-    private final String bossName;
-    private final String difficulty;
-    private final Long crystalPrice;
-    private final Integer maxPartySize;
-    private final Boolean isMonthly;
-    private final Boolean isActive;
-    private final Integer minEntryLevel;
-    private final Integer bossLevel;
-    private final ForceType requiredForceType;
-    private final Integer requiredForceAmount;
-    
-    public AdminBossResponse(Boss boss) {
-        this.id = boss.getId();
-        this.bossName = boss.getBossName();
-        this.difficulty = boss.getDifficulty();
-        this.crystalPrice = boss.getCrystalPrice();
-        this.maxPartySize = boss.getMaxPartySize();
-        this.isMonthly = boss.getIsMonthly();
-        this.isActive = boss.getIsActive();
-        this.minEntryLevel = boss.getMinEntryLevel();
-        this.bossLevel = boss.getBossLevel();
-        this.requiredForceType = boss.getRequiredForceType();
-        this.requiredForceAmount = boss.getRequiredForceAmount();
+    private Long adminBossId;
+    private String bossName;
+    private String bossNameEn;
+    private String difficulty;
+    private String difficultyEn;
+    private Long crystalPrice;
+    private Integer maxPartySize;
+    private Boolean isMonthly;
+    private Boolean isActive;
+    private Integer minEntryLevel;
+    private Integer bossLevel;
+    private ForceType requiredForceType;
+    private Integer requiredForceAmount;
+
+    public static AdminBossResponse from(Boss boss) {
+        return AdminBossResponse.builder()
+                .adminBossId(boss.getId())
+                .bossName(boss.getBossName())
+                .bossNameEn(boss.getBossNameEn())
+                .difficulty(boss.getDifficulty())
+                .difficultyEn(boss.getDifficultyEn())
+                .crystalPrice(boss.getCrystalPrice())
+                .maxPartySize(boss.getMaxPartySize())
+                .isMonthly(boss.getIsMonthly())
+                .isActive(boss.getIsActive())
+                .minEntryLevel(boss.getMinEntryLevel())
+                .requiredForceType(boss.getRequiredForceType())
+                .requiredForceAmount(boss.getRequiredForceAmount())
+                .build();
+
     }
+
 } 

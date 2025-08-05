@@ -26,7 +26,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     @Override
     public List<AdminBossResponse> getAllBosses() {
         return bossRepository.findAll().stream()
-                .map(AdminBossResponse::new)
+                .map(AdminBossResponse::from)
                 .collect(Collectors.toList());
     }
     
@@ -34,7 +34,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     @Override
     public Page<AdminBossResponse> getAllBosses(Pageable pageable) {
         return bossRepository.findAll(pageable)
-                .map(AdminBossResponse::new);
+                .map(AdminBossResponse::from);
     }
     
     // 특정 보스 조회
@@ -42,7 +42,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     public AdminBossResponse getBoss(Long id) {
         Boss boss = bossRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + id));
-        return new AdminBossResponse(boss);
+        return AdminBossResponse.from(boss);
     }
     
     // 보스 생성
@@ -56,6 +56,7 @@ public class AdminBossServiceImpl implements AdminBossService {
         
         Boss boss = Boss.builder()
                 .bossName(request.getBossName())
+                .bossNameEn(request.getBossNameEn())
                 .difficulty(request.getDifficulty())
                 .crystalPrice(request.getCrystalPrice())
                 .maxPartySize(request.getMaxPartySize())
@@ -68,7 +69,7 @@ public class AdminBossServiceImpl implements AdminBossService {
                 .build();
         
         Boss savedBoss = bossRepository.save(boss);
-        return new AdminBossResponse(savedBoss);
+        return AdminBossResponse.from(savedBoss);
     }
     
     // 보스 수정
@@ -86,10 +87,12 @@ public class AdminBossServiceImpl implements AdminBossService {
                     }
                 });
         
-        // 기존 보스 정보 업데이트 (새로운 빌더로 교체)
+        // 기존 보스 정보 업데이트
         Boss updatedBoss = Boss.builder()
                 .bossName(request.getBossName())
+                .bossNameEn(request.getBossNameEn())
                 .difficulty(request.getDifficulty())
+                .difficultyEn(request.getDifficultyEn())
                 .crystalPrice(request.getCrystalPrice())
                 .maxPartySize(request.getMaxPartySize())
                 .isMonthly(request.getIsMonthly())
@@ -102,7 +105,7 @@ public class AdminBossServiceImpl implements AdminBossService {
         
         bossRepository.delete(boss);
         Boss savedBoss = bossRepository.save(updatedBoss);
-        return new AdminBossResponse(savedBoss);
+        return AdminBossResponse.from(savedBoss);
     }
     
     // 보스 삭제 (소프트 삭제 - 비활성화)
@@ -135,6 +138,6 @@ public class AdminBossServiceImpl implements AdminBossService {
         
         boss.activate();
         Boss savedBoss = bossRepository.save(boss);
-        return new AdminBossResponse(savedBoss);
+        return AdminBossResponse.from(savedBoss);
     }
 } 

@@ -1,21 +1,16 @@
 package com.happymapleday.boss.dto.response;
 
 import com.happymapleday.boss.entity.BossPreset;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Map;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
 @Builder
 public class BossPresetResponse {
-    private Long id;
+    private Long presetId;
     private String presetName;
     private List<Map<String, Object>> bossIds;
     private Integer bossCount;
@@ -23,7 +18,7 @@ public class BossPresetResponse {
 
     public static BossPresetResponse from(BossPreset preset) {
         return BossPresetResponse.builder()
-                .id(preset.getId())
+                .presetId(preset.getId())
                 .presetName(preset.getPresetName())
                 .bossIds(preset.getBossIds())
                 .bossCount(preset.getBossCount())
@@ -31,8 +26,12 @@ public class BossPresetResponse {
     }
 
     public static BossPresetResponse fromWithBosses(BossPreset preset, List<BossSimpleResponse> bosses) {
-        BossPresetResponse response = from(preset);
-        response.setBosses(bosses);
-        return response;
+        return BossPresetResponse.builder()
+                .presetId(preset.getId())
+                .presetName(preset.getPresetName())
+                .bossIds(preset.getBossIds())
+                .bossCount(preset.getBossCount())
+                .bosses(bosses)
+                .build();
     }
 } 

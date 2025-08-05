@@ -20,6 +20,9 @@ public class BoxContentItem {
     
     @Column(name = "item_name", nullable = false)
     private String itemName;
+
+    @Column(name="item_name_en", nullable=false)
+    private String itemNameEn;
     
     @Column(name = "item_level")
     private Integer itemLevel;

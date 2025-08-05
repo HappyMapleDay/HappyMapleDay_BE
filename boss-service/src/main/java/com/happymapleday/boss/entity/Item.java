@@ -25,6 +25,9 @@ public class Item {
     @Column(name = "item_name", nullable = false, length = 100, unique = true)
     private String itemName;
 
+    @Column(name="item_name_en", nullable = false, length = 100)
+    private String itemNameEn;
+
     @Column(name = "is_random_box")
     private Boolean isRandomBox = false;
 
@@ -33,8 +36,9 @@ public class Item {
     private List<RandomBoxItem> randomBoxItems = new ArrayList<>();
 
     @Builder
-    public Item(String itemName, Boolean isRandomBox) {
+    public Item(String itemName, String itemNameEn, Boolean isRandomBox) {
         this.itemName = itemName;
+        this.itemNameEn = itemNameEn;
         this.isRandomBox = isRandomBox != null ? isRandomBox : false;
     }
 

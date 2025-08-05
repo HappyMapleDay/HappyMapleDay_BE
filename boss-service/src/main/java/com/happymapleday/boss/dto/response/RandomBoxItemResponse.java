@@ -1,26 +1,23 @@
 package com.happymapleday.boss.dto.response;
 
 import com.happymapleday.boss.entity.RandomBoxItem;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
 @Builder
 public class RandomBoxItemResponse {
-    private Long id;
+    private Long randomBoxItemId;
     private String dropItemName;
+    private String dropItemNameEn;
     private Integer dropItemLevel;
     private String fullDropItemName;
     private Boolean hasDropLevel;
 
     public static RandomBoxItemResponse from(RandomBoxItem randomBoxItem) {
         return RandomBoxItemResponse.builder()
-                .id(randomBoxItem.getBoxContentItem().getId())
+                .randomBoxItemId(randomBoxItem.getBoxContentItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
+                .dropItemNameEn(randomBoxItem.getDropItemNameEn())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())
                 .fullDropItemName(randomBoxItem.getFullDropItemName())
                 .hasDropLevel(randomBoxItem.hasDropLevel())
@@ -29,8 +26,9 @@ public class RandomBoxItemResponse {
 
     public static RandomBoxItemResponse fromRandomBoxItem(RandomBoxItem randomBoxItem) {
         return RandomBoxItemResponse.builder()
-                .id(randomBoxItem.getBoxContentItem().getId())
+                .randomBoxItemId(randomBoxItem.getBoxContentItem().getId())
                 .dropItemName(randomBoxItem.getDropItemName())
+                .dropItemNameEn(randomBoxItem.getDropItemNameEn())
                 .dropItemLevel(randomBoxItem.getDropItemLevel())
                 .fullDropItemName(randomBoxItem.getFullDropItemName())
                 .hasDropLevel(randomBoxItem.hasDropLevel())

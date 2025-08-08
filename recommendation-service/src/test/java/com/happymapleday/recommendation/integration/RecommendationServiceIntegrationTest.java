@@ -50,7 +50,7 @@ class RecommendationServiceIntegrationTest {
 
         // 보스 응답 데이터 준비
         BossResponse soloBossResponse = BossResponse.builder()
-                .id(1L)
+                .bossId(1L)
                 .bossName("자쿰")
                 .difficulty("이지")
                 .crystalPrice(10000L)
@@ -58,7 +58,7 @@ class RecommendationServiceIntegrationTest {
                 .build();
 
         BossResponse partyBossResponse = BossResponse.builder()
-                .id(2L)
+                .bossId(2L)
                 .bossName("루타비스")
                 .difficulty("하드")
                 .crystalPrice(200000L)
@@ -66,7 +66,7 @@ class RecommendationServiceIntegrationTest {
                 .build();
 
         BossResponse soloBoss2Response = BossResponse.builder()
-                .id(3L)
+                .bossId(3L)
                 .bossName("힐라")
                 .difficulty("하드")
                 .crystalPrice(50000L)

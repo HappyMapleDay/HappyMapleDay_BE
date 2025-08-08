@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class BossResponse {
-    private Long id;
+    private Long bossId;
     private String bossName;
     private String difficulty;
     private Long crystalPrice;

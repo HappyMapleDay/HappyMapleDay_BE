@@ -116,6 +116,11 @@ public class GlobalOptimizationEngine {
     }
     
     // 파티 보스 우선 배정
+    /**
+     * 도메인 규칙 적용: 파티 보스 우선 배정(아직 클리어하지 않은 것)
+     * - 캐릭터별 12개, 세계 90개 제한 적용
+     * - 같은 캐릭터의 같은 이름 다른 난이도 금지
+     */
     private int assignPartyBosses(
             List<CharacterBossSelection> characterBossSelections,
             Map<Long, List<BossResponse>> characterClearableBosses,
@@ -178,6 +183,12 @@ public class GlobalOptimizationEngine {
     }
     
     // 수익이 높은 솔로 보스 배정
+    /**
+     * 도메인 규칙 적용: 남은 슬롯에 수익이 높은 솔로 보스 배정
+     * - 캐릭터별 12개, 세계 90개 제한 적용
+     * - 같은 캐릭터의 같은 이름 다른 난이도 금지
+     * - 서로 다른 캐릭터는 같은 보스 배정 가능
+     */
     private int assignOptimalSoloBosses(
             List<CharacterBossSelection> characterBossSelections,
             Map<Long, List<BossResponse>> characterClearableBosses,

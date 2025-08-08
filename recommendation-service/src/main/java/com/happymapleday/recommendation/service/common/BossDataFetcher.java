@@ -40,15 +40,4 @@ public class BossDataFetcher {
         return bosses.stream()
                 .collect(Collectors.toMap(BossResponse::getId, boss -> boss));
     }
-    
-    // 특정 보스 ID들에 해당하는 보스 정보 조회
-    public List<BossResponse> findBossesByIds(List<BossResponse> allBosses, List<Long> bossIds) {
-        return bossIds.stream()
-                .map(bossId -> allBosses.stream()
-                        .filter(boss -> boss.getId().equals(bossId))
-                        .findFirst()
-                        .orElse(null))
-                .filter(boss -> boss != null)
-                .collect(Collectors.toList());
-    }
 } 

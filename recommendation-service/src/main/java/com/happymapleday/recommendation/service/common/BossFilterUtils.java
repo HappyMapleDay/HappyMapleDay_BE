@@ -38,44 +38,6 @@ public class BossFilterUtils {
                 .collect(Collectors.toList());
     }
     
-    // 같은 보스 이름에서 가장 높은 수익을 가진 난이도만 선택
-    public static List<BossSelection> filterUniqueHighestProfitBosses(
-            List<BossSelection> bossSelections, Map<Long, BossResponse> bossInfoMap) {
-        Map<String, BossSelection> uniqueBossMap = new HashMap<>();
-        
-        for (BossSelection boss : bossSelections) {
-            BossResponse bossInfo = bossInfoMap.get(boss.getBossId());
-            if (bossInfo == null) continue;
-            
-            String bossName = bossInfo.getBossName();
-            BossSelection existingBoss = uniqueBossMap.get(bossName);
-            
-            if (existingBoss == null) {
-                uniqueBossMap.put(bossName, boss);
-            } else {
-                BossResponse existingBossInfo = bossInfoMap.get(existingBoss.getBossId());
-                if (existingBossInfo != null && bossInfo.getCrystalPrice() > existingBossInfo.getCrystalPrice()) {
-                    uniqueBossMap.put(bossName, boss);
-                }
-            }
-        }
-        
-        return new ArrayList<>(uniqueBossMap.values());
-    }
-    
-    // 솔로 보스 선택을 수익 기준으로 정렬
-    public static List<BossSelection> sortSoloBossSelectionsByProfit(
-            List<BossSelection> bossSelections, Map<Long, BossResponse> bossInfoMap) {
-        return bossSelections.stream()
-                .filter(BossSelection::isSoloBoss)
-                .sorted((a, b) -> {
-                    BossResponse aInfo = bossInfoMap.get(a.getBossId());
-                    BossResponse bInfo = bossInfoMap.get(b.getBossId());
-                    if (aInfo == null || bInfo == null) return 0;
-                    return Long.compare(bInfo.getCrystalPrice(), aInfo.getCrystalPrice()); // 내림차순
-                })
-                .collect(Collectors.toList());
-    }
     
     // 최고 난이도 솔로 보스 ID 찾기
     public static Long findHighestDifficultySoloBossId(

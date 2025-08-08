@@ -8,7 +8,6 @@ import com.happymapleday.recommendation.dto.response.OptimizationSummary;
 import com.happymapleday.recommendation.service.calculator.OptimizationSummaryCalculator;
 import com.happymapleday.recommendation.service.impl.OptimizationServiceImpl;
 import com.happymapleday.recommendation.service.limiter.CrystalLimitManager;
-import com.happymapleday.recommendation.service.processor.CharacterRecommendationProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,16 +21,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class OptimizationServiceTest {
-
-    @Mock
-    private CharacterRecommendationProcessor characterRecommendationProcessor;
 
     @Mock
     private CrystalLimitManager crystalLimitManager;
@@ -138,10 +133,8 @@ class OptimizationServiceTest {
     @DisplayName("최적화 추천 생성 성공")
     void optimizeRecommendations_Success() {
         // given
-        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(0)), anyInt()))
-                .willReturn(characterRecommendations.get(0));
-        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(1)), anyInt()))
-                .willReturn(characterRecommendations.get(1));
+        given(crystalLimitManager.optimizeGlobalRecommendations(eq(characterBossSelections)))
+                .willReturn(characterRecommendations);
 
         // when
         List<CharacterRecommendation> result = optimizationService.optimizeRecommendations(characterBossSelections);
@@ -150,7 +143,7 @@ class OptimizationServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).isEqualTo(characterRecommendations);
 
-        verify(characterRecommendationProcessor, times(2)).createCharacterRecommendation(any(CharacterBossSelection.class), anyInt());
+        verify(crystalLimitManager, times(1)).optimizeGlobalRecommendations(eq(characterBossSelections));
     }
 
     @Test
@@ -160,8 +153,8 @@ class OptimizationServiceTest {
         List<CharacterBossSelection> singleCharacterSelection = List.of(characterBossSelections.get(0));
         List<CharacterRecommendation> singleCharacterRecommendation = List.of(characterRecommendations.get(0));
 
-        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(0)), anyInt()))
-                .willReturn(characterRecommendations.get(0));
+        given(crystalLimitManager.optimizeGlobalRecommendations(eq(singleCharacterSelection)))
+                .willReturn(singleCharacterRecommendation);
 
         // when
         List<CharacterRecommendation> result = optimizationService.optimizeRecommendations(singleCharacterSelection);
@@ -170,7 +163,7 @@ class OptimizationServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).isEqualTo(singleCharacterRecommendation.get(0));
 
-        verify(characterRecommendationProcessor, times(1)).createCharacterRecommendation(any(CharacterBossSelection.class), anyInt());
+        verify(crystalLimitManager, times(1)).optimizeGlobalRecommendations(eq(singleCharacterSelection));
     }
 
     @Test
@@ -206,25 +199,22 @@ class OptimizationServiceTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(characterRecommendationProcessor, never()).createCharacterRecommendation(any(), anyInt());
+        verify(crystalLimitManager, never()).optimizeGlobalRecommendations(any());
     }
 
     @Test
-    @DisplayName("결정석 개수 누적 테스트")
-    void optimizeRecommendations_CrystalCountAccumulation() {
+    @DisplayName("오케스트레이션 위임 호출")
+    void optimizeRecommendations_DelegatesToCrystalLimitManager() {
         // given
-        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(0)), eq(0)))
-                .willReturn(characterRecommendations.get(0));
-        given(characterRecommendationProcessor.createCharacterRecommendation(eq(characterBossSelections.get(1)), eq(1)))
-                .willReturn(characterRecommendations.get(1));
+        given(crystalLimitManager.optimizeGlobalRecommendations(eq(characterBossSelections)))
+                .willReturn(characterRecommendations);
 
         // when
         List<CharacterRecommendation> result = optimizationService.optimizeRecommendations(characterBossSelections);
 
         // then
         assertThat(result).hasSize(2);
-        verify(characterRecommendationProcessor).createCharacterRecommendation(characterBossSelections.get(0), 0);
-        verify(characterRecommendationProcessor).createCharacterRecommendation(characterBossSelections.get(1), 1);
+        verify(crystalLimitManager, times(1)).optimizeGlobalRecommendations(eq(characterBossSelections));
     }
 
     @Test

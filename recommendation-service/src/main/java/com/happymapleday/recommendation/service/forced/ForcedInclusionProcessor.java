@@ -19,14 +19,9 @@ public class ForcedInclusionProcessor {
         this.eligibilityService = eligibilityService;
     }
 
-    public List<SelectedBoss> process(CharacterInput character,
-                                      Map<Long, BossResponse> bossById,
-                                      Set<String> takenGroup,
-                                      int characterLimit,
-                                      int worldLimit,
-                                      int[] worldSelectedCount,
-                                      long[] worldCrystal) {
-        List<SelectedBoss> selected = new ArrayList<>();
+    // 강제 포함 후보를 수집만 하고, 누산/차단은 하지 않음
+    public List<SelectedBoss> collectCandidates(CharacterInput character,
+                                                Map<Long, BossResponse> bossById) {
         List<PlannedBoss> planned = Optional.ofNullable(character.getPlannedBosses()).orElseGet(List::of);
         List<PlannedBoss> forced = planned.stream()
                 .filter(p -> Boolean.TRUE.equals(p.getAlreadyCleared()) || (p.getPartySize() != null && p.getPartySize() >= 2))
@@ -60,17 +55,15 @@ public class ForcedInclusionProcessor {
             }
         }
 
+        List<SelectedBoss> candidates = new ArrayList<>();
         for (PlannedBoss pb : hardestForcedByName.values()) {
-            if (worldSelectedCount[0] >= worldLimit) break;
-            if (selected.size() >= characterLimit) break;
             BossResponse boss = bossById.get(pb.getBossId());
+            if (boss == null) continue;
             if (!eligibilityService.canChallenge(boss, character)) continue;
-            String groupKey = boss.getBossName();
-            if (takenGroup.contains(groupKey)) continue;
             int partySize = Optional.ofNullable(pb.getPartySize()).orElse(1);
             if (partySize <= 0) partySize = 1;
             long perPlayerCrystal = Optional.ofNullable(boss.getCrystalPrice()).orElse(0L) / partySize;
-            selected.add(SelectedBoss.builder()
+            candidates.add(SelectedBoss.builder()
                     .bossId(boss.getBossId())
                     .bossName(boss.getBossName())
                     .difficulty(boss.getDifficulty())
@@ -78,12 +71,8 @@ public class ForcedInclusionProcessor {
                     .partySize(partySize)
                     .forcedIncluded(true)
                     .build());
-            takenGroup.add(groupKey);
-            worldSelectedCount[0]++;
-            worldCrystal[0] += perPlayerCrystal;
         }
-
-        return selected;
+        return candidates;
     }
 }
 

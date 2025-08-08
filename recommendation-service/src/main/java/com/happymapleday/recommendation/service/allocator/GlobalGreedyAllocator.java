@@ -5,6 +5,7 @@ import com.happymapleday.recommendation.dto.request.CharacterInput;
 import com.happymapleday.recommendation.dto.response.CharacterRecommendation;
 import com.happymapleday.recommendation.dto.response.SelectedBoss;
 import com.happymapleday.recommendation.service.eligibility.BossEligibilityService;
+import com.happymapleday.recommendation.service.model.WorldAccumulator;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -25,42 +26,69 @@ public class GlobalGreedyAllocator {
                          List<CharacterRecommendation> characterRecs,
                          int characterLimit,
                          int worldLimit,
-                         int[] worldSelectedCount,
-                         long[] worldCrystal) {
+                         WorldAccumulator worldAcc) {
 
-        Map<Long, BossResponse> nextCandidateByChar = new HashMap<>();
+        // 캐릭터별 추천 객체 맵 구성 (없으면 생성)
+        Map<Long, Integer> positionByCharId = new HashMap<>();
+        for (int j = 0; j < characterRecs.size(); j++) {
+            positionByCharId.put(characterRecs.get(j).getCharacterId(), j);
+        }
+        for (CharacterInput c : characters) {
+            long cid = c.getCharacterId();
+            if (!positionByCharId.containsKey(cid)) {
+                characterRecs.add(CharacterRecommendation.builder()
+                        .characterId(cid)
+                        .selectedBossCount(0)
+                        .crystalIncome(0L)
+                        .bosses(new ArrayList<>())
+                        .build());
+                positionByCharId.put(cid, characterRecs.size() - 1);
+            }
+        }
+
+        // 초기 후보를 우선순위 큐로 구성
+        record Candidate(long characterId, BossResponse boss, long price) {}
+        PriorityQueue<Candidate> pq = new PriorityQueue<>(Comparator.comparingLong((Candidate c) -> c.price).reversed());
+
         for (int i = 0; i < characters.size(); i++) {
             CharacterInput c = characters.get(i);
-            CharacterRecommendation rec = characterRecs.get(i);
+            CharacterRecommendation rec = characterRecs.get(positionByCharId.get(c.getCharacterId()));
             if (rec.getSelectedBossCount() >= characterLimit) continue;
             long maxSolo = characterMaxSoloPrice.getOrDefault(c.getCharacterId(), 0L);
             if (maxSolo == 0L) continue;
-            Set<String> takenGroup = takenGroupByChar.get(c.getCharacterId());
+            Set<String> takenGroup = takenGroupByChar.computeIfAbsent(c.getCharacterId(), k -> new HashSet<>());
             Optional<BossResponse> cand = weeklyActive.stream()
                     .filter(b -> !takenGroup.contains(b.getBossName()))
                     .filter(b -> eligibilityService.canChallenge(b, c))
                     .filter(b -> b.getCrystalPrice() <= maxSolo)
                     .findFirst();
-            cand.ifPresent(b -> nextCandidateByChar.put(c.getCharacterId(), b));
+            cand.ifPresent(b -> pq.offer(new Candidate(c.getCharacterId(), b, Optional.ofNullable(b.getCrystalPrice()).orElse(0L))));
         }
 
-        while (worldSelectedCount[0] < worldLimit) {
-            Optional<Map.Entry<Long, BossResponse>> best = nextCandidateByChar.entrySet().stream()
-                    .max(Comparator.comparingLong(e -> Optional.ofNullable(e.getValue().getCrystalPrice()).orElse(0L)));
-            if (best.isEmpty()) break;
-            Long chosenCharId = best.get().getKey();
-            BossResponse b = best.get().getValue();
+        while (worldAcc.getSelectedCount() < worldLimit && !pq.isEmpty()) {
+            Candidate best = pq.poll();
+            Long chosenCharId = best.characterId;
+            BossResponse b = best.boss;
 
-            int idx = -1;
-            for (int i = 0; i < characters.size(); i++) {
-                if (Objects.equals(characters.get(i).getCharacterId(), chosenCharId)) { idx = i; break; }
+            Integer idxObj = positionByCharId.get(chosenCharId);
+            if (idxObj == null) {
+                characterRecs.add(CharacterRecommendation.builder()
+                        .characterId(chosenCharId)
+                        .selectedBossCount(0)
+                        .crystalIncome(0L)
+                        .bosses(new ArrayList<>())
+                        .build());
+                idxObj = characterRecs.size() - 1;
+                positionByCharId.put(chosenCharId, idxObj);
             }
-            if (idx < 0) { nextCandidateByChar.remove(chosenCharId); continue; }
+            int idx = idxObj;
 
             CharacterRecommendation rec = characterRecs.get(idx);
-            if (rec.getSelectedBossCount() >= characterLimit) { nextCandidateByChar.remove(chosenCharId); continue; }
+            if (rec.getSelectedBossCount() >= characterLimit) continue;
 
-            Set<String> takenGroup = takenGroupByChar.get(chosenCharId);
+            Set<String> takenGroup = takenGroupByChar.computeIfAbsent(chosenCharId, k -> new HashSet<>());
+            if (takenGroup.contains(b.getBossName())) continue;
+
             SelectedBoss sb = SelectedBoss.builder()
                     .bossId(b.getBossId())
                     .bossName(b.getBossName())
@@ -74,28 +102,31 @@ public class GlobalGreedyAllocator {
             characterRecs.set(idx, CharacterRecommendation.builder()
                     .characterId(rec.getCharacterId())
                     .selectedBossCount(rec.getSelectedBossCount() + 1)
-                    .crystalIncome(rec.getCrystalIncome() + b.getCrystalPrice())
+                    .crystalIncome(rec.getCrystalIncome() + Optional.ofNullable(b.getCrystalPrice()).orElse(0L))
                     .bosses(newBosses)
                     .build());
             takenGroup.add(b.getBossName());
             takenGroupByChar.put(chosenCharId, takenGroup);
-            worldSelectedCount[0]++;
-            worldCrystal[0] += b.getCrystalPrice();
+            worldAcc.incrementSelected();
+            worldAcc.addCrystal(Optional.ofNullable(b.getCrystalPrice()).orElse(0L));
 
             long maxSolo = characterMaxSoloPrice.getOrDefault(chosenCharId, 0L);
             if (maxSolo == 0L || characterRecs.get(idx).getSelectedBossCount() >= characterLimit) {
-                nextCandidateByChar.remove(chosenCharId);
-            } else {
-                Set<String> tk = takenGroupByChar.get(chosenCharId);
-                CharacterInput c = characters.get(idx);
-                Optional<BossResponse> cand = weeklyActive.stream()
-                        .filter(x -> !tk.contains(x.getBossName()))
-                        .filter(x -> eligibilityService.canChallenge(x, c))
-                        .filter(x -> x.getCrystalPrice() <= maxSolo)
-                        .findFirst();
-                if (cand.isPresent()) nextCandidateByChar.put(chosenCharId, cand.get());
-                else nextCandidateByChar.remove(chosenCharId);
+                continue;
             }
+            Set<String> tk = takenGroupByChar.computeIfAbsent(chosenCharId, k -> new HashSet<>());
+            CharacterInput found = null;
+            for (CharacterInput ci : characters) {
+                if (Objects.equals(ci.getCharacterId(), chosenCharId)) { found = ci; break; }
+            }
+            if (found == null) continue;
+            final CharacterInput finalFound = found;
+            Optional<BossResponse> cand = weeklyActive.stream()
+                    .filter(x -> !tk.contains(x.getBossName()))
+                    .filter(x -> eligibilityService.canChallenge(x, finalFound))
+                    .filter(x -> x.getCrystalPrice() <= maxSolo)
+                    .findFirst();
+            cand.ifPresent(nb -> pq.offer(new Candidate(chosenCharId, nb, Optional.ofNullable(nb.getCrystalPrice()).orElse(0L))));
         }
     }
 }

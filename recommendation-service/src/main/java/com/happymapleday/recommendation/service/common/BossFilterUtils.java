@@ -15,19 +15,7 @@ public class BossFilterUtils {
     // 주의: BossResponse로는 솔로/파티 구분 불가 (사용자 선택에 따라 결정됨)
     // 솔로/파티 구분은 BossSelection의 partySize를 사용해야 함
     
-    // 결정석 가격 기준으로 정렬 (높은 순)
-    public static List<BossResponse> sortByProfitDesc(List<BossResponse> bosses) {
-        return bosses.stream()
-                .sorted(Comparator.comparingLong(BossResponse::getCrystalPrice).reversed())
-                .collect(Collectors.toList());
-    }
-    
-    // 결정석 가격 기준으로 정렬 (낮은 순)
-    public static List<BossResponse> sortByProfitAsc(List<BossResponse> bosses) {
-        return bosses.stream()
-                .sorted(Comparator.comparingLong(BossResponse::getCrystalPrice))
-                .collect(Collectors.toList());
-    }
+    // (미사용 메서드 제거)
     
     // 특정 결정석 가격 이하의 보스들만 필터링
     public static List<BossResponse> filterByMaxPrice(List<BossResponse> bosses, Long maxPrice) {

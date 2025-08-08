@@ -6,7 +6,6 @@ import com.happymapleday.recommendation.dto.request.CharacterBossSelection;
 import com.happymapleday.recommendation.service.common.BossDataFetcher;
 import com.happymapleday.recommendation.service.common.BossFilterUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class CharacterCapabilityAnalyzer {
     
     private final BossDataFetcher bossDataFetcher;
@@ -45,8 +43,7 @@ public class CharacterCapabilityAnalyzer {
             Long characterHighestDifficultySoloBossId = findCharacterHighestDifficultySoloBossId(
                     selection, allBosses);
             
-            // 3. 모든 보스는 클리어 가능하되, 솔로 보스는 해당 캐릭터의 가장 어려운 솔로 보스보다 
-            //    결정석 가격이 낮거나 같은 것만 클리어 가능
+            // 3. 가장 어려운 보스의 결정석 가격 보다 낮은 보스들은 모두 클리어 가능하다고 판단
             if (characterHighestDifficultySoloBossId != null) {
                 BossResponse characterHighestDifficultySoloBoss = allBosses.stream()
                         .filter(boss -> boss.getId().equals(characterHighestDifficultySoloBossId))

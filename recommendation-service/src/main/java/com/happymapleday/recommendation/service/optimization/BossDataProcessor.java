@@ -4,7 +4,6 @@ import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.service.common.BossDataFetcher;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -12,7 +11,6 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class BossDataProcessor {
     
     private final BossDataFetcher bossDataFetcher;

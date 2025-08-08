@@ -11,7 +11,6 @@ import com.happymapleday.recommendation.service.common.BossFilterUtils;
 import com.happymapleday.recommendation.service.factory.BossRecommendationFactory;
 import com.happymapleday.recommendation.service.limiter.CrystalLimitManager;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CharacterRecommendationProcessor {

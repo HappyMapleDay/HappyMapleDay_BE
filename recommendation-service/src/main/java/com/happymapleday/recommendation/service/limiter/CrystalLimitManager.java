@@ -33,22 +33,19 @@ public class CrystalLimitManager {
             // 1. 전체 보스 목록 가져오기
             List<BossResponse> allBosses = bossDataProcessor.getAllBosses();
             
-            // 2. 솔로 보스 중 가장 어려운 보스 찾기 (결정석 가격이 가장 높은 솔로 보스)
-            Long highestDifficultySoloBossId = bossDataProcessor.findHighestDifficultySoloBoss(allBosses);
-            
-            // 3. 각 캐릭터가 클리어할 수 있는 보스 목록 생성
+            // 2. 각 캐릭터가 클리어할 수 있는 보스 목록 생성
             Map<Long, List<BossResponse>> characterClearableBosses = characterCapabilityAnalyzer
-                    .createCharacterClearableBosses(characterBossSelections, allBosses, highestDifficultySoloBossId);
+                    .createCharacterClearableBosses(characterBossSelections, allBosses);
             
-            // 4. 캐릭터별 가장 어려운 솔로 보스 ID 계산
+            // 3. 캐릭터별 가장 어려운 솔로 보스 ID 계산
             Map<Long, Long> characterHighestDifficultySoloBossIds = characterCapabilityAnalyzer
                     .calculateCharacterHighestDifficultySoloBossIds(characterBossSelections, characterClearableBosses);
             
-            // 5. 최적화된 보스 조합 찾기
+            // 4. 최적화된 보스 조합 찾기
             Map<Long, List<BossRecommendation>> characterRecommendations = globalOptimizationEngine
                     .findOptimalCombination(characterBossSelections, characterClearableBosses, characterHighestDifficultySoloBossIds);
             
-            // 6. CharacterRecommendation 객체들 생성
+            // 5. CharacterRecommendation 객체들 생성
             return recommendationAssembler.createCharacterRecommendations(
                     characterBossSelections, characterRecommendations, characterHighestDifficultySoloBossIds);
                     

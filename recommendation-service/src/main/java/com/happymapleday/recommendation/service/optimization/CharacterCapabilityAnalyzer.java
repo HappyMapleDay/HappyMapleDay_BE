@@ -19,20 +19,19 @@ public class CharacterCapabilityAnalyzer {
     
     // 각 캐릭터가 클리어할 수 있는 보스 목록 생성
     public Map<Long, List<BossResponse>> createCharacterClearableBosses(
-            List<CharacterBossSelection> characterBossSelections, 
-            List<BossResponse> allBosses, 
-            Long globalHighestDifficultySoloBossId) {
+            List<CharacterBossSelection> characterBossSelections,
+            List<BossResponse> allBosses) {
         
         Map<Long, List<BossResponse>> characterClearableBosses = new HashMap<>();
+        Map<Long, BossResponse> bossInfoMap = bossDataFetcher.createBossInfoMap(allBosses);
         
         for (CharacterBossSelection selection : characterBossSelections) {
             List<BossResponse> clearableBosses = new ArrayList<>();
             
             // 1. 사용자가 요청한 파티 보스들 (2명 이상으로 클리어한다고 작성한 것들)
-            Set<Long> requestedPartyBossIds = selection.getBossSelections().stream()
-                    .filter(BossSelection::isPartyBoss)
-                    .map(BossSelection::getBossId)
-                    .collect(Collectors.toSet());
+            Set<Long> requestedPartyBossIds = BossFilterUtils.extractPartyBossIds(
+                    BossFilterUtils.filterPartyBossSelections(selection.getBossSelections()))
+                    .stream().collect(Collectors.toSet());
             
             // 요청한 파티 보스들을 클리어 가능 목록에 추가
             clearableBosses.addAll(allBosses.stream()
@@ -40,15 +39,13 @@ public class CharacterCapabilityAnalyzer {
                     .collect(Collectors.toList()));
             
             // 2. 각 캐릭터가 선택한 솔로 보스들 중에서 가장 어려운 보스 찾기
-            Long characterHighestDifficultySoloBossId = findCharacterHighestDifficultySoloBossId(
-                    selection, allBosses);
+            Long characterHighestDifficultySoloBossId = BossFilterUtils.findHighestDifficultySoloBossId(
+                    BossFilterUtils.filterSoloBossSelections(selection.getBossSelections()),
+                    bossInfoMap);
             
             // 3. 가장 어려운 보스의 결정석 가격 보다 낮은 보스들은 모두 클리어 가능하다고 판단
             if (characterHighestDifficultySoloBossId != null) {
-                BossResponse characterHighestDifficultySoloBoss = allBosses.stream()
-                        .filter(boss -> boss.getId().equals(characterHighestDifficultySoloBossId))
-                        .findFirst()
-                        .orElse(null);
+                BossResponse characterHighestDifficultySoloBoss = bossInfoMap.get(characterHighestDifficultySoloBossId);
                 
                 if (characterHighestDifficultySoloBoss != null) {
                     List<BossResponse> availableBosses = BossFilterUtils.filterByMaxPrice(
@@ -72,13 +69,16 @@ public class CharacterCapabilityAnalyzer {
         Map<Long, Long> characterHighestDifficultySoloBossIds = new HashMap<>();
         
         for (CharacterBossSelection selection : characterBossSelections) {
-            Long characterHighestDifficultySoloBossId = selection.getBossSelections().stream()
-                    .filter(boss -> boss.isSoloBoss()) // 솔로로 가기로 선택한 보스만
+            Set<Long> soloSelectedBossIds = selection.getBossSelections().stream()
+                    .filter(BossSelection::isSoloBoss)
                     .map(BossSelection::getBossId)
-                    .map(bossId -> characterClearableBosses.get(selection.getCharacterId()).stream()
-                            .filter(boss -> boss.getId().equals(bossId))
-                            .findFirst()
-                            .orElse(null))
+                    .collect(Collectors.toSet());
+
+            Map<Long, BossResponse> clearableBossMap = characterClearableBosses.getOrDefault(selection.getCharacterId(), List.of()).stream()
+                    .collect(Collectors.toMap(BossResponse::getId, boss -> boss));
+
+            Long characterHighestDifficultySoloBossId = soloSelectedBossIds.stream()
+                    .map(clearableBossMap::get)
                     .filter(Objects::nonNull)
                     .max(Comparator.comparingLong(BossResponse::getCrystalPrice))
                     .map(BossResponse::getId)
@@ -90,31 +90,4 @@ public class CharacterCapabilityAnalyzer {
         return characterHighestDifficultySoloBossIds;
     }
     
-    // 개별 캐릭터의 가장 어려운 솔로 보스 찾기
-    private Long findCharacterHighestDifficultySoloBossId(
-            CharacterBossSelection selection, List<BossResponse> allBosses) {
-        
-                    // 솔로로 가기로 선택한 보스들
-        List<BossSelection> soloBossSelections = BossFilterUtils.filterSoloBossSelections(
-                selection.getBossSelections());
-        
-        // 선택한 보스 ID들
-        List<Long> selectedBossIds = soloBossSelections.stream()
-                .map(BossSelection::getBossId)
-                .collect(Collectors.toList());
-        
-        // 실제 보스 정보 가져오기
-        List<BossResponse> foundBosses = bossDataFetcher.findBossesByIds(allBosses, selectedBossIds);
-        
-        // 솔로로 가기로 선택한 보스들의 실제 정보 필터링
-        List<BossResponse> soloBossResponses = foundBosses.stream()
-                .filter(bossResponse -> soloBossSelections.stream()
-                        .anyMatch(soloBossSelection -> soloBossSelection.getBossId().equals(bossResponse.getId())))
-                .collect(Collectors.toList());
-        
-        return soloBossResponses.stream()
-                .max(Comparator.comparingLong(BossResponse::getCrystalPrice))
-                .map(BossResponse::getId)
-                .orElse(null);
-    }
 } 

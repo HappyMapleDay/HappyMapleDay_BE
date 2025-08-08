@@ -24,8 +24,7 @@ public class ForcedInclusionProcessor {
                                       Set<String> takenGroup,
                                       int characterLimit,
                                       int worldLimit,
-                                      int[] worldSelectedCount,
-                                      long[] worldCrystal) {
+                                      com.happymapleday.recommendation.service.model.WorldAccumulator worldAcc) {
         List<SelectedBoss> selected = new ArrayList<>();
         List<PlannedBoss> planned = Optional.ofNullable(character.getPlannedBosses()).orElseGet(List::of);
         List<PlannedBoss> forced = planned.stream()
@@ -61,7 +60,7 @@ public class ForcedInclusionProcessor {
         }
 
         for (PlannedBoss pb : hardestForcedByName.values()) {
-            if (worldSelectedCount[0] >= worldLimit) break;
+            if (worldAcc.getSelectedCount() >= worldLimit) break;
             if (selected.size() >= characterLimit) break;
             BossResponse boss = bossById.get(pb.getBossId());
             if (!eligibilityService.canChallenge(boss, character)) continue;
@@ -79,8 +78,8 @@ public class ForcedInclusionProcessor {
                     .forcedIncluded(true)
                     .build());
             takenGroup.add(groupKey);
-            worldSelectedCount[0]++;
-            worldCrystal[0] += perPlayerCrystal;
+            worldAcc.incrementSelected();
+            worldAcc.addCrystal(perPlayerCrystal);
         }
 
         return selected;

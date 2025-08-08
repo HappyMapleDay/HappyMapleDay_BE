@@ -5,6 +5,7 @@ import com.happymapleday.recommendation.dto.request.CharacterInput;
 import com.happymapleday.recommendation.dto.response.CharacterRecommendation;
 import com.happymapleday.recommendation.dto.response.SelectedBoss;
 import com.happymapleday.recommendation.service.eligibility.BossEligibilityService;
+import com.happymapleday.recommendation.service.model.WorldAccumulator;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -25,7 +26,25 @@ public class GlobalGreedyAllocator {
                          List<CharacterRecommendation> characterRecs,
                          int characterLimit,
                          int worldLimit,
-                         com.happymapleday.recommendation.service.model.WorldAccumulator worldAcc) {
+                         WorldAccumulator worldAcc) {
+
+        // 캐릭터별 추천 객체 맵 구성 (없으면 생성)
+        Map<Long, Integer> positionByCharId = new HashMap<>();
+        for (int j = 0; j < characterRecs.size(); j++) {
+            positionByCharId.put(characterRecs.get(j).getCharacterId(), j);
+        }
+        for (CharacterInput c : characters) {
+            long cid = c.getCharacterId();
+            if (!positionByCharId.containsKey(cid)) {
+                characterRecs.add(CharacterRecommendation.builder()
+                        .characterId(cid)
+                        .selectedBossCount(0)
+                        .crystalIncome(0L)
+                        .bosses(new ArrayList<>())
+                        .build());
+                positionByCharId.put(cid, characterRecs.size() - 1);
+            }
+        }
 
         // 초기 후보를 우선순위 큐로 구성
         record Candidate(long characterId, BossResponse boss, long price) {}
@@ -33,11 +52,11 @@ public class GlobalGreedyAllocator {
 
         for (int i = 0; i < characters.size(); i++) {
             CharacterInput c = characters.get(i);
-            CharacterRecommendation rec = characterRecs.get(i);
+            CharacterRecommendation rec = characterRecs.get(positionByCharId.get(c.getCharacterId()));
             if (rec.getSelectedBossCount() >= characterLimit) continue;
             long maxSolo = characterMaxSoloPrice.getOrDefault(c.getCharacterId(), 0L);
             if (maxSolo == 0L) continue;
-            Set<String> takenGroup = takenGroupByChar.get(c.getCharacterId());
+            Set<String> takenGroup = takenGroupByChar.computeIfAbsent(c.getCharacterId(), k -> new HashSet<>());
             Optional<BossResponse> cand = weeklyActive.stream()
                     .filter(b -> !takenGroup.contains(b.getBossName()))
                     .filter(b -> eligibilityService.canChallenge(b, c))
@@ -51,16 +70,23 @@ public class GlobalGreedyAllocator {
             Long chosenCharId = best.characterId;
             BossResponse b = best.boss;
 
-            int idx = -1;
-            for (int i = 0; i < characters.size(); i++) {
-                if (Objects.equals(characters.get(i).getCharacterId(), chosenCharId)) { idx = i; break; }
+            Integer idxObj = positionByCharId.get(chosenCharId);
+            if (idxObj == null) {
+                characterRecs.add(CharacterRecommendation.builder()
+                        .characterId(chosenCharId)
+                        .selectedBossCount(0)
+                        .crystalIncome(0L)
+                        .bosses(new ArrayList<>())
+                        .build());
+                idxObj = characterRecs.size() - 1;
+                positionByCharId.put(chosenCharId, idxObj);
             }
-            if (idx < 0) continue;
+            int idx = idxObj;
 
             CharacterRecommendation rec = characterRecs.get(idx);
             if (rec.getSelectedBossCount() >= characterLimit) continue;
 
-            Set<String> takenGroup = takenGroupByChar.get(chosenCharId);
+            Set<String> takenGroup = takenGroupByChar.computeIfAbsent(chosenCharId, k -> new HashSet<>());
             if (takenGroup.contains(b.getBossName())) continue;
 
             SelectedBoss sb = SelectedBoss.builder()
@@ -88,11 +114,16 @@ public class GlobalGreedyAllocator {
             if (maxSolo == 0L || characterRecs.get(idx).getSelectedBossCount() >= characterLimit) {
                 continue;
             }
-            Set<String> tk = takenGroupByChar.get(chosenCharId);
-            CharacterInput c = characters.get(idx);
+            Set<String> tk = takenGroupByChar.computeIfAbsent(chosenCharId, k -> new HashSet<>());
+            CharacterInput found = null;
+            for (CharacterInput ci : characters) {
+                if (Objects.equals(ci.getCharacterId(), chosenCharId)) { found = ci; break; }
+            }
+            if (found == null) continue;
+            final CharacterInput finalFound = found;
             Optional<BossResponse> cand = weeklyActive.stream()
                     .filter(x -> !tk.contains(x.getBossName()))
-                    .filter(x -> eligibilityService.canChallenge(x, c))
+                    .filter(x -> eligibilityService.canChallenge(x, finalFound))
                     .filter(x -> x.getCrystalPrice() <= maxSolo)
                     .findFirst();
             cand.ifPresent(nb -> pq.offer(new Candidate(chosenCharId, nb, Optional.ofNullable(nb.getCrystalPrice()).orElse(0L))));

@@ -5,11 +5,12 @@ import com.happymapleday.common.dto.ApiResponse;
 import com.happymapleday.common.dto.BossResponse;
 import com.happymapleday.recommendation.dto.request.CharacterInput;
 import com.happymapleday.recommendation.dto.request.OptimizeRecommendationRequest;
-import com.happymapleday.recommendation.dto.request.PlannedBoss;
 import com.happymapleday.recommendation.dto.response.*;
 import com.happymapleday.recommendation.service.RecommendationService;
 import com.happymapleday.recommendation.service.allocator.GlobalGreedyAllocator;
-import com.happymapleday.recommendation.service.forced.ForcedInclusionProcessor;
+import com.happymapleday.recommendation.service.analysis.CharacterPlanAnalyzer;
+import com.happymapleday.recommendation.service.forced.ForcedInclusionAggregator;
+import com.happymapleday.recommendation.service.provider.WeeklyActiveProvider;
 import com.happymapleday.recommendation.service.model.WorldAccumulator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,15 +27,10 @@ public class RecommendationServiceImpl implements RecommendationService {
     private static final int WORLD_LIMIT = 90;
 
     private final BossServiceClient bossServiceClient;
-    private final ForcedInclusionProcessor forcedInclusionProcessor;
+    private final ForcedInclusionAggregator forcedInclusionAggregator;
     private final GlobalGreedyAllocator globalGreedyAllocator;
-
-    private List<BossResponse> weeklyActiveCache(List<BossResponse> allBosses) {
-        return allBosses.stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsMonthly()))
-                .sorted(Comparator.comparingLong(BossResponse::getCrystalPrice).reversed())
-                .toList();
-    }
+    private final CharacterPlanAnalyzer characterPlanAnalyzer;
+    private final WeeklyActiveProvider weeklyActiveProvider;
 
     @Override
     public OptimizedRecommendationResponse optimize(OptimizeRecommendationRequest request) {
@@ -42,7 +38,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<BossResponse> allBosses = bossListResp.getData();
         Map<Long, BossResponse> bossById = allBosses.stream().collect(Collectors.toMap(BossResponse::getBossId, Function.identity()));
         // 캐시용 주간 보스 목록 사전 계산
-        List<BossResponse> weeklyActiveOnce = weeklyActiveCache(allBosses);
+        List<BossResponse> weeklyActiveOnce = weeklyActiveProvider.provideSortedWeekly(allBosses);
 
         Map<String, List<CharacterInput>> worldToCharacters = request.getCharacters().stream()
                 .collect(Collectors.groupingBy(CharacterInput::getWorldName));
@@ -61,53 +57,25 @@ public class RecommendationServiceImpl implements RecommendationService {
             long[] worldCrystalRef = new long[]{0L};
 
             // 각 캐릭터별 우선적으로 포함 되어야 할 보스 선택
+
             Map<Long, Set<String>> characterTakenBossGroup = new HashMap<>();
-
-            for (CharacterInput character : characters) {
-                List<SelectedBoss> selected = new ArrayList<>();
-                Set<String> takenGroup = new HashSet<>();
-
-                List<PlannedBoss> planned = Optional.ofNullable(character.getPlannedBosses()).orElseGet(List::of);
-                // 2인 이상 클리어, 이미 클리어 한 보스 포함
-                planned.stream()
-                        .filter(p -> Boolean.TRUE.equals(p.getAlreadyCleared()) || (p.getPartySize() != null && p.getPartySize() >= 2))
-                        .toList();
-
-                WorldAccumulator accInit = new WorldAccumulator();
-                for (int i = 0; i < worldSelectedRef[0]; i++) accInit.incrementSelected();
-                accInit.addCrystal(worldCrystalRef[0]);
-                List<SelectedBoss> forcedSelected =
-                        forcedInclusionProcessor.process(
-                                character,
-                                bossById,
-                                takenGroup,
-                                CHARACTER_LIMIT,
-                                WORLD_LIMIT,
-                                accInit
-                        );
-                worldSelectedRef[0] = accInit.getSelectedCount();
-                worldCrystalRef[0] = accInit.getCrystal();
-                selected.addAll(forcedSelected);
-                characterTakenBossGroup.put(character.getCharacterId(), takenGroup);
-                characterRecs.add(CharacterRecommendation.builder()
-                        .characterId(character.getCharacterId())
-                        .selectedBossCount(selected.size())
-                        .crystalIncome(selected.stream().mapToLong(SelectedBoss::getCrystalPrice).sum())
-                        .bosses(selected)
-                        .build());
-            }
+            WorldAccumulator accInit = new WorldAccumulator();
+            for (int i = 0; i < worldSelectedRef[0]; i++) accInit.incrementSelected();
+            accInit.addCrystal(worldCrystalRef[0]);
+            forcedInclusionAggregator.aggregateAndApply(
+                    characters,
+                    bossById,
+                    CHARACTER_LIMIT,
+                    WORLD_LIMIT,
+                    characterRecs,
+                    accInit,
+                    characterTakenBossGroup
+            );
+            worldSelectedRef[0] = accInit.getSelectedCount();
+            worldCrystalRef[0] = accInit.getCrystal();
 
             // 사용자가 입력한 1인 보스 중 가장 비싼 보스의 가격을 기준으로 동일/이하 가격은 잡을 수 있다고 가정
-            Map<Long, Long> characterMaxSoloPrice = new HashMap<>();
-            for (CharacterInput character : characters) {
-                long maxSolo = Optional.ofNullable(character.getPlannedBosses()).orElseGet(List::of).stream()
-                        .filter(p -> p.getPartySize() != null && p.getPartySize() == 1)
-                        .map(p -> bossById.getOrDefault(p.getBossId(), null))
-                        .filter(Objects::nonNull)
-                        .mapToLong(BossResponse::getCrystalPrice)
-                        .max().orElse(0L);
-                characterMaxSoloPrice.put(character.getCharacterId(), maxSolo);
-            }
+            Map<Long, Long> characterMaxSoloPrice = characterPlanAnalyzer.computeMaxSoloPrice(characters, bossById);
 
             // 나머지 슬롯은 월드/캐릭터 제한 안에서 높은 가격의 보스를 우선적으로 채움. (greedy)
             // 캐릭터 순회하며 가능한 보스 후보를 가격 내림차순으로 시도

@@ -1,10 +1,10 @@
 package com.happymapleday.recommendation.service;
 
-import com.happymapleday.recommendation.dto.request.RecommendationRequest;
-import com.happymapleday.recommendation.dto.response.RecommendationResponse;
+import com.happymapleday.recommendation.dto.request.OptimizeRecommendationRequest;
+import com.happymapleday.recommendation.dto.response.OptimizedRecommendationResponse;
 
 public interface RecommendationService {
-    
-    // 캐릭터별 보스 선택을 기반으로 최적화된 추천 결과를 생성
-    RecommendationResponse generateRecommendation(RecommendationRequest request);
-} 
+    OptimizedRecommendationResponse optimize(OptimizeRecommendationRequest request);
+}
+
+

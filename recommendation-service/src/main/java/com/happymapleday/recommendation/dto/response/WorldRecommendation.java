@@ -11,11 +11,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CharacterRecommendation {
-    private Long characterId;
-    private Integer selectedBossCount;
-    private Long crystalIncome;
-    private List<SelectedBoss> bosses;
+public class WorldRecommendation {
+    private String worldName;
+    private Integer worldBossCount;
+    private Long worldCrystalIncome;
+    private List<CharacterRecommendation> characters;
 }
 
 

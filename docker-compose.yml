@@ -11,6 +11,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     restart: unless-stopped
 
@@ -30,9 +31,9 @@ services:
       - mysql
     environment:
       - TZ=Asia/Seoul
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happymapleday?createDatabaseIfNotExist=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_boss?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${BOSS_DB_USER:-boss_user}
+      - SPRING_DATASOURCE_PASSWORD=${BOSS_DB_PASSWORD:-boss_password}
     ports:
       - "8081:8081"
     restart: unless-stopped
@@ -60,9 +61,9 @@ services:
       - redis
     environment:
       - TZ=Asia/Seoul
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_character?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_character?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${CHAR_DB_USER:-character_user}
+      - SPRING_DATASOURCE_PASSWORD=${CHAR_DB_PASSWORD:-character_password}
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
@@ -80,9 +81,9 @@ services:
       - mysql
     environment:
       - TZ=Asia/Seoul
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_settlement?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_settlement?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${SETTLE_DB_USER:-settlement_user}
+      - SPRING_DATASOURCE_PASSWORD=${SETTLE_DB_PASSWORD:-settlement_password}
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
       - SERVICES_USER_SERVICE_URL=http://user-service:8082
@@ -114,9 +115,9 @@ services:
       - redis
     environment:
       - TZ=Asia/Seoul
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_history?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_history?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${HISTORY_DB_USER:-history_user}
+      - SPRING_DATASOURCE_PASSWORD=${HISTORY_DB_PASSWORD:-history_password}
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
@@ -134,9 +135,9 @@ services:
       - mysql
     environment:
       - TZ=Asia/Seoul
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_admin?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_admin?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${ADMIN_DB_USER:-admin_user}
+      - SPRING_DATASOURCE_PASSWORD=${ADMIN_DB_PASSWORD:-admin_password}
       - SERVICES_USER_SERVICE_URL=http://user-service:8082
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081

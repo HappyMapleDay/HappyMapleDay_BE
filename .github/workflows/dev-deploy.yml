@@ -1,0 +1,157 @@
+name: Build & Push (dev)
+
+on:
+  push:
+    branches: [ "dev" ]
+  workflow_dispatch:
+
+concurrency:
+  group: dev-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TAG_PREFIX: dev
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set-matrix.outputs.services }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            root-build:
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle/**'
+            common:
+              - 'common/**'
+            gateway:
+              - 'gateway/**'
+            user-service:
+              - 'user-service/**'
+            character-service:
+              - 'character-service/**'
+            boss-service:
+              - 'boss-service/**'
+            settlement-service:
+              - 'settlement-service/**'
+            recommendation-service:
+              - 'recommendation-service/**'
+            history-service:
+              - 'history-service/**'
+            admin-service:
+              - 'admin-service/**'
+
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          ALL='["gateway","user-service","character-service","boss-service","settlement-service","recommendation-service","history-service","admin-service"]'
+          MATRIX='[]'
+          if [[ "${{ steps.changes.outputs.common }}" == 'true' || "${{ steps.changes.outputs.root-build }}" == 'true' ]]; then
+            MATRIX=$ALL
+          else
+            for svc in gateway user-service character-service boss-service settlement-service recommendation-service history-service admin-service; do
+              key=${svc//-/_}
+              changed='${{ steps.changes.outputs.gateway }}'
+              case "$svc" in
+                gateway) changed='${{ steps.changes.outputs.gateway }}' ;;
+                user-service) changed='${{ steps.changes.outputs.user-service }}' ;;
+                character-service) changed='${{ steps.changes.outputs.character-service }}' ;;
+                boss-service) changed='${{ steps.changes.outputs.boss-service }}' ;;
+                settlement-service) changed='${{ steps.changes.outputs.settlement-service }}' ;;
+                recommendation-service) changed='${{ steps.changes.outputs.recommendation-service }}' ;;
+                history-service) changed='${{ steps.changes.outputs.history-service }}' ;;
+                admin-service) changed='${{ steps.changes.outputs.admin-service }}' ;;
+              esac
+              if [[ "$changed" == 'true' ]]; then
+                MATRIX=$(jq --arg svc "$svc" '. + [ $svc ]' <<< "$MATRIX")
+              fi
+            done
+          fi
+          echo "services=$MATRIX" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/happymapleday/${{ matrix.service }}:${{ env.TAG_PREFIX }}-${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/happymapleday/${{ matrix.service }}:${{ env.TAG_PREFIX }}-latest
+
+  deploy:
+    needs: [detect-changes, build-and-push]
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - name: Deploy ${{ matrix.service }} to dev server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          script_stop: true
+          envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,SERVICE
+          script: |
+            set -euo pipefail
+            SERVICE=${{ matrix.service }}
+            export AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'
+            export AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+            export AWS_DEFAULT_REGION='${{ secrets.AWS_DEFAULT_REGION }}'
+            AWS_ACCOUNT_ID='${{ secrets.AWS_ACCOUNT_ID }}'
+
+            # 환경 준비
+            cd ${{ secrets.DEV_APP_DIR }}
+            # ECR 로그인 후 최신 이미지 풀
+            aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+            docker compose -f docker-compose.dev.yml --env-file env/dev.env pull "$SERVICE"
+
+            # TAG 최신화(dev-latest 사용)
+            if ! grep -q '^TAG=' env/dev.env; then echo 'TAG=dev-latest' >> env/dev.env; else sed -i.bak 's/^TAG=.*/TAG=dev-latest/' env/dev.env; fi
+
+            # 서비스만 롤링 업데이트
+            docker compose -f docker-compose.dev.yml --env-file env/dev.env up -d "$SERVICE"
+
+

@@ -25,9 +25,7 @@ services:
     restart: unless-stopped
 
   boss-service:
-    build:
-      context: .
-      dockerfile: boss-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/boss-service:${TAG:-dev-latest}
     container_name: boss-service
     depends_on:
       - mysql
@@ -44,9 +42,7 @@ services:
     restart: unless-stopped
 
   user-service:
-    build:
-      context: .
-      dockerfile: user-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/user-service:${TAG:-dev-latest}
     container_name: user-service
     env_file:
       - env/dev.env
@@ -60,9 +56,7 @@ services:
     restart: unless-stopped
 
   character-service:
-    build:
-      context: .
-      dockerfile: character-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/character-service:${TAG:-dev-latest}
     container_name: character-service
     depends_on:
       - mysql
@@ -84,9 +78,7 @@ services:
     restart: unless-stopped
 
   settlement-service:
-    build:
-      context: .
-      dockerfile: settlement-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/settlement-service:${TAG:-dev-latest}
     container_name: settlement-service
     depends_on:
       - mysql
@@ -106,9 +98,7 @@ services:
     restart: unless-stopped
 
   recommendation-service:
-    build:
-      context: .
-      dockerfile: recommendation-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/recommendation-service:${TAG:-dev-latest}
     container_name: recommendation-service
     env_file:
       - env/dev.env
@@ -123,9 +113,7 @@ services:
     restart: unless-stopped
 
   history-service:
-    build:
-      context: .
-      dockerfile: history-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/history-service:${TAG:-dev-latest}
     container_name: history-service
     depends_on:
       - mysql
@@ -147,9 +135,7 @@ services:
     restart: unless-stopped
 
   admin-service:
-    build:
-      context: .
-      dockerfile: admin-service/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/admin-service:${TAG:-dev-latest}
     container_name: admin-service
     depends_on:
       - mysql
@@ -172,9 +158,7 @@ services:
     restart: unless-stopped
 
   gateway:
-    build:
-      context: .
-      dockerfile: gateway/Dockerfile
+    image: ${ECR_REGISTRY}/happymapleday/gateway:${TAG:-dev-latest}
     container_name: gateway
     depends_on:
       - user-service

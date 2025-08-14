@@ -166,15 +166,15 @@ INSERT INTO items (item_name, item_name_en, is_random_box) VALUES
 ('미트라의 분노 선택 상자', 'mithraAngerBox',false),
 ('익셉셔널 해머 - 얼굴장식', 'exceptionalHammer-face',false),
 ('생명의 연마석', 'scochStoneOfLife',false),
-('의지의 에테르넬 방어구 상자', 'etherealAmorBox-kalos',false),
+('의지의 에테르넬 방어구 상자', 'etherealArmorBox-kalos',false),
 ('익셉셔널 해머 - 눈장식', 'exceptionalHammer-eye',false),
-('흉수의 에테르넬 방어구 상자', 'etherealAmorBox-kaling',false),
+('흉수의 에테르넬 방어구 상자', 'etherealArmorBox-kaling',false),
 ('익셉셔널 해머 - 귀고리', 'exceptionalHammer-earing',false),
 ('신념의 연마석', 'scochStoneOfBelief',false),
-('욕망의 에테르넬 방어구 상자', 'etherealAmorBox-limbo',false),
+('욕망의 에테르넬 방어구 상자', 'etherealArmorBox-limbo',false),
 ('근원의 속삭임', 'whisperOfSource',false),
 ('발드릭스로이드', 'Android-baldrix',false),
-('맹세의 에테르넬 방어구 상자', 'etherealAmorBox-baldrix',false);
+('맹세의 에테르넬 방어구 상자', 'etherealArmorBox-baldrix',false);
 
 -- 보스 드랍 아이템 연결 데이터 삽입
 INSERT INTO boss_drop_items (boss_id, item_id) VALUES

@@ -5,10 +5,8 @@ services:
     image: mysql:8.0
     container_name: happymapleday-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: happymapleday
-      MYSQL_USER: happymapleday
-      MYSQL_PASSWORD: happymapleday123
     ports:
       - "3306:3306"
     volumes:
@@ -16,5 +14,164 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: happymapleday-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  boss-service:
+    build:
+      context: .
+      dockerfile: boss-service/Dockerfile
+    container_name: boss-service
+    depends_on:
+      - mysql
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happymapleday?createDatabaseIfNotExist=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    environment:
+      - TZ=Asia/Seoul
+      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+      - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+
+  character-service:
+    build:
+      context: .
+      dockerfile: character-service/Dockerfile
+    container_name: character-service
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_character?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+      - SERVICES_USER_SERVICE_URL=http://user-service:8082
+    ports:
+      - "8083:8083"
+    restart: unless-stopped
+
+  settlement-service:
+    build:
+      context: .
+      dockerfile: settlement-service/Dockerfile
+    container_name: settlement-service
+    depends_on:
+      - mysql
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_settlement?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+      - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
+      - SERVICES_USER_SERVICE_URL=http://user-service:8082
+    ports:
+      - "8084:8084"
+    restart: unless-stopped
+
+  recommendation-service:
+    build:
+      context: .
+      dockerfile: recommendation-service/Dockerfile
+    container_name: recommendation-service
+    environment:
+      - TZ=Asia/Seoul
+      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+      - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
+      - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
+    ports:
+      - "8085:8085"
+    restart: unless-stopped
+
+  history-service:
+    build:
+      context: .
+      dockerfile: history-service/Dockerfile
+    container_name: history-service
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_history?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
+      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+    ports:
+      - "8086:8086"
+    restart: unless-stopped
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: admin-service/Dockerfile
+    container_name: admin-service
+    depends_on:
+      - mysql
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_admin?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SERVICES_USER_SERVICE_URL=http://user-service:8082
+      - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
+      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+      - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
+      - SERVICES_RECOMMENDATION_SERVICE_URL=http://recommendation-service:8085
+      - SERVICES_HISTORY_SERVICE_URL=http://history-service:8086
+    ports:
+      - "8087:8087"
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    depends_on:
+      - user-service
+      - character-service
+      - boss-service
+      - settlement-service
+      - recommendation-service
+      - history-service
+      - admin-service
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_0_URI=http://user-service:8082
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_1_URI=http://character-service:8083
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_2_URI=http://boss-service:8081
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_3_URI=http://settlement-service:8084
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_4_URI=http://recommendation-service:8085
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_5_URI=http://history-service:8086
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_ROUTES_6_URI=http://admin-service:8087
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
 volumes:
-  mysql_data: 
+  mysql_data:

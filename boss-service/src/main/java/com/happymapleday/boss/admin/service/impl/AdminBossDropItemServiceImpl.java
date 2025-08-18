@@ -11,6 +11,7 @@ import com.happymapleday.boss.repository.BossDropItemRepository;
 import com.happymapleday.boss.repository.BossRepository;
 import com.happymapleday.boss.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,7 @@ public class AdminBossDropItemServiceImpl implements AdminBossDropItemService {
     // 보스 드랍 아이템 생성
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossDropItems", "bossList", "bossPresetList"}, allEntries = true)
     public AdminBossDropItemResponse createBossDropItem(AdminBossDropItemCreateRequest request) {
         Boss boss = bossRepository.findById(request.getBossId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + request.getBossId()));
@@ -80,6 +82,7 @@ public class AdminBossDropItemServiceImpl implements AdminBossDropItemService {
     // 보스 드랍 아이템 수정
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossDropItems", "bossList", "bossPresetList"}, allEntries = true)
     public AdminBossDropItemResponse updateBossDropItem(Long id, AdminBossDropItemUpdateRequest request) {
         BossDropItem bossDropItem = bossDropItemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스 드랍 아이템입니다. ID: " + id));
@@ -106,6 +109,7 @@ public class AdminBossDropItemServiceImpl implements AdminBossDropItemService {
     // 보스 드랍 아이템 삭제
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossDropItems", "bossList", "bossPresetList"}, allEntries = true)
     public void deleteBossDropItem(Long id) {
         BossDropItem bossDropItem = bossDropItemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스 드랍 아이템입니다. ID: " + id));

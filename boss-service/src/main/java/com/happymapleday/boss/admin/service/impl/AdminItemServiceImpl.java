@@ -7,6 +7,7 @@ import com.happymapleday.boss.admin.service.AdminItemService;
 import com.happymapleday.boss.entity.Item;
 import com.happymapleday.boss.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,7 @@ public class AdminItemServiceImpl implements AdminItemService {
     // 아이템 생성
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossDropItems", "bossList", "bossPresetList"}, allEntries = true)
     public AdminItemResponse createItem(AdminItemCreateRequest request) {
         // 아이템 이름 중복 체크
         if (itemRepository.existsByItemName(request.getItemName())) {
@@ -74,6 +76,7 @@ public class AdminItemServiceImpl implements AdminItemService {
     // 아이템 수정
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossDropItems", "bossList", "bossPresetList"}, allEntries = true)
     public AdminItemResponse updateItem(Long id, AdminItemUpdateRequest request) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다. ID: " + id));
@@ -100,6 +103,7 @@ public class AdminItemServiceImpl implements AdminItemService {
     // 아이템 삭제
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossDropItems", "bossList", "bossPresetList"}, allEntries = true)
     public void deleteItem(Long id) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다. ID: " + id));

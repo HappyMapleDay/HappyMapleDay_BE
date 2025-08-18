@@ -7,6 +7,7 @@ import com.happymapleday.boss.admin.service.AdminBossService;
 import com.happymapleday.boss.entity.Boss;
 import com.happymapleday.boss.repository.BossRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     // 보스 생성
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossList", "bossPresetList"}, allEntries = true)
     public AdminBossResponse createBoss(AdminBossCreateRequest request) {
         // 중복 체크
         if (bossRepository.existsByBossNameAndDifficultyAndIsActiveTrue(request.getBossName(), request.getDifficulty())) {
@@ -75,6 +77,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     // 보스 수정
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossList", "bossPresetList", "bossDropItems"}, allEntries = true)
     public AdminBossResponse updateBoss(Long id, AdminBossUpdateRequest request) {
         Boss boss = bossRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + id));
@@ -111,6 +114,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     // 보스 삭제 (소프트 삭제 - 비활성화)
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossList", "bossPresetList", "bossDropItems"}, allEntries = true)
     public void deleteBoss(Long id) {
         Boss boss = bossRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + id));
@@ -122,6 +126,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     // 보스 완전 삭제 (하드 삭제)
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossList", "bossPresetList", "bossDropItems"}, allEntries = true)
     public void deleteBossCompletely(Long id) {
         Boss boss = bossRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + id));
@@ -132,6 +137,7 @@ public class AdminBossServiceImpl implements AdminBossService {
     // 보스 활성화
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"bossList", "bossPresetList"}, allEntries = true)
     public AdminBossResponse activateBoss(Long id) {
         Boss boss = bossRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보스입니다. ID: " + id));

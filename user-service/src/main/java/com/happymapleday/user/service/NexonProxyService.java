@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,15 +62,18 @@ public class NexonProxyService {
         }
 
         String decryptedKey = encryptionService.decrypt(user.getNexonApiKey());
-        List<String> ocids = nexonApiService.getUserCharacterOcids(decryptedKey);
+        List<String> ocids = nexonApiService.getUserCharacterOcids(decryptedKey).block();
 
-        List<NexonCharacterSummaryDto> results = new ArrayList<>();
-        for (String ocid : ocids) {
-            JsonNode basic = nexonApiService.getCharacterBasic(decryptedKey, ocid);
-            results.add(NexonCharacterSummaryDto.from(basic, ocid));
-            // 캐릭터 기본정보 캐시도 같이 채움
-            putCacheValue(cache, CACHE_KEY_CHAR_BASIC_PREFIX + ocid, basic);
-        }
+        List<NexonCharacterSummaryDto> results = Flux.fromIterable(ocids)
+                .flatMap(ocid -> nexonApiService.getCharacterBasic(decryptedKey, ocid)
+                        .map(basic -> {
+                            putCacheValue(cache, CACHE_KEY_CHAR_BASIC_PREFIX + ocid, basic);
+                            return NexonCharacterSummaryDto.from(basic, ocid);
+                        })
+                        .onErrorResume(ex -> Mono.empty()),
+                        6)
+                .collectList()
+                .block();
 
         putCacheValue(cache, cacheKey, results);
         return results;

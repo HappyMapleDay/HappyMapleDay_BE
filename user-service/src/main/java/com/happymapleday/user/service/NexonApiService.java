@@ -10,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import reactor.core.publisher.Mono;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -28,6 +30,7 @@ public class NexonApiService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final CacheManager cacheManager;
+    private final WebClient webClient;
     
     // 마스터키 설정 (환경변수에서 가져옴)
     @Value("${nexon.api.master-key:}")
@@ -37,10 +40,11 @@ public class NexonApiService {
     private final ConcurrentHashMap<String, CachedResult> invalidKeysCache = new ConcurrentHashMap<>();
     
     @Autowired
-    public NexonApiService(RestTemplate restTemplate, ObjectMapper objectMapper, CacheManager cacheManager) {
+    public NexonApiService(RestTemplate restTemplate, ObjectMapper objectMapper, CacheManager cacheManager, WebClient webClient) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.cacheManager = cacheManager;
+        this.webClient = webClient;
     }
     
     /**
@@ -148,81 +152,73 @@ public class NexonApiService {
     /**
      * 사용자 키로 캐릭터 OCID 목록 조회
      */
-    public List<String> getUserCharacterOcids(String apiKey) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(API_KEY_HEADER, apiKey);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            String url = NEXON_API_BASE_URL + "/character/list";
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new IllegalStateException("넥슨 캐릭터 목록 조회에 실패했습니다.");
-            }
-
-            JsonNode root = objectMapper.readTree(response.getBody());
-            List<String> ocids = new ArrayList<>();
-
-            if (root.isArray()) {
-                for (JsonNode node : root) {
-                    JsonNode ocidNode = node.get("ocid");
-                    if (ocidNode != null && !ocidNode.isNull()) {
-                        ocids.add(ocidNode.asText());
-                    }
-                }
-            } else {
-                JsonNode listNode = root.get("characters");
-                if (listNode != null && listNode.isArray()) {
-                    for (JsonNode node : listNode) {
-                        JsonNode ocidNode = node.get("ocid");
-                        if (ocidNode != null && !ocidNode.isNull()) {
-                            ocids.add(ocidNode.asText());
-                        }
-                    }
-                } else {
-                    Iterator<String> fieldNames = root.fieldNames();
-                    while (fieldNames.hasNext()) {
-                        String field = fieldNames.next();
-                        JsonNode candidate = root.get(field);
-                        if (candidate != null && candidate.isArray()) {
-                            for (JsonNode node : candidate) {
+    public Mono<List<String>> getUserCharacterOcids(String apiKey) {
+        String url = NEXON_API_BASE_URL + "/character/list";
+        return webClient.get()
+                .uri(url)
+                .header(API_KEY_HEADER, apiKey)
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(body -> {
+                    try {
+                        JsonNode root = objectMapper.readTree(body);
+                        List<String> ocids = new ArrayList<>();
+                        if (root.isArray()) {
+                            for (JsonNode node : root) {
                                 JsonNode ocidNode = node.get("ocid");
                                 if (ocidNode != null && !ocidNode.isNull()) {
                                     ocids.add(ocidNode.asText());
                                 }
                             }
+                        } else {
+                            JsonNode listNode = root.get("characters");
+                            if (listNode != null && listNode.isArray()) {
+                                for (JsonNode node : listNode) {
+                                    JsonNode ocidNode = node.get("ocid");
+                                    if (ocidNode != null && !ocidNode.isNull()) {
+                                        ocids.add(ocidNode.asText());
+                                    }
+                                }
+                            } else {
+                                Iterator<String> fieldNames = root.fieldNames();
+                                while (fieldNames.hasNext()) {
+                                    String field = fieldNames.next();
+                                    JsonNode candidate = root.get(field);
+                                    if (candidate != null && candidate.isArray()) {
+                                        for (JsonNode node : candidate) {
+                                            JsonNode ocidNode = node.get("ocid");
+                                            if (ocidNode != null && !ocidNode.isNull()) {
+                                                ocids.add(ocidNode.asText());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
+                        return ocids;
+                    } catch (Exception e) {
+                        throw new RuntimeException("넥슨 캐릭터 목록 파싱 중 오류가 발생했습니다.", e);
                     }
-                }
-            }
-
-            return ocids;
-        } catch (Exception e) {
-            throw new RuntimeException("넥슨 캐릭터 목록 파싱 중 오류가 발생했습니다.", e);
-        }
+                });
     }
 
     /**
      * 캐릭터 기본 정보 조회 (닉네임/직업/월드/레벨/이미지 등)
      */
-    public JsonNode getCharacterBasic(String apiKey, String ocid) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(API_KEY_HEADER, apiKey);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            String url = NEXON_API_BASE_URL + "/character/basic?ocid=" + ocid;
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new IllegalStateException("넥슨 캐릭터 기본 정보 조회에 실패했습니다.");
-            }
-
-            return objectMapper.readTree(response.getBody());
-        } catch (Exception e) {
-            throw new RuntimeException("넥슨 캐릭터 기본 정보 파싱 중 오류가 발생했습니다.", e);
-        }
+    public Mono<JsonNode> getCharacterBasic(String apiKey, String ocid) {
+        String url = NEXON_API_BASE_URL + "/character/basic?ocid=" + ocid;
+        return webClient.get()
+                .uri(url)
+                .header(API_KEY_HEADER, apiKey)
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(body -> {
+                    try {
+                        return objectMapper.readTree(body);
+                    } catch (Exception e) {
+                        throw new RuntimeException("넥슨 캐릭터 기본 정보 파싱 중 오류가 발생했습니다.", e);
+                    }
+                });
     }
 
     /**

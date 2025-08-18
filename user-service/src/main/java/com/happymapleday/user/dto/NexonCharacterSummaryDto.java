@@ -9,11 +9,11 @@ import lombok.Getter;
 public class NexonCharacterSummaryDto {
 
     private final String ocid;
-    private final String nickname;
+    private final String character_name;
     private final String character_class;
-    private final String server;
-    private final Integer level;
-    private final String imageUrl;
+    private final String world_name;
+    private final Integer character_level;
+    private final String character_image;
 
     public static NexonCharacterSummaryDto from(JsonNode basicInfo, String ocid) {
         String nickname = getTextSafely(basicInfo, "character_name");
@@ -24,11 +24,11 @@ public class NexonCharacterSummaryDto {
 
         return NexonCharacterSummaryDto.builder()
                 .ocid(ocid)
-                .nickname(nickname)
+                .character_name(nickname)
                 .character_class(job)
-                .server(server)
-                .level(level)
-                .imageUrl(imageUrl)
+                .world_name(server)
+                .character_level(level)
+                .character_image(imageUrl)
                 .build();
     }
 

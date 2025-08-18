@@ -10,7 +10,7 @@ public class NexonCharacterSummaryDto {
 
     private final String ocid;
     private final String nickname;
-    private final String job;
+    private final String character_class;
     private final String server;
     private final Integer level;
     private final String imageUrl;
@@ -25,7 +25,7 @@ public class NexonCharacterSummaryDto {
         return NexonCharacterSummaryDto.builder()
                 .ocid(ocid)
                 .nickname(nickname)
-                .job(job)
+                .character_class(job)
                 .server(server)
                 .level(level)
                 .imageUrl(imageUrl)

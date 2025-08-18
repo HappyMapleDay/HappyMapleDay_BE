@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -142,6 +145,86 @@ public class NexonApiService {
         }
     }
     
+    /**
+     * 사용자 키로 캐릭터 OCID 목록 조회
+     */
+    public List<String> getUserCharacterOcids(String apiKey) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(API_KEY_HEADER, apiKey);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            String url = NEXON_API_BASE_URL + "/character/list";
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new IllegalStateException("넥슨 캐릭터 목록 조회에 실패했습니다.");
+            }
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+            List<String> ocids = new ArrayList<>();
+
+            if (root.isArray()) {
+                for (JsonNode node : root) {
+                    JsonNode ocidNode = node.get("ocid");
+                    if (ocidNode != null && !ocidNode.isNull()) {
+                        ocids.add(ocidNode.asText());
+                    }
+                }
+            } else {
+                JsonNode listNode = root.get("characters");
+                if (listNode != null && listNode.isArray()) {
+                    for (JsonNode node : listNode) {
+                        JsonNode ocidNode = node.get("ocid");
+                        if (ocidNode != null && !ocidNode.isNull()) {
+                            ocids.add(ocidNode.asText());
+                        }
+                    }
+                } else {
+                    Iterator<String> fieldNames = root.fieldNames();
+                    while (fieldNames.hasNext()) {
+                        String field = fieldNames.next();
+                        JsonNode candidate = root.get(field);
+                        if (candidate != null && candidate.isArray()) {
+                            for (JsonNode node : candidate) {
+                                JsonNode ocidNode = node.get("ocid");
+                                if (ocidNode != null && !ocidNode.isNull()) {
+                                    ocids.add(ocidNode.asText());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return ocids;
+        } catch (Exception e) {
+            throw new RuntimeException("넥슨 캐릭터 목록 파싱 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    /**
+     * 캐릭터 기본 정보 조회 (닉네임/직업/월드/레벨/이미지 등)
+     */
+    public JsonNode getCharacterBasic(String apiKey, String ocid) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(API_KEY_HEADER, apiKey);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            String url = NEXON_API_BASE_URL + "/character/basic?ocid=" + ocid;
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new IllegalStateException("넥슨 캐릭터 기본 정보 조회에 실패했습니다.");
+            }
+
+            return objectMapper.readTree(response.getBody());
+        } catch (Exception e) {
+            throw new RuntimeException("넥슨 캐릭터 기본 정보 파싱 중 오류가 발생했습니다.", e);
+        }
+    }
+
     /**
      * API Key 검증 결과를 담는 클래스
      */

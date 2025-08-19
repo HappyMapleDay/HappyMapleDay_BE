@@ -5,6 +5,7 @@ import com.happymapleday.boss.repository.BossDropItemRepository;
 import com.happymapleday.boss.service.BossDropItemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class BossDropItemServiceImpl implements BossDropItemService {
 
     // 특정 보스의 모든 드랍 아이템 조회
     @Override
+    @Cacheable(cacheNames = "bossDropItems", key = "#bossId")
     public List<DesireItemResponse> getDropItemsByBossId(Long bossId) {
         return bossDropItemRepository.findByBossIdWithRandomBoxItems(bossId)
                 .stream()

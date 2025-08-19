@@ -8,6 +8,7 @@ import com.happymapleday.boss.repository.BossRepository;
 import com.happymapleday.boss.service.BossPresetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class BossPresetServiceImpl implements BossPresetService {
 
     // 보스 정보를 포함한 모든 프리셋 조회
     @Override
+    @Cacheable(cacheNames = "bossPresetList")
     public List<BossPresetResponse> getAllPresetsWithBosses() {
         return bossPresetRepository.findAllByOrderByCreatedAtDesc()
                 .stream()

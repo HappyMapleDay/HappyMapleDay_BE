@@ -5,8 +5,6 @@ import com.happymapleday.user.entity.User;
 import com.happymapleday.user.repository.UserRepository;
 import com.happymapleday.user.util.SecurityUtil;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;

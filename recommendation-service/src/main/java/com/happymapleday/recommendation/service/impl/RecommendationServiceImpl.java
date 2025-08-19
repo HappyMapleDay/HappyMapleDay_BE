@@ -51,6 +51,29 @@ public class RecommendationServiceImpl implements RecommendationService {
             String worldName = entry.getKey();
             List<CharacterInput> characters = entry.getValue();
 
+            // 내부 계산용 캐릭터 ID 정규화 (null/중복 ID 분리용 임시 ID 부여)
+            List<CharacterInput> normalizedCharacters = new ArrayList<>();
+            Map<Long, Long> internalToOriginalId = new HashMap<>();
+            Set<Long> seenOriginalIds = new HashSet<>();
+            long syntheticIdSeed = -1L;
+            for (CharacterInput ch : characters) {
+                Long originalId = ch.getCharacterId();
+                boolean needsSynthetic = (originalId == null) || (seenOriginalIds.contains(originalId));
+                long internalId = needsSynthetic ? (syntheticIdSeed--) : originalId;
+                if (!needsSynthetic) {
+                    seenOriginalIds.add(originalId);
+                }
+                normalizedCharacters.add(CharacterInput.builder()
+                        .characterId(internalId)
+                        .worldName(ch.getWorldName())
+                        .level(ch.getLevel())
+                        .arcaneForce(ch.getArcaneForce())
+                        .authenticForce(ch.getAuthenticForce())
+                        .plannedBosses(ch.getPlannedBosses())
+                        .build());
+                internalToOriginalId.put(internalId, originalId);
+            }
+
             // 캐릭터별 선택 결과
             List<CharacterRecommendation> characterRecs = new ArrayList<>();
             int[] worldSelectedRef = new int[]{0};
@@ -63,7 +86,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             for (int i = 0; i < worldSelectedRef[0]; i++) accInit.incrementSelected();
             accInit.addCrystal(worldCrystalRef[0]);
             forcedInclusionAggregator.aggregateAndApply(
-                    characters,
+                    normalizedCharacters,
                     bossById,
                     CHARACTER_LIMIT,
                     WORLD_LIMIT,
@@ -75,7 +98,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             worldCrystalRef[0] = accInit.getCrystal();
 
             // 사용자가 입력한 1인 보스 중 가장 비싼 보스의 가격을 기준으로 동일/이하 가격은 잡을 수 있다고 가정
-            Map<Long, Long> characterMaxSoloPrice = characterPlanAnalyzer.computeMaxSoloPrice(characters, bossById);
+            Map<Long, Long> characterMaxSoloPrice = characterPlanAnalyzer.computeMaxSoloPrice(normalizedCharacters, bossById);
 
             // 나머지 슬롯은 월드/캐릭터 제한 안에서 높은 가격의 보스를 우선적으로 채움. (greedy)
             // 캐릭터 순회하며 가능한 보스 후보를 가격 내림차순으로 시도
@@ -89,7 +112,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             acc.addCrystal(worldCrystalRef[0]);
 
             globalGreedyAllocator.allocate(
-                    characters,
+                    normalizedCharacters,
                     weeklyActive,
                     characterMaxSoloPrice,
                     characterTakenBossGroup,
@@ -99,13 +122,25 @@ public class RecommendationServiceImpl implements RecommendationService {
                     acc
             );
 
+            // 응답용으로 캐릭터 ID를 원래 ID로 복구
+            List<CharacterRecommendation> remapped = new ArrayList<>();
+            for (CharacterRecommendation rec : characterRecs) {
+                Long originalId = internalToOriginalId.getOrDefault(rec.getCharacterId(), rec.getCharacterId());
+                remapped.add(CharacterRecommendation.builder()
+                        .characterId(originalId)
+                        .selectedBossCount(rec.getSelectedBossCount())
+                        .crystalIncome(rec.getCrystalIncome())
+                        .bosses(rec.getBosses())
+                        .build());
+            }
+
             int worldSelectedCount = acc.getSelectedCount();
             long worldCrystal = acc.getCrystal();
             worldRecommendations.add(WorldRecommendation.builder()
                     .worldName(worldName)
                     .worldBossCount(worldSelectedCount)
                     .worldCrystalIncome(worldCrystal)
-                    .characters(characterRecs)
+                    .characters(remapped)
                     .build());
             grandTotalCrystal += worldCrystal;
             grandTotalBossCount += worldSelectedCount;

@@ -34,4 +34,14 @@ public class BossRecordRequest {
     
     @Valid
     private final List<DesireItemRequest> desireItems;
+
+    // 정산 검증용: 프론트에서 전달
+    @NotNull(message = "캐릭터 레벨은 필수입니다.")
+    @Min(value = 1, message = "캐릭터 레벨은 1 이상이어야 합니다.")
+    @Max(value = 300, message = "캐릭터 레벨은 300 이하여야 합니다.")
+    private final Integer characterLevel;
+
+    private final Integer arcaneForce;
+
+    private final Integer authenticForce;
 } 

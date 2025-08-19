@@ -7,6 +7,7 @@ import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.entity.WeeklySettlement;
 import com.happymapleday.settlement.repository.WeeklySettlementRepository;
 import com.happymapleday.settlement.service.validator.CrystalLimitValidator;
+import com.happymapleday.settlement.service.validator.BossEligibilityValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ public class WeeklySettlementProcessor {
     private final WeeklySettlementRepository weeklySettlementRepository;
     private final BossRecordProcessor bossRecordProcessor;
     private final CrystalLimitValidator crystalLimitValidator;
+    private final BossEligibilityValidator bossEligibilityValidator;
     
     // 새로운 정산 생성
     public SettlementCompleteResponse createSettlement(Long userId, LocalDate weekStartDate, 
@@ -29,6 +31,9 @@ public class WeeklySettlementProcessor {
         List<WeeklyBossRecord> bossRecords = bossRecordProcessor.createBossRecords(
                 userId, weekStartDate, request.getBossRecords());
         
+        // 보스 입장 조건 검증 (레벨/포스)
+        bossEligibilityValidator.validate(request.getBossRecords());
+
         // 결정석 제한 검증
         crystalLimitValidator.validateCrystalLimits(bossRecords);
         
@@ -56,6 +61,9 @@ public class WeeklySettlementProcessor {
         List<WeeklyBossRecord> bossRecords = bossRecordProcessor.createBossRecords(
                 userId, weekStartDate, request.getBossRecords());
         
+        // 보스 입장 조건 검증 (레벨/포스)
+        bossEligibilityValidator.validate(request.getBossRecords());
+
         // 결정석 제한 검증
         crystalLimitValidator.validateCrystalLimits(bossRecords);
         
@@ -77,6 +85,9 @@ public class WeeklySettlementProcessor {
         List<WeeklyBossRecord> bossRecords = bossRecordProcessor.createBossRecords(
                 userId, weekStartDate, request.getBossRecords());
         
+        // 보스 입장 조건 검증 (레벨/포스)
+        bossEligibilityValidator.validate(request.getBossRecords());
+
         // 결정석 제한 검증
         crystalLimitValidator.validateCrystalLimits(bossRecords);
         
@@ -104,6 +115,9 @@ public class WeeklySettlementProcessor {
         List<WeeklyBossRecord> bossRecords = bossRecordProcessor.createBossRecords(
                 userId, weekStartDate, request.getBossRecords());
         
+        // 보스 입장 조건 검증 (레벨/포스)
+        bossEligibilityValidator.validate(request.getBossRecords());
+
         // 결정석 제한 검증
         crystalLimitValidator.validateCrystalLimits(bossRecords);
         

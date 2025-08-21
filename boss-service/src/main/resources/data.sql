@@ -94,7 +94,13 @@ INSERT INTO bosses (boss_name, boss_name_en, difficulty, difficulty_en, crystal_
 
 -- 발드릭스
 ('발드릭스', 'baldrix','노말', 'normal',1200000000, 3, false, true, 290, 290, 'AUTHENTIC', 700),
-('발드릭스', 'baldrix','하드', 'hard',2160000000, 3, false, true, 290, 290, 'AUTHENTIC', 700);
+('발드릭스', 'baldrix','하드', 'hard',2160000000, 3, false, true, 290, 290, 'AUTHENTIC', 700),
+
+-- 최초의 대적자
+('최초의 대적자', 'adversary', '이지', 'easy', 361000000, 3, false,true,270, 270,'AUTHENTIC',220),
+('최초의 대적자', 'adversary', '노말', 'normal', 530000000, 3, false,true,270, 280,'AUTHENTIC',320),
+('최초의 대적자', 'adversary', '하드', 'hard', 1260000000, 3, false,true,270, 285,'AUTHENTIC',340),
+('최초의 대적자', 'adversary', '익스트림', 'extreme', 2920000000, 3, false,true,270, 290,'AUTHENTIC',460);
 
 -- 보스 프리셋 데이터 삽입  
 -- 각 프리셋 내에서 같은 보스명은 하나의 난이도만 포함
@@ -149,7 +155,6 @@ INSERT INTO items (item_name, item_name_en, is_random_box) VALUES
 ('백옥의 보스 반지 상자', 'ringBoxOfWhiteJade',true),
 ('생명의 보스 반지 상자', 'ringBoxWithLife',true),
 ('루즈 컨트롤 머신 마크', 'machineMark',false),
-('손상된 블랙 하트', 'damagedBlackHeart',false),
 ('컴플리트 언더 컨트롤', 'completeUnderControl',false),
 ('마력이 깃든 안대', 'magicEyepatch',false),
 ('트와일라이트 마크', 'twilightMark',false),
@@ -174,7 +179,12 @@ INSERT INTO items (item_name, item_name_en, is_random_box) VALUES
 ('욕망의 에테르넬 방어구 상자', 'etherealArmorBox-limbo',false),
 ('근원의 속삭임', 'whisperOfSource',false),
 ('발드릭스로이드', 'Android-baldrix',false),
-('맹세의 에테르넬 방어구 상자', 'etherealArmorBox-baldrix',false);
+('맹세의 에테르넬 방어구 상자', 'etherealArmorBox-baldrix',false),
+('대적자로이드','Android-adversary',false),
+('불멸의 유산', 'immortalLegacy',false),
+('고대의 에테르넬 방어구 상자', 'etherealArmorBox-adversary', false),
+('익셉셔널 해머 - 훈장', 'exceptionalHammer-medal',false),
+('혼돈의 칠흑 장신구 상자', 'ornamentBoxOfChaos',true);
 
 -- 보스 드랍 아이템 연결 데이터 삽입
 INSERT INTO boss_drop_items (boss_id, item_id) VALUES
@@ -182,10 +192,8 @@ INSERT INTO boss_drop_items (boss_id, item_id) VALUES
 -- 스우
 ((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '홍옥의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '루즈 컨트롤 머신 마크')),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '손상된 블랙 하트')),
 ((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '루즈 컨트롤 머신 마크')),
-((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '손상된 블랙 하트')),
 ((SELECT id FROM bosses WHERE boss_name = '스우' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '컴플리트 언더 컨트롤')),
 
 -- 데미안
@@ -261,30 +269,55 @@ INSERT INTO boss_drop_items (boss_id, item_id) VALUES
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '이지'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '흉수의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
-((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '흉수의 에테르넬 방어구 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '익셉셔널 해머 - 귀고리')),
+((SELECT id FROM bosses WHERE boss_name = '카링' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
 
 -- 림보
 ((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
 ((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '욕망의 에테르넬 방어구 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '근원의 속삭임')),
+((SELECT id FROM bosses WHERE boss_name = '림보' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
 
 -- 발드릭스
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '발드릭스로이드')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '신념의 연마석')),
 ((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '발드릭스로이드')),
-((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '맹세의 에테르넬 방어구 상자'));
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '맹세의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '발드릭스' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '혼돈의 칠흑 장신구 상자')),
+
+-- 최초의 대적자
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '이지'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '대적자로이드')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '백옥의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '노말'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '불멸의 유산')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '대적자로이드')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '고대의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '하드'), (SELECT id FROM items WHERE item_name = '생명의 연마석')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '불멸의 유산')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '대적자로이드')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '익셉셔널 해머 - 훈장')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '고대의 에테르넬 방어구 상자')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 보스 반지 상자')),
+((SELECT id FROM bosses WHERE boss_name = '최초의 대적자' AND difficulty = '익스트림'), (SELECT id FROM items WHERE item_name = '생명의 연마석'));
+
 
 -- 박스 내용물 마스터 데이터 삽입
 INSERT INTO box_content_item (item_name, item_name_en, item_level, full_item_name, is_special, notes) VALUES
@@ -295,6 +328,11 @@ INSERT INTO box_content_item (item_name, item_name_en, item_level, full_item_nam
 ('컨티뉴어스 링', 'continue',4, '컨티뉴어스 링 4레벨', false, null),
 -- 기타 아이템
 ('생명의 연마석', 'scochStoneOfLife',null, '생명의 연마석', true, '생명의 보스 반지 상자에서만 나옴');
+-- 칠흑 박스 세팅
+INSERT INTO box_content_item (item_name, item_name_en, full_item_name, is_special, notes)
+SELECT items.item_name, items.item_name_en, item_name, true, '혼돈의 칠흑 보스 장신구 상자에서 랜덤으로 나옴'
+FROM items
+WHERE item_name IN ('루즈 컨트롤 머신 마크', '마력이 깃든 안대', '몽환의 벨트', '저주받은 마도서 선택 상자', '거대한 공포', '커맨더 포스 이어링', '고통의 근원');
 
 -- 랜덤박스-내용물 연결 데이터 삽입
 
@@ -336,3 +374,18 @@ WHERE items.item_name = '생명의 보스 반지 상자'
      AND box_content_item.item_level=4)
     OR box_content_item.item_name = '생명의 연마석'
   );
+
+-- 혼돈의 칠흑 장신구 상자
+INSERT INTO random_box_items (item_id, box_content_item_id)
+SELECT items.id, box_content_item.id
+FROM items
+CROSS JOIN box_content_item
+WHERE items.item_name = '혼돈의 칠흑 장신구 상자'
+  AND box_content_item.item_name IN ('루즈 컨트롤 머신 마크',
+                                     '마력이 깃든 안대',
+                                     '몽환의 벨트',
+                                     '저주받은 마도서 선택 상자',
+                                     '거대한 공포',
+                                     '커맨더 포스 이어링',
+                                     '고통의 근원'
+                                    );

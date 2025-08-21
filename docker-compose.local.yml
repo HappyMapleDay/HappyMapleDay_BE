@@ -1,14 +1,13 @@
 version: '3.8'
 
 services:
+  # 데이터베이스 (로컬에서만)
   mysql:
     image: mysql:8.0
     container_name: happymapleday-mysql
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: happymapleday
-    env_file:
-      - env/dev.env
     ports:
       - "3306:3306"
     volumes:
@@ -24,31 +23,31 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  # 애플리케이션 서비스들
   boss-service:
-    image: ${ECR_REGISTRY}/happymapleday/boss-service:${TAG:-dev-latest}
+    image: happymapleday-boss:latest
     container_name: boss-service
     depends_on:
       - mysql
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_boss?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=${BOSS_DB_USER:-boss_user}
-      - SPRING_DATASOURCE_PASSWORD=${BOSS_DB_PASSWORD:-boss_password}
+      - SPRING_DATASOURCE_USERNAME=boss_user
+      - SPRING_DATASOURCE_PASSWORD=boss_password
     ports:
       - "8081:8081"
     restart: unless-stopped
 
   user-service:
-    image: ${ECR_REGISTRY}/happymapleday/user-service:${TAG:-dev-latest}
+    image: happymapleday-user:latest
     container_name: user-service
-    env_file:
-      - env/dev.env
+    depends_on:
+      - boss-service
+      - character-service
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
     ports:
@@ -56,19 +55,17 @@ services:
     restart: unless-stopped
 
   character-service:
-    image: ${ECR_REGISTRY}/happymapleday/character-service:${TAG:-dev-latest}
+    image: happymapleday-character:latest
     container_name: character-service
     depends_on:
       - mysql
       - redis
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_character?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=${CHAR_DB_USER:-character_user}
-      - SPRING_DATASOURCE_PASSWORD=${CHAR_DB_PASSWORD:-character_password}
+      - SPRING_DATASOURCE_USERNAME=character_user
+      - SPRING_DATASOURCE_PASSWORD=character_password
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
@@ -78,18 +75,16 @@ services:
     restart: unless-stopped
 
   settlement-service:
-    image: ${ECR_REGISTRY}/happymapleday/settlement-service:${TAG:-dev-latest}
+    image: happymapleday-settlement:latest
     container_name: settlement-service
     depends_on:
       - mysql
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_settlement?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=${SETTLE_DB_USER:-settlement_user}
-      - SPRING_DATASOURCE_PASSWORD=${SETTLE_DB_PASSWORD:-settlement_password}
+      - SPRING_DATASOURCE_USERNAME=settlement_user
+      - SPRING_DATASOURCE_PASSWORD=settlement_password
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
       - SERVICES_USER_SERVICE_URL=http://user-service:8082
@@ -98,13 +93,11 @@ services:
     restart: unless-stopped
 
   recommendation-service:
-    image: ${ECR_REGISTRY}/happymapleday/recommendation-service:${TAG:-dev-latest}
+    image: happymapleday-recommendation:latest
     container_name: recommendation-service
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
       - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
@@ -113,19 +106,17 @@ services:
     restart: unless-stopped
 
   history-service:
-    image: ${ECR_REGISTRY}/happymapleday/history-service:${TAG:-dev-latest}
+    image: happymapleday-history:latest
     container_name: history-service
     depends_on:
       - mysql
       - redis
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_history?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=${HISTORY_DB_USER:-history_user}
-      - SPRING_DATASOURCE_PASSWORD=${HISTORY_DB_PASSWORD:-history_password}
+      - SPRING_DATASOURCE_USERNAME=history_user
+      - SPRING_DATASOURCE_PASSWORD=history_password
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
@@ -135,18 +126,16 @@ services:
     restart: unless-stopped
 
   admin-service:
-    image: ${ECR_REGISTRY}/happymapleday/admin-service:${TAG:-dev-latest}
+    image: happymapleday-admin:latest
     container_name: admin-service
     depends_on:
       - mysql
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/happy_maple_day_admin?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=${ADMIN_DB_USER:-admin_user}
-      - SPRING_DATASOURCE_PASSWORD=${ADMIN_DB_PASSWORD:-admin_password}
+      - SPRING_DATASOURCE_USERNAME=admin_user
+      - SPRING_DATASOURCE_PASSWORD=admin_password
       - SERVICES_USER_SERVICE_URL=http://user-service:8082
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
@@ -158,7 +147,7 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: ${ECR_REGISTRY}/happymapleday/gateway:${TAG:-dev-latest}
+    image: happymapleday-gateway:latest
     container_name: gateway
     depends_on:
       - user-service
@@ -168,16 +157,12 @@ services:
       - recommendation-service
       - history-service
       - admin-service
-    env_file:
-      - env/dev.env
     environment:
       - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
     ports:
       - "8080:8080"
     restart: unless-stopped
 
 volumes:
   mysql_data:
-
-

@@ -1,0 +1,57 @@
+name: Deploy to OCI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Build with Gradle
+      run: |
+        chmod +x ./gradlew
+        ./gradlew build -x test
+        
+    - name: Build Docker images
+      run: |
+        docker build -t happymapleday-admin:latest ./admin-service/
+        docker build -t happymapleday-boss:latest ./boss-service/
+        docker build -t happymapleday-character:latest ./character-service/
+        docker build -t happymapleday-gateway:latest ./gateway/
+        docker build -t happymapleday-history:latest ./history-service/
+        docker build -t happymapleday-recommendation:latest ./recommendation-service/
+        docker build -t happymapleday-settlement:latest ./settlement-service/
+        docker build -t happymapleday-user:latest ./user-service/
+        
+    - name: Deploy to OCI
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # OCI CLI 설치 및 설정
+        curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh
+        chmod +x install.sh
+        ./install.sh --accept-all-defaults
+        
+        # OCI 인증 설정 (환경변수로 설정 필요)
+        echo $OCI_CONFIG | base64 -d > ~/.oci/config
+        echo $OCI_KEY | base64 -d > ~/.oci/oci_api_key.pem
+        chmod 600 ~/.oci/oci_api_key.pem
+        
+        # 애플리케이션 서버에 배포
+        oci compute instance action --instance-id $OCI_APP_INSTANCE_ID --action SOFTRESET
+        
+        # Docker 이미지 전송 및 실행
+        # (실제 구현에서는 OCI Container Registry 사용 권장)
+

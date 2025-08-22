@@ -8,6 +8,8 @@ import com.happymapleday.character.dto.response.CharacterBulkCreateResponse;
 import com.happymapleday.character.dto.response.MainCharacterSettingResponse;
 import com.happymapleday.character.dto.response.MainCharacterResponse;
 import com.happymapleday.character.service.CharacterService;
+import com.happymapleday.character.service.CharacterSelectedBossService;
+import com.happymapleday.character.dto.response.CharacterSelectedBossesResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import java.util.List;
 public class CharacterController {
     
     private final CharacterService characterService;
+    private final CharacterSelectedBossService characterSelectedBossService;
     
     /**
      * 2.2 전체 캐릭터 조회 (유저별)
@@ -115,6 +118,20 @@ public class CharacterController {
         }
     }
 
+    /**
+     * 캐릭터 ID 목록으로 선택 보스 상세 조회 (한 번의 호출)
+     */
+    @GetMapping("/selected-bosses/details")
+    public ResponseEntity<ApiResponse<List<CharacterSelectedBossesResponse>>> getSelectedBossDetails(
+            @RequestParam("characterIds") List<Long> characterIds) {
+        try {
+            List<CharacterSelectedBossesResponse> response = characterSelectedBossService.getSelectedBossDetailsByCharacterIds(characterIds);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("선택 보스 상세 조회 중 오류가 발생했습니다."));
+        }
+    }
     /**
      * 2.7 본캐 조회
      */

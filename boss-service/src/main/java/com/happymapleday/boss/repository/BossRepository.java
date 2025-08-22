@@ -63,4 +63,11 @@ public interface BossRepository extends JpaRepository<Boss, Long> {
            "WHERE b.isActive = true " +
            "ORDER BY b.crystalPrice DESC")
     List<Boss> findByIsActiveTrueWithBossDropItemsOrderByCrystalPriceDesc();
+
+    // 특정 ID 목록으로 보스 조회 (드랍 아이템 포함)
+    @Query("SELECT DISTINCT b FROM Boss b " +
+           "LEFT JOIN FETCH b.bossDropItems bdi " +
+           "LEFT JOIN FETCH bdi.item i " +
+           "WHERE b.isActive = true AND b.id IN :ids")
+    List<Boss> findActiveByIdInWithDropItems(@Param("ids") List<Long> ids);
 } 

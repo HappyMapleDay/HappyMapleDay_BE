@@ -3,6 +3,8 @@ package com.happymapleday.settlement.service.processor;
 import com.happymapleday.settlement.dto.request.BossRecordRequest;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.repository.WeeklyBossRecordRepository;
+import com.happymapleday.settlement.service.util.BossWeightProvider;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,7 @@ public class BossRecordProcessor {
     
     private final WeeklyBossRecordRepository weeklyBossRecordRepository;
     private final DesireItemProcessor desireItemProcessor;
+    private final BossWeightProvider bossWeightProvider;
     
     // 보스 기록 생성 (중복 검증 포함)
     public List<WeeklyBossRecord> createBossRecords(Long userId, LocalDate weekStartDate, 
@@ -82,6 +85,9 @@ public class BossRecordProcessor {
     // 보스 기록 생성 헬퍼 메서드
     private WeeklyBossRecord createBossRecord(Long userId, LocalDate weekStartDate, 
                                               BossRecordRequest bossRequest, Long settlementId) {
+        java.math.BigDecimal weight = bossWeightProvider.getWeightOrDefault(bossRequest.getBossId(), java.math.BigDecimal.ONE);
+        java.math.BigDecimal difficultyScore = new java.math.BigDecimal(bossRequest.getCrystalIncome()).multiply(weight);
+
         return WeeklyBossRecord.builder()
                 .settlementId(settlementId)
                 .userId(userId)
@@ -92,6 +98,9 @@ public class BossRecordProcessor {
                 .partySize(bossRequest.getPartySize() != null ? bossRequest.getPartySize() : 1)
                 .desireItemIncome(BigInteger.ZERO)
                 .totalIncome(bossRequest.getCrystalIncome())
+                .characterClass(bossRequest.getCharacter_class())
+                .combatPower(bossRequest.getCombat_power())
+                .difficultyScore(difficultyScore)
                 .build();
     }
     
@@ -110,6 +119,9 @@ public class BossRecordProcessor {
                 .partySize(bossRecord.getPartySize())
                 .desireItemIncome(desireItemIncome)
                 .totalIncome(totalIncome)
+                .characterClass(bossRecord.getCharacterClass())
+                .combatPower(bossRecord.getCombatPower())
+                .difficultyScore(bossRecord.getDifficultyScore())
                 .build();
     }
     

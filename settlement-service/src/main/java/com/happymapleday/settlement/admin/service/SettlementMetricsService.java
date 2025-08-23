@@ -20,6 +20,9 @@ public interface SettlementMetricsService {
     List<TimeSeriesLongResponse> getItemDropCountByWeek(Long itemId, LocalDate from, LocalDate to);
 
     List<TimeSeriesBigIntegerResponse> getItemAveragePriceByWeek(Long itemId, LocalDate from, LocalDate to);
+
+    java.util.List<java.util.Map<String, Object>> getTrimmedAvgCombatPowerByBossAndJob(Long bossId, String job,
+                                                                                       LocalDate from, LocalDate to);
 }
 
 

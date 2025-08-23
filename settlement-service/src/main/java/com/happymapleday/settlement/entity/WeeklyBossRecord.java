@@ -72,6 +72,19 @@ public class WeeklyBossRecord {
     @Column(name = "total_income", nullable = false)
     private BigInteger totalIncome;
     
+    // Nexon Open API 스냅샷 필드
+    // 직업
+    @Column(name = "character_class", length = 50)
+    private String characterClass;
+    
+    // 전투력
+    @Column(name = "combat_power")
+    private Long combatPower;
+
+    // 난이도 점수(결정석 × 가중치)
+    @Column(name = "difficulty_score", precision = 20, scale = 4)
+    private java.math.BigDecimal difficultyScore;
+    
     // 연관관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "settlement_id", insertable = false, updatable = false)

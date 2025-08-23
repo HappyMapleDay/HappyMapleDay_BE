@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -77,6 +78,11 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
         return rows.stream()
                 .map(r -> TimeSeriesBigIntegerResponse.builder().date(r.getDate()).value(r.getValue()).build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String, Object>> getTrimmedAvgCombatPowerByBossAndJob(Long bossId, String job, LocalDate from, LocalDate to) {
+        return weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
     }
 }
 

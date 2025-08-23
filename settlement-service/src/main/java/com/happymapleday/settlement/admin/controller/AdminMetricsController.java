@@ -81,6 +81,17 @@ public class AdminMetricsController {
         List<TimeSeriesBigIntegerResponse> result = settlementMetricsService.getItemAveragePriceByWeek(itemId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
+    // 보스별·직업별 트림 평균 투력(솔플, 해당 보스가 가장 어려운 보스인 경우)
+    @GetMapping("/boss-hardness/avg-combat-power")
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getTrimmedAvgCombatPowerByBossAndJob(
+            @RequestParam(required = false) Long bossId,
+            @RequestParam(required = false) String job,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<java.util.Map<String, Object>> result = settlementMetricsService.getTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
 }
 
 

@@ -21,6 +21,14 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
                                                  @Param("from") LocalDate from,
                                                  @Param("to") LocalDate to);
 
+    // 보스별 총 처치 수 요약
+    @Query("select wbr.bossId as id, count(wbr.id) as value from WeeklyBossRecord wbr " +
+           "where (:from is null or wbr.weekStartDate >= :from) and (:to is null or wbr.weekStartDate <= :to) " +
+           "group by wbr.bossId order by wbr.bossId")
+    List<com.happymapleday.settlement.admin.repository.projection.IdLongValue> summarizeBossKillCounts(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
+
     // 보스별·직업별 트림 평균 투력: 솔플만 포함, 각 캐릭터/주에서 가장 어려운 보스가 해당 bossId인 경우
     @Query(value = "" +
             "with ranked as (\n" +

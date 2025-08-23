@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/settlement/admin/metrics")
@@ -82,14 +83,32 @@ public class AdminMetricsController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    // 보스별 총 처치 수 요약
+    @GetMapping("/boss-kills/summary")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> summarizeBossKillCounts(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<Map<String, Object>> result = settlementMetricsService.summarizeBossKillCounts(from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // 보스별 아이템별 총 드랍 수 요약(랜덤박스 내부 품목 포함: 결과 아이템 기준)
+    @GetMapping("/boss-item-drops/summary")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> summarizeItemDropsByBoss(
+            @RequestParam(required = false) Long bossId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<Map<String, Object>> result = settlementMetricsService.summarizeItemDropsByBoss(bossId, from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
     // 보스별·직업별 트림 평균 투력(솔플, 해당 보스가 가장 어려운 보스인 경우)
     @GetMapping("/boss-hardness/avg-combat-power")
-    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getTrimmedAvgCombatPowerByBossAndJob(
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTrimmedAvgCombatPowerByBossAndJob(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) String job,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<java.util.Map<String, Object>> result = settlementMetricsService.getTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
+        List<Map<String, Object>> result = settlementMetricsService.getTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

@@ -5,6 +5,7 @@ import com.happymapleday.recommendation.dto.request.CharacterInput;
 import com.happymapleday.recommendation.dto.response.CharacterRecommendation;
 import com.happymapleday.recommendation.dto.response.SelectedBoss;
 import com.happymapleday.recommendation.service.eligibility.BossEligibilityService;
+import com.happymapleday.recommendation.service.weight.BossWeightCache;
 import com.happymapleday.recommendation.service.model.WorldAccumulator;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +15,11 @@ import java.util.*;
 public class GlobalGreedyAllocator {
 
     private final BossEligibilityService eligibilityService;
+    private final BossWeightCache bossWeightCache;
 
-    public GlobalGreedyAllocator(BossEligibilityService eligibilityService) {
+    public GlobalGreedyAllocator(BossEligibilityService eligibilityService, BossWeightCache bossWeightCache) {
         this.eligibilityService = eligibilityService;
+        this.bossWeightCache = bossWeightCache;
     }
 
     public void allocate(List<CharacterInput> characters,
@@ -47,8 +50,8 @@ public class GlobalGreedyAllocator {
         }
 
         // 초기 후보를 우선순위 큐로 구성
-        record Candidate(long characterId, BossResponse boss, long price) {}
-        PriorityQueue<Candidate> pq = new PriorityQueue<>(Comparator.comparingLong((Candidate c) -> c.price).reversed());
+        record Candidate(long characterId, BossResponse boss, double score) {}
+        PriorityQueue<Candidate> pq = new PriorityQueue<>(Comparator.comparingDouble((Candidate c) -> c.score).reversed());
 
         for (int i = 0; i < characters.size(); i++) {
             CharacterInput c = characters.get(i);
@@ -60,9 +63,9 @@ public class GlobalGreedyAllocator {
             Optional<BossResponse> cand = weeklyActive.stream()
                     .filter(b -> !takenGroup.contains(b.getBossName()))
                     .filter(b -> eligibilityService.canChallenge(b, c))
-                    .filter(b -> b.getCrystalPrice() <= maxSolo)
+                    .filter(b -> weightedPrice(b) <= maxSolo)
                     .findFirst();
-            cand.ifPresent(b -> pq.offer(new Candidate(c.getCharacterId(), b, Optional.ofNullable(b.getCrystalPrice()).orElse(0L))));
+            cand.ifPresent(b -> pq.offer(new Candidate(c.getCharacterId(), b, weightedPrice(b))));
         }
 
         while (worldAcc.getSelectedCount() < worldLimit && !pq.isEmpty()) {
@@ -124,10 +127,16 @@ public class GlobalGreedyAllocator {
             Optional<BossResponse> cand = weeklyActive.stream()
                     .filter(x -> !tk.contains(x.getBossName()))
                     .filter(x -> eligibilityService.canChallenge(x, finalFound))
-                    .filter(x -> x.getCrystalPrice() <= maxSolo)
+                    .filter(x -> weightedPrice(x) <= maxSolo)
                     .findFirst();
-            cand.ifPresent(nb -> pq.offer(new Candidate(chosenCharId, nb, Optional.ofNullable(nb.getCrystalPrice()).orElse(0L))));
+            cand.ifPresent(nb -> pq.offer(new Candidate(chosenCharId, nb, weightedPrice(nb))));
         }
+    }
+
+    private double weightedPrice(BossResponse boss) {
+        long price = boss.getCrystalPrice() == null ? 0L : boss.getCrystalPrice();
+        double w = bossWeightCache.getWeight(boss.getBossId());
+        return price * w;
     }
 }
 

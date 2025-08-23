@@ -22,7 +22,9 @@ import java.util.stream.Collectors;
        indexes = {
            @Index(name = "idx_settlement", columnList = "settlement_id"),
            @Index(name = "idx_user_week", columnList = "user_id, week_start_date"),
-           @Index(name = "idx_character_week", columnList = "character_id, week_start_date")
+           @Index(name = "idx_character_week", columnList = "character_id, week_start_date"),
+           @Index(name = "idx_boss_week", columnList = "boss_id, week_start_date"),
+           @Index(name = "idx_party_week", columnList = "party_size, week_start_date")
        })
 @Getter
 @NoArgsConstructor

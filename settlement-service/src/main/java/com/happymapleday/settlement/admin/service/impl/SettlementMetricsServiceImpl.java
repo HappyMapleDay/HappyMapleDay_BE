@@ -1,13 +1,8 @@
 package com.happymapleday.settlement.admin.service.impl;
 
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesBigIntegerResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesDecimalResponse;
 import com.happymapleday.settlement.admin.repository.AdminDesireItemRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.AdminWeeklyBossRecordQueryRepository;
-import com.happymapleday.settlement.admin.repository.AdminWeeklySettlementQueryRepository;
-import com.happymapleday.settlement.admin.repository.projection.DateBigIntegerValue;
-import com.happymapleday.settlement.admin.repository.projection.DateBigDecimalValue;
 import com.happymapleday.settlement.admin.repository.projection.DateLongValue;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
 import lombok.RequiredArgsConstructor;
@@ -22,36 +17,10 @@ import java.util.stream.Collectors;
 @Service
 public class SettlementMetricsServiceImpl implements SettlementMetricsService {
 
-    private final AdminWeeklySettlementQueryRepository weeklySettlementRepository;
     private final AdminWeeklyBossRecordQueryRepository weeklyBossRecordRepository;
     private final AdminDesireItemRecordQueryRepository desireItemRecordRepository;
 
-    // 주차별 평균 총수익
-    @Override
-    public List<TimeSeriesDecimalResponse> getAverageTotalIncomeByWeek(LocalDate from, LocalDate to) {
-        List<DateBigDecimalValue> rows = weeklySettlementRepository.findAverageTotalIncomeByWeek(from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesDecimalResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
-
-    // 주차별 평균 결정석 수익
-    @Override
-    public List<TimeSeriesDecimalResponse> getAverageCrystalIncomeByWeek(LocalDate from, LocalDate to) {
-        List<DateBigDecimalValue> rows = weeklySettlementRepository.findAverageCrystalIncomeByWeek(from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesDecimalResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
-
-    // 주차별 평균 물욕템 수익
-    @Override
-    public List<TimeSeriesDecimalResponse> getAverageDesireItemIncomeByWeek(LocalDate from, LocalDate to) {
-        List<DateBigDecimalValue> rows = weeklySettlementRepository.findAverageDesireItemIncomeByWeek(from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesDecimalResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
+    // 평균 총/결정석/물욕템 수익 타임시리즈 제거
 
     // 주차별 보스 처치 횟수
     @Override
@@ -62,27 +31,40 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                 .collect(Collectors.toList());
     }
 
-    // 주차별 물욕템 드랍 횟수
+    // 아이템 드랍/평균가 타임시리즈 제거
     @Override
-    public List<TimeSeriesLongResponse> getItemDropCountByWeek(Long itemId, LocalDate from, LocalDate to) {
-        List<DateLongValue> rows = desireItemRecordRepository.findItemDropCountByWeek(itemId, from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesLongResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
-
-    // 주차별 물욕템 평균 판매가격
-    @Override
-    public List<TimeSeriesBigIntegerResponse> getItemAveragePriceByWeek(Long itemId, LocalDate from, LocalDate to) {
-        List<DateBigIntegerValue> rows = desireItemRecordRepository.findItemAveragePriceByWeek(itemId, from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesBigIntegerResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
+    public List<Map<String, Object>> summarizeBossKillCounts(LocalDate from, LocalDate to) {
+        return weeklyBossRecordRepository.summarizeBossKillCounts(from, to);
     }
 
     @Override
-    public List<Map<String, Object>> getTrimmedAvgCombatPowerByBossAndJob(Long bossId, String job, LocalDate from, LocalDate to) {
-        return weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
+    public List<Map<String, Object>> summarizeItemDropsByBoss(Long bossId, LocalDate from, LocalDate to) {
+        return desireItemRecordRepository.summarizeItemDropsByBoss(bossId, from, to);
+    }
+
+    @Override
+    public List<Map<String, Object>> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to) {
+        return desireItemRecordRepository.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
+    }
+
+    @Override
+    public List<Map<String, Object>> summarizeItemAveragePrice(Long bossId, Long itemId, LocalDate from, LocalDate to) {
+        return desireItemRecordRepository.summarizeItemAveragePrice(bossId, itemId, from, to);
+    }
+
+    @Override
+    public Map<String, Object> summarizeBossHardness(Long bossId, LocalDate from, LocalDate to) {
+        Map<String, Object> total = weeklyBossRecordRepository.summarizeBossHardnessTotal(bossId, from, to);
+        List<Map<String, Object>> byJob = weeklyBossRecordRepository.summarizeBossHardnessByJob(bossId, from, to);
+        java.util.HashMap<String, Object> result = new java.util.HashMap<>();
+        result.put("totalCount", total != null ? total.get("totalCount") : 0L);
+        result.put("byJob", byJob);
+        return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to) {
+        return weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossGroupByJob(from, to);
     }
 }
 

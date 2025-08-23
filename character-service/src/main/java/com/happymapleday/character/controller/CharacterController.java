@@ -118,9 +118,8 @@ public class CharacterController {
         }
     }
 
-    /**
-     * 캐릭터 ID 목록으로 선택 보스 상세 조회 (한 번의 호출)
-     */
+
+    // 캐릭터 ID 목록으로 선택 보스 상세 조회
     @GetMapping("/selected-bosses/details")
     public ResponseEntity<ApiResponse<List<CharacterSelectedBossesResponse>>> getSelectedBossDetails(
             @RequestParam("characterIds") List<Long> characterIds) {

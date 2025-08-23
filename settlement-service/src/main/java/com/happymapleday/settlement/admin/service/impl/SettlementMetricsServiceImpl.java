@@ -66,6 +66,11 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
     public List<Map<String, Object>> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to) {
         return weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossGroupByJob(from, to);
     }
+
+    @Override
+    public Map<String, Object> summarizePartyRatio(Long bossId, LocalDate from, LocalDate to) {
+        return weeklyBossRecordRepository.summarizePartyRatio(bossId, from, to);
+    }
 }
 
 

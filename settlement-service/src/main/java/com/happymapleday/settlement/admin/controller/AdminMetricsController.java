@@ -91,6 +91,16 @@ public class AdminMetricsController {
         Map<String, Object> result = settlementMetricsService.summarizeBossHardness(bossId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
+    // 보스 솔로/파티 비율 요약
+    @GetMapping("/boss-party-ratio/summary")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> summarizePartyRatio(
+            @RequestParam(required = false) Long bossId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        Map<String, Object> result = settlementMetricsService.summarizePartyRatio(bossId, from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
 }
 
 

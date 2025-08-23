@@ -17,6 +17,7 @@ public interface SettlementMetricsService {
 	List<Map<String, Object>> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to);
 	List<Map<String, Object>> summarizeItemAveragePrice(Long bossId, Long itemId, LocalDate from, LocalDate to);
 	Map<String, Object> summarizeBossHardness(Long bossId, LocalDate from, LocalDate to);
+	Map<String, Object> summarizePartyRatio(Long bossId, LocalDate from, LocalDate to);
 
 	// 전체 보스 대상: 직업별 트림 평균 투력 (솔플, 각 주 최난이도 보스 기준)
 	List<Map<String, Object>> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to);

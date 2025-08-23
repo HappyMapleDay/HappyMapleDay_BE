@@ -30,4 +30,17 @@ public class BossController {
                     .body(ApiResponse.error("보스 목록 조회 중 오류가 발생했습니다."));
         }
     }
+
+    // 특정 보스 ID 목록 조회 API (드랍 아이템 포함)
+    @GetMapping("/list/ids")
+    public ResponseEntity<ApiResponse<List<BossResponse>>> getBossesByIds(@RequestParam("ids") List<Long> ids) {
+        try {
+            List<BossResponse> bosses = bossService.getBossesByIds(ids);
+            return ResponseEntity.ok(ApiResponse.success(bosses));
+        } catch (Exception e) {
+            log.error("특정 보스 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("특정 보스 조회 중 오류가 발생했습니다."));
+        }
+    }
 }

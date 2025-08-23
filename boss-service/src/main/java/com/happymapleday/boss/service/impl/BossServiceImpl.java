@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,25 @@ public class BossServiceImpl implements BossService {
     @Cacheable(cacheNames = "bossList")
     public List<BossResponse> getAllActiveBosses() {
         return bossRepository.findByIsActiveTrueWithBossDropItemsOrderByCrystalPriceDesc()
+                .stream()
+                .map(BossResponse::fromWithDesireItems)
+                .toList();
+    }
+
+    // ID 목록으로 특정 보스들 조회 (드랍 아이템 포함)
+    @Override
+    public List<BossResponse> getBossesByIds(List<Long> bossIds) {
+        if (bossIds == null || bossIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> distinctIds = bossIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (distinctIds.isEmpty()) {
+            return List.of();
+        }
+        return bossRepository.findActiveByIdInWithDropItems(distinctIds)
                 .stream()
                 .map(BossResponse::fromWithDesireItems)
                 .toList();

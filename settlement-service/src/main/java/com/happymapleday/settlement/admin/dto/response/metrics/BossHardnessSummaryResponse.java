@@ -14,7 +14,7 @@ import java.util.List;
 public class BossHardnessSummaryResponse {
 
     private Long totalCount;
-    private List<BossHardnessByJobResponse> byJob;
+    private List<BossHardnessByJobResponse> byCharacterClass;
 }
 
 

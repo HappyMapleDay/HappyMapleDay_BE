@@ -94,14 +94,14 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
         }
         List<BossHardnessByJobResponse> byJobDtos = byJob.stream()
                 .map(r -> BossHardnessByJobResponse.builder()
-                        .job((String) r.get("job"))
+                        .characterClass((String) r.get("job"))
                         .count(((Number) r.get("count")).longValue())
-                        .avgPower(r.get("avg_power") == null ? null : Double.valueOf(r.get("avg_power").toString()))
+                        .avgCombatPower(r.get("avg_power") == null ? null : Double.valueOf(r.get("avg_power").toString()))
                         .build())
                 .collect(Collectors.toList());
         return BossHardnessSummaryResponse.builder()
                 .totalCount(totalCount)
-                .byJob(byJobDtos)
+                .byCharacterClass(byJobDtos)
                 .build();
     }
 

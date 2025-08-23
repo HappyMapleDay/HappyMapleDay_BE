@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BossHardnessByJobResponse {
 
-    private String job;
+    private String characterClass;
     private Long count;
-    private Double avgPower;
+    private Double avgCombatPower;
 }
 
 

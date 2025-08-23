@@ -1,6 +1,14 @@
 package com.happymapleday.settlement.admin.service.impl;
 
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossKillCountSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.ItemDropSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BoxContentsSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.ItemAveragePriceResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossHardnessSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossHardnessByJobResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.PartyRatioSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
 import com.happymapleday.settlement.admin.repository.AdminDesireItemRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.AdminWeeklyBossRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.projection.DateLongValue;
@@ -33,43 +41,95 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
 
     // 아이템 드랍/평균가 타임시리즈 제거
     @Override
-    public List<Map<String, Object>> summarizeBossKillCounts(LocalDate from, LocalDate to) {
-        return weeklyBossRecordRepository.summarizeBossKillCounts(from, to);
+    public List<BossKillCountSummaryResponse> summarizeBossKillCounts(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = weeklyBossRecordRepository.summarizeBossKillCounts(from, to);
+        return rows.stream()
+                .map(r -> BossKillCountSummaryResponse.builder()
+                        .bossId(((Number) r.get("bossId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Map<String, Object>> summarizeItemDropsByBoss(Long bossId, LocalDate from, LocalDate to) {
-        return desireItemRecordRepository.summarizeItemDropsByBoss(bossId, from, to);
+    public List<ItemDropSummaryResponse> summarizeItemDropsByBoss(Long bossId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemDropsByBoss(bossId, from, to);
+        return rows.stream()
+                .map(r -> ItemDropSummaryResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Map<String, Object>> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to) {
-        return desireItemRecordRepository.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
+    public List<BoxContentsSummaryResponse> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
+        return rows.stream()
+                .map(r -> BoxContentsSummaryResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Map<String, Object>> summarizeItemAveragePrice(Long bossId, Long itemId, LocalDate from, LocalDate to) {
-        return desireItemRecordRepository.summarizeItemAveragePrice(bossId, itemId, from, to);
+    public List<ItemAveragePriceResponse> summarizeItemAveragePrice(Long bossId, Long itemId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemAveragePrice(bossId, itemId, from, to);
+        return rows.stream()
+                .map(r -> ItemAveragePriceResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .avgPrice(new java.math.BigDecimal(r.get("avgPrice").toString()))
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Map<String, Object> summarizeBossHardness(Long bossId, LocalDate from, LocalDate to) {
+    public BossHardnessSummaryResponse summarizeBossHardness(Long bossId, LocalDate from, LocalDate to) {
         Map<String, Object> total = weeklyBossRecordRepository.summarizeBossHardnessTotal(bossId, from, to);
         List<Map<String, Object>> byJob = weeklyBossRecordRepository.summarizeBossHardnessByJob(bossId, from, to);
-        java.util.HashMap<String, Object> result = new java.util.HashMap<>();
-        result.put("totalCount", total != null ? total.get("totalCount") : 0L);
-        result.put("byJob", byJob);
-        return result;
+        Long totalCount = 0L;
+        if (total != null && total.get("totalCount") != null) {
+            totalCount = ((Number) total.get("totalCount")).longValue();
+        }
+        List<BossHardnessByJobResponse> byJobDtos = byJob.stream()
+                .map(r -> BossHardnessByJobResponse.builder()
+                        .job((String) r.get("job"))
+                        .count(((Number) r.get("count")).longValue())
+                        .avgPower(r.get("avg_power") == null ? null : Double.valueOf(r.get("avg_power").toString()))
+                        .build())
+                .collect(Collectors.toList());
+        return BossHardnessSummaryResponse.builder()
+                .totalCount(totalCount)
+                .byJob(byJobDtos)
+                .build();
     }
 
     @Override
-    public List<Map<String, Object>> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to) {
-        return weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossGroupByJob(from, to);
+    public List<AvgCombatPowerByBossJobResponse> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossGroupByJob(from, to);
+        return rows.stream()
+                .map(r -> new AvgCombatPowerByBossJobResponse(
+                        ((Number) r.get("bossId")).longValue(),
+                        (String) r.get("job"),
+                        r.get("avg_power") == null ? null : Double.valueOf(r.get("avg_power").toString())
+                ))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Map<String, Object> summarizePartyRatio(Long bossId, LocalDate from, LocalDate to) {
-        return weeklyBossRecordRepository.summarizePartyRatio(bossId, from, to);
+    public PartyRatioSummaryResponse summarizePartyRatio(Long bossId, LocalDate from, LocalDate to) {
+        Map<String, Object> row = weeklyBossRecordRepository.summarizePartyRatio(bossId, from, to);
+        Long solo = 0L;
+        Long party = 0L;
+        if (row != null) {
+            if (row.get("soloCount") != null) solo = ((Number) row.get("soloCount")).longValue();
+            if (row.get("partyCount") != null) party = ((Number) row.get("partyCount")).longValue();
+        }
+        return PartyRatioSummaryResponse.builder()
+                .soloCount(solo)
+                .partyCount(party)
+                .build();
     }
 }
 

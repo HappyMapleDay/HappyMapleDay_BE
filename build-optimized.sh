@@ -20,8 +20,8 @@ sudo systemctl stop docker
 sudo dockerd --storage-driver=overlay2 --max-concurrent-downloads=1 --max-concurrent-uploads=1 &
 sleep 5
 
-# 빌드 순서 (의존성 순서대로)
-SERVICES=("common" "boss-service" "user-service" "character-service" "settlement-service" "recommendation-service" "admin-service" "gateway")
+# 빌드 순서 (의존성 순서대로) - common 제거 (라이브러리 모듈)
+SERVICES=("boss-service" "user-service" "character-service" "settlement-service" "recommendation-service" "admin-service" "gateway")
 
 for service in "${SERVICES[@]}"; do
     echo "🏗️  $service 빌드 시작..."

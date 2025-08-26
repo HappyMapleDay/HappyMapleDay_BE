@@ -31,7 +31,7 @@ jobs:
         docker build -t happymapleday-boss:latest ./boss-service/
         docker build -t happymapleday-character:latest ./character-service/
         docker build -t happymapleday-gateway:latest ./gateway/
-        docker build -t happymapleday-history:latest ./history-service/
+
         docker build -t happymapleday-recommendation:latest ./recommendation-service/
         docker build -t happymapleday-settlement:latest ./settlement-service/
         docker build -t happymapleday-user:latest ./user-service/

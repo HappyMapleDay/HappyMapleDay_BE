@@ -6,7 +6,6 @@ include 'character-service'
 include 'boss-service'
 include 'settlement-service'
 include 'recommendation-service'
-include 'history-service'
 include 'admin-service'
 
 // 공통 모듈들

@@ -86,24 +86,7 @@ services:
       - "8085:8085"
     restart: unless-stopped
 
-  history-service:
-    image: happymapleday-history:latest
-    container_name: history-service
-    depends_on:
-      - redis
-    environment:
-      - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}history?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${HISTORY_DB_PASSWORD}
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=6379
-      - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
-      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
-    ports:
-      - "8086:8086"
-    restart: unless-stopped
+
 
   admin-service:
     image: happymapleday-admin:latest
@@ -119,7 +102,7 @@ services:
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
       - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
       - SERVICES_RECOMMENDATION_SERVICE_URL=http://recommendation-service:8085
-      - SERVICES_HISTORY_SERVICE_URL=http://history-service:8086
+
     ports:
       - "8087:8087"
     restart: unless-stopped
@@ -133,7 +116,7 @@ services:
       - boss-service
       - settlement-service
       - recommendation-service
-      - history-service
+
       - admin-service
     environment:
       - TZ=Asia/Seoul

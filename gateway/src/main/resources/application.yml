@@ -50,13 +50,7 @@ spring:
               filters:
                 - StripPrefix=0
             
-            # History Service 라우팅
-            - id: history-service
-              uri: http://history-service:8086
-              predicates:
-                - Path=/api/history/**
-              filters:
-                - StripPrefix=0
+
             
             # Admin Service 라우팅
             - id: admin-service

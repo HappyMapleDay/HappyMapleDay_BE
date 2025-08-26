@@ -52,5 +52,4 @@ services:
     url: http://localhost:8084
   recommendation-service:
     url: http://localhost:8085
-  history-service:
-    url: http://localhost:8086 
+ 

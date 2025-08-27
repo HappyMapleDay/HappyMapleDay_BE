@@ -4,6 +4,7 @@ import com.happymapleday.common.client.BossServiceClient;
 import com.happymapleday.common.client.CharacterServiceClient;
 import com.happymapleday.common.dto.ApiResponse;
 import com.happymapleday.common.dto.BossResponse;
+import com.happymapleday.common.dto.CharacterBasicResponse;
 import com.happymapleday.settlement.dto.request.SettlementRequest;
 import com.happymapleday.settlement.dto.response.BossRecordDetailResponse;
 import com.happymapleday.settlement.dto.response.CurrentWeekStatusResponse;
@@ -171,22 +172,10 @@ public class SettlementServiceImpl implements SettlementService {
         if (characterIds == null || characterIds.isEmpty()) {
             return Map.of();
         }
-        return characterIds.stream().collect(Collectors.toMap(Function.identity(), id -> {
-            try {
-                ApiResponse<Object> resp = characterServiceClient.getCharacterDetails(id);
-                if (resp == null || resp.getData() == null) {
-                    return "-";
-                }
-                Object data = resp.getData();
-                if (data instanceof java.util.Map<?, ?> map) {
-                    Object name = map.get("characterName");
-                    return name != null ? String.valueOf(name) : "-";
-                }
-                return "-";
-            } catch (Exception e) {
-                return "-";
-            }
-        }));
+        ApiResponse<List<CharacterBasicResponse>> resp = characterServiceClient.getCharacterDetailsByIds(characterIds);
+        List<CharacterBasicResponse> data = resp != null ? resp.getData() : List.of();
+        if (data == null) data = List.of();
+        return data.stream().collect(Collectors.toMap(CharacterBasicResponse::getId, CharacterBasicResponse::getCharacterName, (a,b) -> a));
     }
 
     private Map<Long, BossResponse> fetchBossByIds(List<Long> bossIds) {

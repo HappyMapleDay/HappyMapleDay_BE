@@ -20,4 +20,7 @@ public class SettlementRequest {
     @NotEmpty(message = "보스 기록은 최소 1개 이상 필요합니다.")
     @Valid
     private final List<BossRecordRequest> bossRecords;
+
+    // 낙관적 락용 버전 (선택적 전송)
+    private final Long version;
 } 

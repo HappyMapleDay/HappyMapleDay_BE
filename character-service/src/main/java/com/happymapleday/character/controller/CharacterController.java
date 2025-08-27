@@ -131,6 +131,19 @@ public class CharacterController {
                     .body(ApiResponse.error("선택 보스 상세 조회 중 오류가 발생했습니다."));
         }
     }
+
+    // 캐릭터 ID 목록으로 기본 정보 배치 조회 (id, characterName)
+    @GetMapping("/details")
+    public ResponseEntity<ApiResponse<List<CharacterResponse>>> getCharacterDetailsByIds(
+            @RequestParam("ids") List<Long> ids) {
+        try {
+            List<CharacterResponse> characters = characterService.getCharactersByIds(ids);
+            return ResponseEntity.ok(ApiResponse.success(characters));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("캐릭터 배치 조회 중 오류가 발생했습니다."));
+        }
+    }
     /**
      * 2.7 본캐 조회
      */

@@ -161,4 +161,14 @@ public class CharacterService {
                 .errors(errors)
                 .build();
     }
+
+     // 캐릭터 ID 목록으로 기본 정보 조회
+    public List<CharacterResponse> getCharactersByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return characterRepository.findAllById(ids).stream()
+                .map(CharacterResponse::from)
+                .collect(Collectors.toList());
+    }
 } 

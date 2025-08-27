@@ -98,7 +98,7 @@ public class SettlementServiceImpl implements SettlementService {
         
         WeeklySettlement weeklySettlement = settlement.get();
         List<WeeklyBossRecord> bossRecords = weeklyBossRecordRepository
-                .findBySettlementId(weeklySettlement.getId());
+                .findWithDesireItemsBySettlementId(weeklySettlement.getId());
         // 외부 서비스에서 이름/난이도 조회 후 매핑
         Map<Long, String> characterIdToName = fetchCharacterNamesByIds(
                 bossRecords.stream().map(WeeklyBossRecord::getCharacterId).distinct().collect(Collectors.toList())

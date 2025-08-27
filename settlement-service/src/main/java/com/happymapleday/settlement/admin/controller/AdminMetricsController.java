@@ -1,10 +1,17 @@
 package com.happymapleday.settlement.admin.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesBigIntegerResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesDecimalResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossKillCountSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.ItemDropSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BoxContentsSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.ItemAveragePriceResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossHardnessSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.PartyRatioSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
+import com.happymapleday.settlement.service.util.WeekCalculator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,102 +20,154 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/settlement/admin/metrics")
+@RequiredArgsConstructor
 public class AdminMetricsController {
 
     private final SettlementMetricsService settlementMetricsService;
-
-    public AdminMetricsController(SettlementMetricsService settlementMetricsService) {
-        this.settlementMetricsService = settlementMetricsService;
-    }
-
-    // 주차별 평균 총수익
-    @GetMapping("/average-total-income")
-    public ResponseEntity<ApiResponse<List<TimeSeriesDecimalResponse>>> getAverageTotalIncomeByWeek(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<TimeSeriesDecimalResponse> result = settlementMetricsService.getAverageTotalIncomeByWeek(from, to);
-        return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-    // 주차별 평균 결정석 수익
-    @GetMapping("/average-crystal-income")
-    public ResponseEntity<ApiResponse<List<TimeSeriesDecimalResponse>>> getAverageCrystalIncomeByWeek(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<TimeSeriesDecimalResponse> result = settlementMetricsService.getAverageCrystalIncomeByWeek(from, to);
-        return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-    // 주차별 평균 물욕템 수익
-    @GetMapping("/average-desire-income")
-    public ResponseEntity<ApiResponse<List<TimeSeriesDecimalResponse>>> getAverageDesireItemIncomeByWeek(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<TimeSeriesDecimalResponse> result = settlementMetricsService.getAverageDesireItemIncomeByWeek(from, to);
-        return ResponseEntity.ok(ApiResponse.success(result));
-    }
+    private final WeekCalculator weekCalculator;
 
     // 주차별 보스 처치 횟수
-    @GetMapping("/boss-kills")
+    @GetMapping("/boss/kills/time-series")
     public ResponseEntity<ApiResponse<List<TimeSeriesLongResponse>>> getBossKillCountsByWeek(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<TimeSeriesLongResponse> result = settlementMetricsService.getBossKillCountsByWeek(bossId, from, to);
-        return ResponseEntity.ok(ApiResponse.success(result));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String range,
+            @RequestParam(required = false, defaultValue = "week") String bucket) {
+        LocalDate normalizedTo = to != null ? weekCalculator.getWeekStartDate(to) : weekCalculator.getWeekStartDate(LocalDate.now());
+        LocalDate normalizedFrom = computeFromByRangeOrNormalize(from, normalizedTo, range);
+
+        List<TimeSeriesLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
+        if (bucket == null || bucket.equalsIgnoreCase("week")) {
+            return ResponseEntity.ok(ApiResponse.success(weekly));
+        }
+        if (bucket.equalsIgnoreCase("month")) {
+            List<TimeSeriesLongResponse> monthly = aggregateByMonth(weekly);
+            return ResponseEntity.ok(ApiResponse.success(monthly));
+        }
+        return ResponseEntity.ok(ApiResponse.success(weekly));
     }
 
-    // 주차별 물욕템 드랍 횟수
-    @GetMapping("/item-drops")
-    public ResponseEntity<ApiResponse<List<TimeSeriesLongResponse>>> getItemDropCountByWeek(
-            @RequestParam(required = false) Long itemId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<TimeSeriesLongResponse> result = settlementMetricsService.getItemDropCountByWeek(itemId, from, to);
-        return ResponseEntity.ok(ApiResponse.success(result));
+    private LocalDate computeFromByRangeOrNormalize(LocalDate from, LocalDate normalizedTo, String range) {
+        if (from != null) {
+            return weekCalculator.getWeekStartDate(from);
+        }
+        if (range == null || range.isEmpty()) {
+            // 기본 4주
+            return normalizedTo.minusWeeks(3);
+        }
+        String r = range.toLowerCase();
+        if (r.endsWith("w")) {
+            int weeks = parseNumber(r.substring(0, r.length() - 1), 4);
+            int back = Math.max(1, weeks);
+            return normalizedTo.minusWeeks(back - 1);
+        }
+        if (r.endsWith("m")) {
+            int months = parseNumber(r.substring(0, r.length() - 1), 3);
+            LocalDate candidate = normalizedTo.minusMonths(Math.max(1, months));
+            return weekCalculator.getWeekStartDate(candidate);
+        }
+        return normalizedTo.minusWeeks(3);
     }
 
-    // 주차별 물욕템 평균 판매가격
-    @GetMapping("/item-average-price")
-    public ResponseEntity<ApiResponse<List<TimeSeriesBigIntegerResponse>>> getItemAveragePriceByWeek(
-            @RequestParam(required = false) Long itemId,
+    private int parseNumber(String s, int defaultVal) {
+        try {
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return defaultVal;
+        }
+    }
+
+    private List<TimeSeriesLongResponse> aggregateByMonth(List<TimeSeriesLongResponse> weekly) {
+        LinkedHashMap<YearMonth, Long> ymToSum = new LinkedHashMap<>();
+        for (TimeSeriesLongResponse w : weekly) {
+            YearMonth ym = YearMonth.from(w.getDate());
+            ymToSum.put(ym, ymToSum.getOrDefault(ym, 0L) + (w.getValue() != null ? w.getValue() : 0L));
+        }
+        List<TimeSeriesLongResponse> result = new ArrayList<>();
+        for (java.util.Map.Entry<YearMonth, Long> e : ymToSum.entrySet()) {
+            result.add(TimeSeriesLongResponse.builder()
+                    .date(e.getKey().atDay(1))
+                    .value(e.getValue())
+                    .build());
+        }
+        return result;
+    }
+
+    // 보스별 직업별 트림 평균 투력(전체 보스)
+    @GetMapping("/boss/hardness/avg-combat-power")
+    public ResponseEntity<ApiResponse<List<AvgCombatPowerByBossJobResponse>>> getTrimmedAvgCombatPowerGroupByBossAndJob(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<TimeSeriesBigIntegerResponse> result = settlementMetricsService.getItemAveragePriceByWeek(itemId, from, to);
+        List<AvgCombatPowerByBossJobResponse> result = settlementMetricsService.getTrimmedAvgCombatPowerGroupByBossAndJob(from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     // 보스별 총 처치 수 요약
-    @GetMapping("/boss-kills/summary")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> summarizeBossKillCounts(
+    @GetMapping("/boss/kills/summary")
+    public ResponseEntity<ApiResponse<List<BossKillCountSummaryResponse>>> summarizeBossKillCounts(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<Map<String, Object>> result = settlementMetricsService.summarizeBossKillCounts(from, to);
+        List<BossKillCountSummaryResponse> result = settlementMetricsService.summarizeBossKillCounts(from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    // 보스별 아이템별 총 드랍 수 요약(랜덤박스 내부 품목 포함: 결과 아이템 기준)
-    @GetMapping("/boss-item-drops/summary")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> summarizeItemDropsByBoss(
+    // 보스별 아이템별 총 드랍 수 요약
+    @GetMapping("/item/drops/summary")
+    public ResponseEntity<ApiResponse<List<ItemDropSummaryResponse>>> summarizeItemDropsByBoss(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<Map<String, Object>> result = settlementMetricsService.summarizeItemDropsByBoss(bossId, from, to);
+        List<ItemDropSummaryResponse> result = settlementMetricsService.summarizeItemDropsByBoss(bossId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
-    // 보스별·직업별 트림 평균 투력(솔플, 해당 보스가 가장 어려운 보스인 경우)
-    @GetMapping("/boss-hardness/avg-combat-power")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTrimmedAvgCombatPowerByBossAndJob(
+
+    // 보스별 박스 내용물 요약
+    @GetMapping("/box/contents/summary")
+    public ResponseEntity<ApiResponse<List<BoxContentsSummaryResponse>>> summarizeBoxContentsByBoss(
             @RequestParam(required = false) Long bossId,
-            @RequestParam(required = false) String job,
+            @RequestParam(required = false) Long boxItemId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        List<Map<String, Object>> result = settlementMetricsService.getTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
+        List<BoxContentsSummaryResponse> result = settlementMetricsService.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // 아이템별 평균 판매가 요약
+    @GetMapping("/item/average-price/summary")
+    public ResponseEntity<ApiResponse<List<ItemAveragePriceResponse>>> summarizeItemAveragePrice(
+            @RequestParam(required = false) Long bossId,
+            @RequestParam(required = false) Long itemId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<ItemAveragePriceResponse> result = settlementMetricsService.summarizeItemAveragePrice(bossId, itemId, from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // 보스 하드니스 요약
+    @GetMapping("/boss/hardness/summary")
+    public ResponseEntity<ApiResponse<BossHardnessSummaryResponse>> summarizeBossHardness(
+            @RequestParam(required = false) Long bossId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        BossHardnessSummaryResponse result = settlementMetricsService.summarizeBossHardness(bossId, from, to);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // 보스 솔로/파티 비율 요약
+    @GetMapping("/boss/party-ratio/summary")
+    public ResponseEntity<ApiResponse<PartyRatioSummaryResponse>> summarizePartyRatio(
+            @RequestParam(required = false) Long bossId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        PartyRatioSummaryResponse result = settlementMetricsService.summarizePartyRatio(bossId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

@@ -1,13 +1,16 @@
 package com.happymapleday.settlement.admin.service.impl;
 
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesBigIntegerResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesDecimalResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossKillCountSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.ItemDropSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BoxContentsSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.ItemAveragePriceResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossHardnessSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossHardnessByJobResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.PartyRatioSummaryResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
 import com.happymapleday.settlement.admin.repository.AdminDesireItemRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.AdminWeeklyBossRecordQueryRepository;
-import com.happymapleday.settlement.admin.repository.AdminWeeklySettlementQueryRepository;
-import com.happymapleday.settlement.admin.repository.projection.DateBigIntegerValue;
-import com.happymapleday.settlement.admin.repository.projection.DateBigDecimalValue;
 import com.happymapleday.settlement.admin.repository.projection.DateLongValue;
 import com.happymapleday.settlement.admin.repository.projection.IdLongValue;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
@@ -24,36 +27,10 @@ import java.util.stream.Collectors;
 @Service
 public class SettlementMetricsServiceImpl implements SettlementMetricsService {
 
-    private final AdminWeeklySettlementQueryRepository weeklySettlementRepository;
     private final AdminWeeklyBossRecordQueryRepository weeklyBossRecordRepository;
     private final AdminDesireItemRecordQueryRepository desireItemRecordRepository;
 
-    // 주차별 평균 총수익
-    @Override
-    public List<TimeSeriesDecimalResponse> getAverageTotalIncomeByWeek(LocalDate from, LocalDate to) {
-        List<DateBigDecimalValue> rows = weeklySettlementRepository.findAverageTotalIncomeByWeek(from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesDecimalResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
-
-    // 주차별 평균 결정석 수익
-    @Override
-    public List<TimeSeriesDecimalResponse> getAverageCrystalIncomeByWeek(LocalDate from, LocalDate to) {
-        List<DateBigDecimalValue> rows = weeklySettlementRepository.findAverageCrystalIncomeByWeek(from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesDecimalResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
-
-    // 주차별 평균 물욕템 수익
-    @Override
-    public List<TimeSeriesDecimalResponse> getAverageDesireItemIncomeByWeek(LocalDate from, LocalDate to) {
-        List<DateBigDecimalValue> rows = weeklySettlementRepository.findAverageDesireItemIncomeByWeek(from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesDecimalResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
+    // 평균 총/결정석/물욕템 수익 타임시리즈 제거
 
     // 주차별 보스 처치 횟수
     @Override
@@ -64,27 +41,97 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                 .collect(Collectors.toList());
     }
 
-    // 주차별 물욕템 드랍 횟수
+    // 아이템 드랍/평균가 타임시리즈 제거
     @Override
-    public List<TimeSeriesLongResponse> getItemDropCountByWeek(Long itemId, LocalDate from, LocalDate to) {
-        List<DateLongValue> rows = desireItemRecordRepository.findItemDropCountByWeek(itemId, from, to);
+    public List<BossKillCountSummaryResponse> summarizeBossKillCounts(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = weeklyBossRecordRepository.summarizeBossKillCounts(from, to);
         return rows.stream()
-                .map(r -> TimeSeriesLongResponse.builder().date(r.getDate()).value(r.getValue()).build())
-                .collect(Collectors.toList());
-    }
-
-    // 주차별 물욕템 평균 판매가격
-    @Override
-    public List<TimeSeriesBigIntegerResponse> getItemAveragePriceByWeek(Long itemId, LocalDate from, LocalDate to) {
-        List<DateBigIntegerValue> rows = desireItemRecordRepository.findItemAveragePriceByWeek(itemId, from, to);
-        return rows.stream()
-                .map(r -> TimeSeriesBigIntegerResponse.builder().date(r.getDate()).value(r.getValue()).build())
+                .map(r -> BossKillCountSummaryResponse.builder()
+                        .bossId(((Number) r.get("bossId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<Map<String, Object>> getTrimmedAvgCombatPowerByBossAndJob(Long bossId, String job, LocalDate from, LocalDate to) {
-        return weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossAndJob(bossId, job, from, to);
+    public List<ItemDropSummaryResponse> summarizeItemDropsByBoss(Long bossId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemDropsByBoss(bossId, from, to);
+        return rows.stream()
+                .map(r -> ItemDropSummaryResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BoxContentsSummaryResponse> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
+        return rows.stream()
+                .map(r -> BoxContentsSummaryResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ItemAveragePriceResponse> summarizeItemAveragePrice(Long bossId, Long itemId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemAveragePrice(bossId, itemId, from, to);
+        return rows.stream()
+                .map(r -> ItemAveragePriceResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .avgPrice(new java.math.BigDecimal(r.get("avgPrice").toString()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public BossHardnessSummaryResponse summarizeBossHardness(Long bossId, LocalDate from, LocalDate to) {
+        Map<String, Object> total = weeklyBossRecordRepository.summarizeBossHardnessTotal(bossId, from, to);
+        List<Map<String, Object>> byJob = weeklyBossRecordRepository.summarizeBossHardnessByJob(bossId, from, to);
+        Long totalCount = 0L;
+        if (total != null && total.get("totalCount") != null) {
+            totalCount = ((Number) total.get("totalCount")).longValue();
+        }
+        List<BossHardnessByJobResponse> byJobDtos = byJob.stream()
+                .map(r -> BossHardnessByJobResponse.builder()
+                        .characterClass((String) r.get("job"))
+                        .count(((Number) r.get("count")).longValue())
+                        .avgCombatPower(r.get("avg_power") == null ? null : Double.valueOf(r.get("avg_power").toString()))
+                        .build())
+                .collect(Collectors.toList());
+        return BossHardnessSummaryResponse.builder()
+                .totalCount(totalCount)
+                .byCharacterClass(byJobDtos)
+                .build();
+    }
+
+    @Override
+    public List<AvgCombatPowerByBossJobResponse> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = weeklyBossRecordRepository.findTrimmedAvgCombatPowerByBossGroupByJob(from, to);
+        return rows.stream()
+                .map(r -> new AvgCombatPowerByBossJobResponse(
+                        ((Number) r.get("bossId")).longValue(),
+                        (String) r.get("job"),
+                        r.get("avg_power") == null ? null : Double.valueOf(r.get("avg_power").toString())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PartyRatioSummaryResponse summarizePartyRatio(Long bossId, LocalDate from, LocalDate to) {
+        Map<String, Object> row = weeklyBossRecordRepository.summarizePartyRatio(bossId, from, to);
+        Long solo = 0L;
+        Long party = 0L;
+        if (row != null) {
+            if (row.get("soloCount") != null) solo = ((Number) row.get("soloCount")).longValue();
+            if (row.get("partyCount") != null) party = ((Number) row.get("partyCount")).longValue();
+        }
+        return PartyRatioSummaryResponse.builder()
+                .soloCount(solo)
+                .partyCount(party)
+                .build();
     }
 
     @Override

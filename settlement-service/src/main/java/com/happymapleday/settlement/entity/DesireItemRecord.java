@@ -13,7 +13,11 @@ import java.math.BigInteger;
 @Table(name = "desire_item_records",
        indexes = {
            @Index(name = "idx_weekly_boss_record", columnList = "weekly_boss_record_id"),
-           @Index(name = "idx_character", columnList = "character_id")
+           @Index(name = "idx_character", columnList = "character_id"),
+           @Index(name = "idx_desire_item", columnList = "desire_item_id"),
+           @Index(name = "idx_source_box", columnList = "source_box_item_id"),
+           @Index(name = "idx_wbr_item", columnList = "weekly_boss_record_id, desire_item_id"),
+           @Index(name = "idx_wbr_source_box", columnList = "weekly_boss_record_id, source_box_item_id")
        })
 @Getter
 @Builder

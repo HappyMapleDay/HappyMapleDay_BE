@@ -12,6 +12,7 @@ import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByB
 import com.happymapleday.settlement.admin.repository.AdminDesireItemRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.AdminWeeklyBossRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.projection.DateLongValue;
+import com.happymapleday.settlement.admin.repository.projection.IdLongValue;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -130,6 +132,32 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                 .soloCount(solo)
                 .partyCount(party)
                 .build();
+    }
+
+    @Override
+    public List<Map<String, Object>> summarizeBossKillCounts(LocalDate from, LocalDate to) {
+        List<IdLongValue> rows = weeklyBossRecordRepository.summarizeBossKillCounts(from, to);
+        return rows.stream()
+                .map(r -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("bossId", r.getId());
+                    m.put("count", r.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String, Object>> summarizeItemDropsByBoss(Long bossId, LocalDate from, LocalDate to) {
+        List<IdLongValue> rows = desireItemRecordRepository.summarizeItemDropsByBoss(bossId, from, to);
+        return rows.stream()
+                .map(r -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("itemId", r.getId());
+                    m.put("count", r.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
     }
 }
 

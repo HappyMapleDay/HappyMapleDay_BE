@@ -41,6 +41,10 @@ public class DesireItemRecord {
     @Column(name = "desire_item_id", nullable = false)
     private Long desireItemId;
     
+    // 랜덤박스 출처 아이템 ID(랜덤박스에서 나온 결과를 기록할 때, 원본 박스 ID)
+    @Column(name = "source_box_item_id")
+    private Long sourceBoxItemId;
+
     @NotNull
     @Column(name = "sale_price", nullable = false)
     private BigInteger salePrice;

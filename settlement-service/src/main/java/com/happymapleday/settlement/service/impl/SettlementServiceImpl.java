@@ -21,6 +21,8 @@ import com.happymapleday.settlement.service.processor.WeeklySettlementProcessor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +42,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final WeeklySettlementProcessor settlementProcessor;
     private final BossServiceClient bossServiceClient;
     private final CharacterServiceClient characterServiceClient;
+    private final CacheManager cacheManager;
     
     @Override
     public void deleteSettlement(Long settlementId, Long userId) {
@@ -172,19 +175,57 @@ public class SettlementServiceImpl implements SettlementService {
         if (characterIds == null || characterIds.isEmpty()) {
             return Map.of();
         }
-        ApiResponse<List<CharacterBasicResponse>> resp = characterServiceClient.getCharacterDetailsByIds(characterIds);
-        List<CharacterBasicResponse> data = resp != null ? resp.getData() : List.of();
-        if (data == null) data = List.of();
-        return data.stream().collect(Collectors.toMap(CharacterBasicResponse::getId, CharacterBasicResponse::getCharacterName, (a,b) -> a));
+        List<Long> distinctIds = characterIds.stream().distinct().collect(Collectors.toList());
+        Cache cache = cacheManager.getCache("characterNameById");
+        Map<Long, String> cached = distinctIds.stream()
+                .map(id -> Map.entry(id, cache != null ? cache.get(id, String.class) : null))
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        List<Long> misses = distinctIds.stream()
+                .filter(id -> !cached.containsKey(id))
+                .collect(Collectors.toList());
+        Map<Long, String> fetched = Map.of();
+        if (!misses.isEmpty()) {
+            ApiResponse<List<CharacterBasicResponse>> resp = characterServiceClient.getCharacterDetailsByIds(misses);
+            List<CharacterBasicResponse> data = resp != null ? resp.getData() : List.of();
+            if (data == null) data = List.of();
+            fetched = data.stream()
+                    .collect(Collectors.toMap(CharacterBasicResponse::getId, CharacterBasicResponse::getCharacterName, (a,b) -> a));
+            if (cache != null) {
+                fetched.forEach((id, name) -> cache.put(id, name));
+            }
+        }
+        // 합치기 (fetched 우선 유지)
+        Map<Long, String> result = new java.util.HashMap<>(cached);
+        result.putAll(fetched);
+        return result;
     }
 
     private Map<Long, BossResponse> fetchBossByIds(List<Long> bossIds) {
         if (bossIds == null || bossIds.isEmpty()) {
             return Map.of();
         }
-        ApiResponse<List<BossResponse>> resp = bossServiceClient.getBossesByIds(bossIds);
-        List<BossResponse> data = resp != null ? resp.getData() : List.of();
-        if (data == null) data = List.of();
-        return data.stream().collect(Collectors.toMap(BossResponse::getBossId, Function.identity(), (a,b) -> a));
+        List<Long> distinctIds = bossIds.stream().distinct().collect(Collectors.toList());
+        Cache cache = cacheManager.getCache("bossById");
+        Map<Long, BossResponse> cached = distinctIds.stream()
+                .map(id -> Map.entry(id, cache != null ? cache.get(id, BossResponse.class) : null))
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        List<Long> misses = distinctIds.stream()
+                .filter(id -> !cached.containsKey(id))
+                .collect(Collectors.toList());
+        Map<Long, BossResponse> fetched = Map.of();
+        if (!misses.isEmpty()) {
+            ApiResponse<List<BossResponse>> resp = bossServiceClient.getBossesByIds(misses);
+            List<BossResponse> data = resp != null ? resp.getData() : List.of();
+            if (data == null) data = List.of();
+            fetched = data.stream().collect(Collectors.toMap(BossResponse::getBossId, Function.identity(), (a,b) -> a));
+            if (cache != null) {
+                fetched.forEach((id, boss) -> cache.put(id, boss));
+            }
+        }
+        Map<Long, BossResponse> result = new java.util.HashMap<>(cached);
+        result.putAll(fetched);
+        return result;
     }
 } 

@@ -44,4 +44,8 @@ public class BossRecordRequest {
     private final Integer arcaneForce;
 
     private final Integer authenticForce;
+
+    // Nexon Open API 스냅샷: 직업명과 전투력
+    private final String character_class;
+    private final Long combat_power;
 } 

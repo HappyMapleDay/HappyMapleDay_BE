@@ -61,6 +61,10 @@ public class WeeklySettlement {
     @Enumerated(EnumType.STRING)
     @Column(name = "settlement_status", nullable = false)
     private SettlementStatus status;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
     
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)

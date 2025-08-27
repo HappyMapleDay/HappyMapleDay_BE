@@ -186,6 +186,7 @@ public class WeeklySettlementProcessor {
                 .totalBossCount(savedBossRecords.size())
                 .characterCount(calculateCharacterCount(savedBossRecords))
                 .status(SettlementStatus.COMPLETED)
+                .version(settlement.getVersion())
                 .build();
         
         return weeklySettlementRepository.save(updatedSettlement);
@@ -209,6 +210,7 @@ public class WeeklySettlementProcessor {
                 .totalBossCount(savedBossRecords.size())
                 .characterCount(calculateCharacterCount(savedBossRecords))
                 .status(SettlementStatus.PENDING)
+                .version(settlement.getVersion())
                 .build();
         
         return weeklySettlementRepository.save(updatedSettlement);
@@ -229,6 +231,7 @@ public class WeeklySettlementProcessor {
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
                 .status(SettlementStatus.COMPLETED)
+                .version(request.getVersion())
                 .build();
         
         return weeklySettlementRepository.save(settlement);
@@ -249,6 +252,7 @@ public class WeeklySettlementProcessor {
                 .totalBossCount(bossRecords.size())
                 .characterCount(calculateCharacterCount(bossRecords))
                 .status(SettlementStatus.PENDING)
+                .version(request.getVersion())
                 .build();
         
         return weeklySettlementRepository.save(settlement);

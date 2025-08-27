@@ -22,6 +22,7 @@ public class SettlementStatusResponse {
     private final Integer totalBossCount;
     private final Integer characterCount;
     private final Map<Long, Integer> characterCrystalCounts;
+    private final Long version;
     
     public static SettlementStatusResponse from(WeeklySettlement settlement) {
         return SettlementStatusResponse.builder()
@@ -35,6 +36,7 @@ public class SettlementStatusResponse {
                 .totalBossCount(settlement.getTotalBossCount())
                 .characterCount(settlement.getCharacterCount())
                 .characterCrystalCounts(settlement.getCharacterCrystalCounts())
+                .version(settlement.getVersion())
                 .build();
     }
 } 

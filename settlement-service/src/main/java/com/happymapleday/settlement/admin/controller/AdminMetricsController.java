@@ -6,7 +6,6 @@ import com.happymapleday.settlement.admin.dto.response.metrics.BossKillCountSumm
 import com.happymapleday.settlement.admin.dto.response.metrics.ItemDropSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BoxContentsSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.ItemAveragePriceResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.BossHardnessSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.PartyRatioSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
@@ -148,16 +147,6 @@ public class AdminMetricsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         List<ItemAveragePriceResponse> result = settlementMetricsService.summarizeItemAveragePrice(bossId, itemId, from, to);
-        return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-    // 보스 하드니스 요약
-    @GetMapping("/boss/hardness/summary")
-    public ResponseEntity<ApiResponse<BossHardnessSummaryResponse>> summarizeBossHardness(
-            @RequestParam(required = false) Long bossId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        BossHardnessSummaryResponse result = settlementMetricsService.summarizeBossHardness(bossId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

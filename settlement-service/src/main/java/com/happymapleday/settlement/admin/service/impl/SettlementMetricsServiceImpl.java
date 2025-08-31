@@ -1,12 +1,16 @@
 package com.happymapleday.settlement.admin.service.impl;
 
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesBossLongResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BossKillCountSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.ItemDropSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BoxContentsSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.ItemAveragePriceResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.PartyRatioSummaryResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossItemCountResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossItemAvgPriceResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.BossPartyRatioResponse;
 import com.happymapleday.settlement.admin.repository.AdminDesireItemRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.AdminWeeklyBossRecordQueryRepository;
 import com.happymapleday.settlement.admin.repository.projection.DateLongValue;
@@ -15,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +38,31 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
         List<DateLongValue> rows = weeklyBossRecordRepository.findBossKillCountsByWeek(bossId, from, to);
         return rows.stream()
                 .map(r -> TimeSeriesLongResponse.builder().date(r.getDate()).value(r.getValue()).build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TimeSeriesBossLongResponse> getBossKillCountsByWeekGroupByBoss(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = weeklyBossRecordRepository.findBossKillCountsByWeekGroupByBoss(from, to);
+        return rows.stream()
+                .map(r -> {
+                    Long bossIdVal = ((Number) r.get("bossId")).longValue();
+                    Object dateObj = r.get("date");
+                    LocalDate dateVal;
+                    if (dateObj instanceof Date) {
+                        dateVal = ((Date) dateObj).toLocalDate();
+                    } else if (dateObj instanceof LocalDate) {
+                        dateVal = (LocalDate) dateObj;
+                    } else {
+                        dateVal = LocalDate.parse(String.valueOf(dateObj));
+                    }
+                    Long valueVal = ((Number) r.get("value")).longValue();
+                    return TimeSeriesBossLongResponse.builder()
+                            .bossId(bossIdVal)
+                            .date(dateVal)
+                            .value(valueVal)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -58,10 +89,34 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
     }
 
     @Override
+    public List<BossItemCountResponse> summarizeItemDropsGroupByBoss(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemDropsGroupByBoss(from, to);
+        return rows.stream()
+                .map(r -> BossItemCountResponse.builder()
+                        .bossId(((Number) r.get("bossId")).longValue())
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<BoxContentsSummaryResponse> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to) {
         List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
         return rows.stream()
                 .map(r -> BoxContentsSummaryResponse.builder()
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .count(((Number) r.get("count")).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BossItemCountResponse> summarizeBoxContentsGroupByBoss(Long boxItemId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsGroupByBoss(boxItemId, from, to);
+        return rows.stream()
+                .map(r -> BossItemCountResponse.builder()
+                        .bossId(((Number) r.get("bossId")).longValue())
                         .itemId(((Number) r.get("itemId")).longValue())
                         .count(((Number) r.get("count")).longValue())
                         .build())
@@ -74,7 +129,19 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
         return rows.stream()
                 .map(r -> ItemAveragePriceResponse.builder()
                         .itemId(((Number) r.get("itemId")).longValue())
-                        .avgPrice(new java.math.BigDecimal(r.get("avgPrice").toString()))
+                        .avgPrice(new BigDecimal(r.get("avgPrice").toString()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BossItemAvgPriceResponse> summarizeItemAveragePriceGroupByBoss(Long itemId, LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemAveragePriceGroupByBoss(itemId, from, to);
+        return rows.stream()
+                .map(r -> BossItemAvgPriceResponse.builder()
+                        .bossId(((Number) r.get("bossId")).longValue())
+                        .itemId(((Number) r.get("itemId")).longValue())
+                        .avgPrice(new BigDecimal(String.valueOf(r.get("avgPrice"))))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -106,6 +173,18 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                 .soloCount(solo)
                 .partyCount(party)
                 .build();
+    }
+
+    @Override
+    public List<BossPartyRatioResponse> summarizePartyRatioGroupByBoss(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = weeklyBossRecordRepository.summarizePartyRatioGroupByBoss(from, to);
+        return rows.stream()
+                .map(r -> BossPartyRatioResponse.builder()
+                        .bossId(((Number) r.get("bossId")).longValue())
+                        .soloCount(((Number) r.get("soloCount")).longValue())
+                        .partyCount(((Number) r.get("partyCount")).longValue())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     

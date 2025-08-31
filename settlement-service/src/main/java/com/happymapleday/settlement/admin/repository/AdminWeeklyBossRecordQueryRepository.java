@@ -21,6 +21,17 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
                                                  @Param("from") LocalDate from,
                                                  @Param("to") LocalDate to);
 
+    // 보스별 주차별 처치 수 (bossId, weekStartDate, count)
+    @Query(value = "select wbr.boss_id as bossId, wbr.week_start_date as date, count(wbr.id) as value\n" +
+            "from weekly_boss_records wbr\n" +
+            "where (:from is null or wbr.week_start_date >= :from)\n" +
+            "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "group by wbr.boss_id, wbr.week_start_date\n" +
+            "order by wbr.boss_id, wbr.week_start_date",
+            nativeQuery = true)
+    List<Map<String, Object>> findBossKillCountsByWeekGroupByBoss(@Param("from") LocalDate from,
+                                                                  @Param("to") LocalDate to);
+
     // 전체 보스에 대해: 솔플이고 그 주 최난이도 보스로 해당 보스를 선택한 캐릭터들의 직업별 평균 투력
     @Query(value = "with ranked as (\n" +
             "  select wbr.*, \n" +
@@ -68,6 +79,20 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
     Map<String, Object> summarizePartyRatio(@Param("bossId") Long bossId,
                                             @Param("from") LocalDate from,
                                             @Param("to") LocalDate to);
+
+    // 보스별 솔로/파티 비율 요약
+    @Query(value = "select\n" +
+            "  wbr.boss_id as bossId,\n" +
+            "  sum(case when wbr.party_size = 1 then 1 else 0 end) as soloCount,\n" +
+            "  sum(case when wbr.party_size > 1 then 1 else 0 end) as partyCount\n" +
+            "from weekly_boss_records wbr\n" +
+            "where (:from is null or wbr.week_start_date >= :from)\n" +
+            "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "group by wbr.boss_id\n" +
+            "order by wbr.boss_id",
+            nativeQuery = true)
+    List<Map<String, Object>> summarizePartyRatioGroupByBoss(@Param("from") LocalDate from,
+                                                             @Param("to") LocalDate to);
 }
 
 

@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AvgCombatPowerByBossJobResponse {
-
     private Long bossId;
     private String characterClass;
     private Double avgCombatPower;

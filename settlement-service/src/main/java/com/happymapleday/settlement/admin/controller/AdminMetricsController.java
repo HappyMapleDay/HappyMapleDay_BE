@@ -30,7 +30,7 @@ public class AdminMetricsController {
 
     // 주차별 보스 처치 횟수
     @GetMapping("/boss/kills/time-series")
-    public ResponseEntity<ApiResponse<?>> getBossKillCountsByWeek(
+    public ResponseEntity<ApiResponse<List<TimeSeriesBossLongResponse>>> getBossKillCountsByWeek(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -64,7 +64,7 @@ public class AdminMetricsController {
 
     // 보스별 아이템별 총 드랍 수 요약
     @GetMapping("/item/drops/summary")
-    public ResponseEntity<ApiResponse<?>> summarizeItemDropsByBoss(
+    public ResponseEntity<ApiResponse<List<BossItemCountResponse>>> summarizeItemDropsByBoss(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -74,7 +74,7 @@ public class AdminMetricsController {
 
     // 보스별 박스 내용물 요약
     @GetMapping("/box/contents/summary")
-    public ResponseEntity<ApiResponse<?>> summarizeBoxContentsByBoss(
+    public ResponseEntity<ApiResponse<List<BossItemCountResponse>>> summarizeBoxContentsByBoss(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) Long boxItemId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -85,7 +85,7 @@ public class AdminMetricsController {
 
     // 아이템별 평균 판매가 요약
     @GetMapping("/item/average-price/summary")
-    public ResponseEntity<ApiResponse<?>> summarizeItemAveragePrice(
+    public ResponseEntity<ApiResponse<List<BossItemAvgPriceResponse>>> summarizeItemAveragePrice(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) Long itemId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -96,7 +96,7 @@ public class AdminMetricsController {
 
     // 보스 솔로/파티 비율 요약
     @GetMapping("/boss/party-ratio/summary")
-    public ResponseEntity<ApiResponse<?>> summarizePartyRatio(
+    public ResponseEntity<ApiResponse<List<BossPartyRatioResponse>>> summarizePartyRatio(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {

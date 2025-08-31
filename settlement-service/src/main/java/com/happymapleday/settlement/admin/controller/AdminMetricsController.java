@@ -13,7 +13,7 @@ import com.happymapleday.settlement.admin.dto.response.metrics.BossItemCountResp
 import com.happymapleday.settlement.admin.dto.response.metrics.BossItemAvgPriceResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BossPartyRatioResponse;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
-import com.happymapleday.settlement.service.util.WeekCalculator;
+import com.happymapleday.settlement.admin.service.util.MetricsQueryHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
-import java.util.LinkedHashMap;
-import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/settlement/admin/metrics")
@@ -34,7 +31,7 @@ import java.util.ArrayList;
 public class AdminMetricsController {
 
     private final SettlementMetricsService settlementMetricsService;
-    private final WeekCalculator weekCalculator;
+    private final MetricsQueryHelper metricsQueryHelper;
 
     // 주차별 보스 처치 횟수
     @GetMapping("/boss/kills/time-series")
@@ -45,81 +42,26 @@ public class AdminMetricsController {
             @RequestParam(required = false) String range,
             @RequestParam(required = false, defaultValue = "week") String bucket,
             @RequestParam(required = false) String groupBy) {
-        LocalDate normalizedTo = to != null ? weekCalculator.getWeekStartDate(to) : weekCalculator.getWeekStartDate(LocalDate.now());
-        LocalDate normalizedFrom = computeFromByRangeOrNormalize(from, normalizedTo, range);
+        LocalDate normalizedTo = metricsQueryHelper.normalizeTo(to);
+        LocalDate normalizedFrom = metricsQueryHelper.normalizeFrom(from, normalizedTo, range);
 
-        if (groupBy != null && groupBy.equalsIgnoreCase("boss") && bossId == null) {
+        if (metricsQueryHelper.isGroupByBoss(groupBy) && bossId == null) {
             List<TimeSeriesBossLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeekGroupByBoss(normalizedFrom, normalizedTo);
-            if (bucket == null || bucket.equalsIgnoreCase("week")) {
-                return ResponseEntity.ok(ApiResponse.success(weekly));
-            }
-            if (bucket.equalsIgnoreCase("month")) {
-                // 월 집계는 bossId별로 피벗하기보다, 호출자가 FE에서 집계하도록 안내. 여기서는 주단위만 제공.
+            if (bucket == null || !metricsQueryHelper.isBucketMonth(bucket)) {
                 return ResponseEntity.ok(ApiResponse.success(weekly));
             }
             return ResponseEntity.ok(ApiResponse.success(weekly));
         } else {
             List<TimeSeriesLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
-            if (bucket == null || bucket.equalsIgnoreCase("week")) {
+            if (bucket == null || !metricsQueryHelper.isBucketMonth(bucket)) {
                 return ResponseEntity.ok(ApiResponse.success(weekly));
             }
-            if (bucket.equalsIgnoreCase("month")) {
-                List<TimeSeriesLongResponse> monthly = aggregateByMonth(weekly);
-                return ResponseEntity.ok(ApiResponse.success(monthly));
-            }
-            return ResponseEntity.ok(ApiResponse.success(weekly));
+            List<TimeSeriesLongResponse> monthly = metricsQueryHelper.aggregateToMonth(weekly);
+            return ResponseEntity.ok(ApiResponse.success(monthly));
         }
     }
 
-    private LocalDate computeFromByRangeOrNormalize(LocalDate from, LocalDate normalizedTo, String range) {
-        if (from != null) {
-            return weekCalculator.getWeekStartDate(from);
-        }
-        if (range == null || range.isEmpty()) {
-            // 기본 4주
-            return normalizedTo.minusWeeks(3);
-        }
-        String r = range.toLowerCase();
-        if (r.equals("all")) {
-            // 전체 기간: from 제한 해제
-            return null;
-        }
-        if (r.endsWith("w")) {
-            int weeks = parseNumber(r.substring(0, r.length() - 1), 4);
-            int back = Math.max(1, weeks);
-            return normalizedTo.minusWeeks(back - 1);
-        }
-        if (r.endsWith("m")) {
-            int months = parseNumber(r.substring(0, r.length() - 1), 3);
-            LocalDate candidate = normalizedTo.minusMonths(Math.max(1, months));
-            return weekCalculator.getWeekStartDate(candidate);
-        }
-        return normalizedTo.minusWeeks(3);
-    }
-
-    private int parseNumber(String s, int defaultVal) {
-        try {
-            return Integer.parseInt(s);
-        } catch (Exception e) {
-            return defaultVal;
-        }
-    }
-
-    private List<TimeSeriesLongResponse> aggregateByMonth(List<TimeSeriesLongResponse> weekly) {
-        LinkedHashMap<YearMonth, Long> ymToSum = new LinkedHashMap<>();
-        for (TimeSeriesLongResponse w : weekly) {
-            YearMonth ym = YearMonth.from(w.getDate());
-            ymToSum.put(ym, ymToSum.getOrDefault(ym, 0L) + (w.getValue() != null ? w.getValue() : 0L));
-        }
-        List<TimeSeriesLongResponse> result = new ArrayList<>();
-        for (java.util.Map.Entry<YearMonth, Long> e : ymToSum.entrySet()) {
-            result.add(TimeSeriesLongResponse.builder()
-                    .date(e.getKey().atDay(1))
-                    .value(e.getValue())
-                    .build());
-        }
-        return result;
-    }
+    
 
     // 보스별 직업별 트림 평균 투력(전체 보스)
     @GetMapping("/boss/hardness/avg-combat-power")

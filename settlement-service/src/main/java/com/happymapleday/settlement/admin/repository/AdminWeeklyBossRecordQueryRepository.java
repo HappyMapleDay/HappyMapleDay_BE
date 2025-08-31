@@ -26,10 +26,12 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
             "from weekly_boss_records wbr\n" +
             "where (:from is null or wbr.week_start_date >= :from)\n" +
             "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "  and (:bossId is null or wbr.boss_id = :bossId)\n" +
             "group by wbr.boss_id, wbr.week_start_date\n" +
             "order by wbr.boss_id, wbr.week_start_date",
             nativeQuery = true)
-    List<Map<String, Object>> findBossKillCountsByWeekGroupByBoss(@Param("from") LocalDate from,
+    List<Map<String, Object>> findBossKillCountsByWeekGroupByBoss(@Param("bossId") Long bossId,
+                                                                  @Param("from") LocalDate from,
                                                                   @Param("to") LocalDate to);
 
     // 전체 보스에 대해: 솔플이고 그 주 최난이도 보스로 해당 보스를 선택한 캐릭터들의 직업별 평균 투력
@@ -88,10 +90,12 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
             "from weekly_boss_records wbr\n" +
             "where (:from is null or wbr.week_start_date >= :from)\n" +
             "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "  and (:bossId is null or wbr.boss_id = :bossId)\n" +
             "group by wbr.boss_id\n" +
             "order by wbr.boss_id",
             nativeQuery = true)
-    List<Map<String, Object>> summarizePartyRatioGroupByBoss(@Param("from") LocalDate from,
+    List<Map<String, Object>> summarizePartyRatioGroupByBoss(@Param("bossId") Long bossId,
+                                                             @Param("from") LocalDate from,
                                                              @Param("to") LocalDate to);
 }
 

@@ -1,17 +1,12 @@
 package com.happymapleday.settlement.admin.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesBossLongResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BossKillCountSummaryResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.ItemDropSummaryResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.BoxContentsSummaryResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.ItemAveragePriceResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.PartyRatioSummaryResponse;
-import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BossItemCountResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BossItemAvgPriceResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.BossPartyRatioResponse;
+import com.happymapleday.settlement.admin.dto.response.metrics.AvgCombatPowerByBossJobResponse;
 import com.happymapleday.settlement.admin.service.SettlementMetricsService;
 import com.happymapleday.settlement.admin.service.util.MetricsQueryHelper;
 import lombok.RequiredArgsConstructor;
@@ -40,25 +35,17 @@ public class AdminMetricsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String range,
-            @RequestParam(required = false, defaultValue = "week") String bucket,
-            @RequestParam(required = false) String groupBy) {
+            @RequestParam(required = false, defaultValue = "week") String bucket) {
         LocalDate normalizedTo = metricsQueryHelper.normalizeTo(to);
         LocalDate normalizedFrom = metricsQueryHelper.normalizeFrom(from, normalizedTo, range);
 
-        if (metricsQueryHelper.isGroupByBoss(groupBy) && bossId == null) {
-            List<TimeSeriesBossLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeekGroupByBoss(normalizedFrom, normalizedTo);
-            if (bucket == null || !metricsQueryHelper.isBucketMonth(bucket)) {
-                return ResponseEntity.ok(ApiResponse.success(weekly));
-            }
+        List<TimeSeriesBossLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
+        if (bucket == null || !metricsQueryHelper.isBucketMonth(bucket)) {
             return ResponseEntity.ok(ApiResponse.success(weekly));
-        } else {
-            List<TimeSeriesLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
-            if (bucket == null || !metricsQueryHelper.isBucketMonth(bucket)) {
-                return ResponseEntity.ok(ApiResponse.success(weekly));
-            }
-            List<TimeSeriesLongResponse> monthly = metricsQueryHelper.aggregateToMonth(weekly);
-            return ResponseEntity.ok(ApiResponse.success(monthly));
         }
+        // 월별 집계는 boss별 합계 그대로 bossId 포함 응답
+        // 주별을 월별로 변환하려면 서버에서 월별 쿼리 추가가 필요하지만, 우선 주별 그대로 반환
+        return ResponseEntity.ok(ApiResponse.success(weekly));
     }
 
     
@@ -86,13 +73,8 @@ public class AdminMetricsController {
     public ResponseEntity<ApiResponse<?>> summarizeItemDropsByBoss(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) String groupBy) {
-        if (groupBy != null && groupBy.equalsIgnoreCase("boss") && bossId == null) {
-            List<BossItemCountResponse> result = settlementMetricsService.summarizeItemDropsGroupByBoss(from, to);
-            return ResponseEntity.ok(ApiResponse.success(result));
-        }
-        List<ItemDropSummaryResponse> result = settlementMetricsService.summarizeItemDropsByBoss(bossId, from, to);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<BossItemCountResponse> result = settlementMetricsService.summarizeItemDropsByBoss(bossId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -102,13 +84,8 @@ public class AdminMetricsController {
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) Long boxItemId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) String groupBy) {
-        if (groupBy != null && groupBy.equalsIgnoreCase("boss") && bossId == null) {
-            List<BossItemCountResponse> result = settlementMetricsService.summarizeBoxContentsGroupByBoss(boxItemId, from, to);
-            return ResponseEntity.ok(ApiResponse.success(result));
-        }
-        List<BoxContentsSummaryResponse> result = settlementMetricsService.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<BossItemCountResponse> result = settlementMetricsService.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -118,13 +95,8 @@ public class AdminMetricsController {
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) Long itemId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) String groupBy) {
-        if (groupBy != null && groupBy.equalsIgnoreCase("boss") && bossId == null) {
-            List<BossItemAvgPriceResponse> result = settlementMetricsService.summarizeItemAveragePriceGroupByBoss(itemId, from, to);
-            return ResponseEntity.ok(ApiResponse.success(result));
-        }
-        List<ItemAveragePriceResponse> result = settlementMetricsService.summarizeItemAveragePrice(bossId, itemId, from, to);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<BossItemAvgPriceResponse> result = settlementMetricsService.summarizeItemAveragePrice(bossId, itemId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -133,13 +105,8 @@ public class AdminMetricsController {
     public ResponseEntity<ApiResponse<?>> summarizePartyRatio(
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) String groupBy) {
-        if (groupBy != null && groupBy.equalsIgnoreCase("boss") && bossId == null) {
-            List<BossPartyRatioResponse> result = settlementMetricsService.summarizePartyRatioGroupByBoss(from, to);
-            return ResponseEntity.ok(ApiResponse.success(result));
-        }
-        PartyRatioSummaryResponse result = settlementMetricsService.summarizePartyRatio(bossId, from, to);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        List<BossPartyRatioResponse> result = settlementMetricsService.summarizePartyRatio(bossId, from, to);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

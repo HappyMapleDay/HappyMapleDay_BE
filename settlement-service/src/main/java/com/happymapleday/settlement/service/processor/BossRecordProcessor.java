@@ -8,6 +8,7 @@ import com.happymapleday.settlement.service.util.BossWeightProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class BossRecordProcessor {
             validateBossRecordNotExists(bossRequest.getCharacterId(), bossRequest.getBossId(), weekStartDate);
             
             // 보스 기록 생성
-            WeeklyBossRecord bossRecord = createBossRecord(userId, weekStartDate, bossRequest, null);
+            WeeklyBossRecord bossRecord = createBossRecord(userId, weekStartDate, bossRequest);
             bossRecords.add(bossRecord);
         }
         
@@ -82,14 +83,13 @@ public class BossRecordProcessor {
         weeklyBossRecordRepository.deleteBySettlementId(settlementId);
     }
     
-    // 보스 기록 생성 헬퍼 메서드
+    // 보스 기록 생성 헬퍼 메서드 (임시 객체: settlementId 미설정)
     private WeeklyBossRecord createBossRecord(Long userId, LocalDate weekStartDate, 
-                                              BossRecordRequest bossRequest, Long settlementId) {
-        java.math.BigDecimal weight = bossWeightProvider.getWeightOrDefault(bossRequest.getBossId(), java.math.BigDecimal.ONE);
-        java.math.BigDecimal difficultyScore = new java.math.BigDecimal(bossRequest.getCrystalIncome()).multiply(weight);
+                                              BossRecordRequest bossRequest) {
+        BigDecimal weight = bossWeightProvider.getWeightOrDefault(bossRequest.getBossId(), BigDecimal.ONE);
+        BigDecimal difficultyScore = new BigDecimal(bossRequest.getCrystalIncome()).multiply(weight);
 
         return WeeklyBossRecord.builder()
-                .settlementId(settlementId)
                 .userId(userId)
                 .characterId(bossRequest.getCharacterId())
                 .bossId(bossRequest.getBossId())

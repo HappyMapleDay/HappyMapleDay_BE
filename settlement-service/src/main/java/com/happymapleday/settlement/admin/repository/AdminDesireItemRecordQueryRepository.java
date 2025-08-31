@@ -59,6 +59,53 @@ public interface AdminDesireItemRecordQueryRepository extends JpaRepository<Desi
                                                         @Param("itemId") Long itemId,
                                                         @Param("from") LocalDate from,
                                                         @Param("to") LocalDate to);
+
+    // 보스별 아이템 드랍 수 요약
+    @Query(value = "select wbr.boss_id as bossId, dir.desire_item_id as itemId, count(dir.id) as count\n" +
+            "from desire_item_records dir\n" +
+            "join weekly_boss_records wbr on wbr.id = dir.weekly_boss_record_id\n" +
+            "where (:from is null or wbr.week_start_date >= :from)\n" +
+            "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "  and (:bossId is null or wbr.boss_id = :bossId)\n" +
+            "group by wbr.boss_id, dir.desire_item_id\n" +
+            "order by wbr.boss_id, dir.desire_item_id",
+            nativeQuery = true)
+    List<Map<String, Object>> summarizeItemDropsGroupByBoss(@Param("bossId") Long bossId,
+                                                            @Param("from") LocalDate from,
+                                                            @Param("to") LocalDate to);
+
+    // (groupBy=boss) 보스별 박스 내용물 요약
+    @Query(value = "select wbr.boss_id as bossId, dir.desire_item_id as itemId, count(dir.id) as count\n" +
+            "from desire_item_records dir\n" +
+            "join weekly_boss_records wbr on wbr.id = dir.weekly_boss_record_id\n" +
+            "where dir.source_box_item_id is not null\n" +
+            "  and (:boxItemId is null or dir.source_box_item_id = :boxItemId)\n" +
+            "  and (:from is null or wbr.week_start_date >= :from)\n" +
+            "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "  and (:bossId is null or wbr.boss_id = :bossId)\n" +
+            "group by wbr.boss_id, dir.desire_item_id\n" +
+            "order by wbr.boss_id, dir.desire_item_id",
+            nativeQuery = true)
+    List<Map<String, Object>> summarizeBoxContentsGroupByBoss(@Param("bossId") Long bossId,
+                                                              @Param("boxItemId") Long boxItemId,
+                                                              @Param("from") LocalDate from,
+                                                              @Param("to") LocalDate to);
+
+    // (groupBy=boss) 보스별 평균 판매가 요약
+    @Query(value = "select wbr.boss_id as bossId, dir.desire_item_id as itemId, avg(dir.sale_price) as avgPrice\n" +
+            "from desire_item_records dir\n" +
+            "join weekly_boss_records wbr on wbr.id = dir.weekly_boss_record_id\n" +
+            "where (:itemId is null or dir.desire_item_id = :itemId)\n" +
+            "  and (:from is null or wbr.week_start_date >= :from)\n" +
+            "  and (:to is null or wbr.week_start_date <= :to)\n" +
+            "  and (:bossId is null or wbr.boss_id = :bossId)\n" +
+            "group by wbr.boss_id, dir.desire_item_id\n" +
+            "order by wbr.boss_id, dir.desire_item_id",
+            nativeQuery = true)
+    List<Map<String, Object>> summarizeItemAveragePriceGroupByBoss(@Param("bossId") Long bossId,
+                                                                   @Param("itemId") Long itemId,
+                                                                   @Param("from") LocalDate from,
+                                                                   @Param("to") LocalDate to);
 }
 
 

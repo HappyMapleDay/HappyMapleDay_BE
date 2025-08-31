@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemDropSummaryResponse {
-
+public class BossItemCountResponse {
+    private Long bossId;
     private Long itemId;
     private Long count;
 }

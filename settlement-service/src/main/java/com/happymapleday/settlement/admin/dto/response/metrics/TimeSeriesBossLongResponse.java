@@ -5,16 +5,16 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemAveragePriceResponse {
-
-    private Long itemId;
-    private BigDecimal avgPrice;
+public class TimeSeriesBossLongResponse {
+    private Long bossId;
+    private LocalDate date;
+    private Long value;
 }
 
 

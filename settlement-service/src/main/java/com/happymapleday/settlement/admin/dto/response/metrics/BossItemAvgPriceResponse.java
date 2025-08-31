@@ -5,14 +5,16 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PartyRatioSummaryResponse {
-
-    private Long soloCount;
-    private Long partyCount;
+public class BossItemAvgPriceResponse {
+    private Long bossId;
+    private Long itemId;
+    private BigDecimal avgPrice;
 }
 
 

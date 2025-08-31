@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BoxContentsSummaryResponse {
-
-    private Long itemId;
-    private Long count;
+public class BossPartyRatioResponse {
+    private Long bossId;
+    private Long soloCount;
+    private Long partyCount;
 }
 
 

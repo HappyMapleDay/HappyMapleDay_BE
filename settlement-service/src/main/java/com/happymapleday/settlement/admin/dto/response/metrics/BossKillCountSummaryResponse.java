@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BossKillCountSummaryResponse {
-
     private Long bossId;
     private Long count;
 }

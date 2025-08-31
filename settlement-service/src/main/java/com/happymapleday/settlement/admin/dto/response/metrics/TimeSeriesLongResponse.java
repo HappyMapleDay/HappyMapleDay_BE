@@ -8,7 +8,6 @@ import java.time.LocalDate;
 @Getter
 @Builder
 public class TimeSeriesLongResponse {
-
     private LocalDate date;
     private Long value;
 }

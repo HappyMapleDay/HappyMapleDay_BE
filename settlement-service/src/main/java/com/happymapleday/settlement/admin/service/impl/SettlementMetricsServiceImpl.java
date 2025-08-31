@@ -14,9 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,24 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
     public List<TimeSeriesBossLongResponse> getBossKillCountsByWeek(Long bossId, LocalDate from, LocalDate to) {
         if (bossId != null) {
             List<DateLongValue> rows = weeklyBossRecordRepository.findBossKillCountsByWeek(bossId, from, to);
+            // 특정 보스(31, 32)는 월별 집계로 전환
+            if (bossId == 31L || bossId == 32L) {
+                Map<YearMonth, Long> ymToSum = new LinkedHashMap<>();
+                for (DateLongValue r : rows) {
+                    YearMonth ym = YearMonth.from(r.getDate());
+                    Long v = r.getValue() == null ? 0L : r.getValue();
+                    ymToSum.put(ym, ymToSum.getOrDefault(ym, 0L) + v);
+                }
+                List<TimeSeriesBossLongResponse> monthly = new ArrayList<>();
+                for (Map.Entry<YearMonth, Long> e : ymToSum.entrySet()) {
+                    monthly.add(TimeSeriesBossLongResponse.builder()
+                            .bossId(bossId)
+                            .date(e.getKey().atDay(1))
+                            .value(e.getValue())
+                            .build());
+                }
+                return monthly;
+            }
             return rows.stream()
                     .map(r -> TimeSeriesBossLongResponse.builder()
                             .bossId(bossId)

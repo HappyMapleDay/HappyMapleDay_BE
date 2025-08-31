@@ -18,11 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/settlement/admin/metrics")
@@ -42,24 +38,8 @@ public class AdminMetricsController {
         LocalDate normalizedTo = metricsQueryHelper.normalizeTo(to);
         LocalDate normalizedFrom = metricsQueryHelper.normalizeFrom(from, normalizedTo, range);
 
-        List<TimeSeriesBossLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
-        if (bossId != null && (bossId == 31L || bossId == 32L)) {
-            LinkedHashMap<YearMonth, Long> ymToSum = new LinkedHashMap<>();
-            for (TimeSeriesBossLongResponse w : weekly) {
-                YearMonth ym = YearMonth.from(w.getDate());
-                ymToSum.put(ym, ymToSum.getOrDefault(ym, 0L) + (w.getValue() != null ? w.getValue() : 0L));
-            }
-            List<TimeSeriesBossLongResponse> monthly = new ArrayList<>();
-            for (Map.Entry<YearMonth, Long> e : ymToSum.entrySet()) {
-                monthly.add(TimeSeriesBossLongResponse.builder()
-                        .bossId(bossId)
-                        .date(e.getKey().atDay(1))
-                        .value(e.getValue())
-                        .build());
-            }
-            return ResponseEntity.ok(ApiResponse.success(monthly));
-        }
-        return ResponseEntity.ok(ApiResponse.success(weekly));
+        List<TimeSeriesBossLongResponse> result = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     

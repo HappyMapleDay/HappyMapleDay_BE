@@ -1,5 +1,6 @@
 package com.happymapleday.settlement.admin.service.util;
 
+import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesBossLongResponse;
 import com.happymapleday.settlement.admin.dto.response.metrics.TimeSeriesLongResponse;
 import com.happymapleday.settlement.service.util.WeekCalculator;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,11 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
@@ -58,6 +64,42 @@ public class MetricsQueryHelper {
                     .date(e.getKey().atDay(1))
                     .value(e.getValue())
                     .build());
+        }
+        return result;
+    }
+
+    // 월간 보스 식별: 검은 마법사(하드=31, 익스트림=32)
+    private static final Set<Long> MONTHLY_BOSS_IDS = new HashSet<>(Arrays.asList(31L, 32L));
+
+    public boolean isMonthlyBoss(Long bossId) {
+        return bossId != null && MONTHLY_BOSS_IDS.contains(bossId);
+    }
+
+    // 주별 보스 집계를 월별로 합산 (bossId, YearMonth 단위 그룹)
+    public List<TimeSeriesBossLongResponse> aggregateBossWeeklyToMonth(List<TimeSeriesBossLongResponse> weekly) {
+        if (weekly == null || weekly.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LinkedHashMap<Long, LinkedHashMap<YearMonth, Long>> bossMonthSums = new LinkedHashMap<>();
+        for (TimeSeriesBossLongResponse row : weekly) {
+            Long bId = row.getBossId();
+            YearMonth ym = YearMonth.from(row.getDate());
+            bossMonthSums
+                .computeIfAbsent(bId, k -> new LinkedHashMap<>())
+                .merge(ym, row.getValue() != null ? row.getValue() : 0L, Long::sum);
+        }
+
+        List<TimeSeriesBossLongResponse> result = new ArrayList<>();
+        for (Map.Entry<Long, LinkedHashMap<YearMonth, Long>> e : bossMonthSums.entrySet()) {
+            Long bId = e.getKey();
+            for (Map.Entry<YearMonth, Long> me : e.getValue().entrySet()) {
+                result.add(TimeSeriesBossLongResponse.builder()
+                        .bossId(bId)
+                        .date(me.getKey().atDay(1))
+                        .value(me.getValue())
+                        .build());
+            }
         }
         return result;
     }

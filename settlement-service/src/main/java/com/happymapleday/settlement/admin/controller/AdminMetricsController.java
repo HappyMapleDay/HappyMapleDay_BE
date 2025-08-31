@@ -18,7 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/settlement/admin/metrics")
@@ -34,17 +38,27 @@ public class AdminMetricsController {
             @RequestParam(required = false) Long bossId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) String range,
-            @RequestParam(required = false, defaultValue = "week") String bucket) {
+            @RequestParam(required = false) String range) {
         LocalDate normalizedTo = metricsQueryHelper.normalizeTo(to);
         LocalDate normalizedFrom = metricsQueryHelper.normalizeFrom(from, normalizedTo, range);
 
         List<TimeSeriesBossLongResponse> weekly = settlementMetricsService.getBossKillCountsByWeek(bossId, normalizedFrom, normalizedTo);
-        if (bucket == null || !metricsQueryHelper.isBucketMonth(bucket)) {
-            return ResponseEntity.ok(ApiResponse.success(weekly));
+        if (bossId != null && (bossId == 31L || bossId == 32L)) {
+            LinkedHashMap<YearMonth, Long> ymToSum = new LinkedHashMap<>();
+            for (TimeSeriesBossLongResponse w : weekly) {
+                YearMonth ym = YearMonth.from(w.getDate());
+                ymToSum.put(ym, ymToSum.getOrDefault(ym, 0L) + (w.getValue() != null ? w.getValue() : 0L));
+            }
+            List<TimeSeriesBossLongResponse> monthly = new ArrayList<>();
+            for (Map.Entry<YearMonth, Long> e : ymToSum.entrySet()) {
+                monthly.add(TimeSeriesBossLongResponse.builder()
+                        .bossId(bossId)
+                        .date(e.getKey().atDay(1))
+                        .value(e.getValue())
+                        .build());
+            }
+            return ResponseEntity.ok(ApiResponse.success(monthly));
         }
-        // 월별 집계는 boss별 합계 그대로 bossId 포함 응답
-        // 주별을 월별로 변환하려면 서버에서 월별 쿼리 추가가 필요하지만, 우선 주별 그대로 반환
         return ResponseEntity.ok(ApiResponse.success(weekly));
     }
 

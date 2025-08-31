@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BossPartyRatioResponse {
-
     private Long bossId;
     private Long soloCount;
     private Long partyCount;

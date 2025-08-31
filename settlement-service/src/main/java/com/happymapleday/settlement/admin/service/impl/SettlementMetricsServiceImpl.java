@@ -118,18 +118,6 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
     }
 
     @Override
-    public List<BossItemCountResponse> summarizeItemDropsGroupByBoss(LocalDate from, LocalDate to) {
-        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemDropsGroupByBoss(null, from, to);
-        return rows.stream()
-                .map(r -> BossItemCountResponse.builder()
-                        .bossId(((Number) r.get("bossId")).longValue())
-                        .itemId(((Number) r.get("itemId")).longValue())
-                        .count(((Number) r.get("count")).longValue())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public List<BossItemCountResponse> summarizeBoxContentsByBoss(Long bossId, Long boxItemId, LocalDate from, LocalDate to) {
         if (bossId != null) {
             List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsByBoss(bossId, boxItemId, from, to);
@@ -141,18 +129,6 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                             .build())
                     .collect(Collectors.toList());
         }
-        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsGroupByBoss(null, boxItemId, from, to);
-        return rows.stream()
-                .map(r -> BossItemCountResponse.builder()
-                        .bossId(((Number) r.get("bossId")).longValue())
-                        .itemId(((Number) r.get("itemId")).longValue())
-                        .count(((Number) r.get("count")).longValue())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<BossItemCountResponse> summarizeBoxContentsGroupByBoss(Long boxItemId, LocalDate from, LocalDate to) {
         List<Map<String, Object>> rows = desireItemRecordRepository.summarizeBoxContentsGroupByBoss(null, boxItemId, from, to);
         return rows.stream()
                 .map(r -> BossItemCountResponse.builder()
@@ -184,19 +160,6 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                         .build())
                 .collect(Collectors.toList());
     }
-
-    @Override
-    public List<BossItemAvgPriceResponse> summarizeItemAveragePriceGroupByBoss(Long itemId, LocalDate from, LocalDate to) {
-        List<Map<String, Object>> rows = desireItemRecordRepository.summarizeItemAveragePriceGroupByBoss(null, itemId, from, to);
-        return rows.stream()
-                .map(r -> BossItemAvgPriceResponse.builder()
-                        .bossId(((Number) r.get("bossId")).longValue())
-                        .itemId(((Number) r.get("itemId")).longValue())
-                        .avgPrice(new BigDecimal(String.valueOf(r.get("avgPrice"))))
-                        .build())
-                .collect(Collectors.toList());
-    }
-
     
 
     @Override
@@ -227,18 +190,6 @@ public class SettlementMetricsServiceImpl implements SettlementMetricsService {
                     .partyCount(party)
                     .build());
         }
-        List<Map<String, Object>> rows = weeklyBossRecordRepository.summarizePartyRatioGroupByBoss(null, from, to);
-        return rows.stream()
-                .map(r -> BossPartyRatioResponse.builder()
-                        .bossId(((Number) r.get("bossId")).longValue())
-                        .soloCount(((Number) r.get("soloCount")).longValue())
-                        .partyCount(((Number) r.get("partyCount")).longValue())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<BossPartyRatioResponse> summarizePartyRatioGroupByBoss(LocalDate from, LocalDate to) {
         List<Map<String, Object>> rows = weeklyBossRecordRepository.summarizePartyRatioGroupByBoss(null, from, to);
         return rows.stream()
                 .map(r -> BossPartyRatioResponse.builder()

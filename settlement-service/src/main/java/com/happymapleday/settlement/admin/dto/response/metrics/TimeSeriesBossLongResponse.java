@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TimeSeriesBossLongResponse {
-
     private Long bossId;
     private LocalDate date;
     private Long value;

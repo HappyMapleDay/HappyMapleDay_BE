@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BossItemAvgPriceResponse {
-
     private Long bossId;
     private Long itemId;
     private BigDecimal avgPrice;

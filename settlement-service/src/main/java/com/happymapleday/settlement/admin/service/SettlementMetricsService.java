@@ -22,12 +22,6 @@ public interface SettlementMetricsService {
 	List<BossItemAvgPriceResponse> summarizeItemAveragePrice(Long bossId, Long itemId, LocalDate from, LocalDate to);
 	List<BossPartyRatioResponse> summarizePartyRatio(Long bossId, LocalDate from, LocalDate to);
 
-	// bossId 없으면 전체 보스별 반환
-	List<BossItemCountResponse> summarizeItemDropsGroupByBoss(LocalDate from, LocalDate to);
-	List<BossItemCountResponse> summarizeBoxContentsGroupByBoss(Long boxItemId, LocalDate from, LocalDate to);
-	List<BossItemAvgPriceResponse> summarizeItemAveragePriceGroupByBoss(Long itemId, LocalDate from, LocalDate to);
-	List<BossPartyRatioResponse> summarizePartyRatioGroupByBoss(LocalDate from, LocalDate to);
-
 	// 전체 보스 대상: 직업별 트림 평균 투력 (솔플, 각 주 최난이도 보스 기준)
 	List<AvgCombatPowerByBossJobResponse> getTrimmedAvgCombatPowerGroupByBossAndJob(LocalDate from, LocalDate to);
 }

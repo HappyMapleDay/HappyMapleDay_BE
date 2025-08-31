@@ -21,9 +21,7 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
                                                  @Param("from") LocalDate from,
                                                  @Param("to") LocalDate to);
 
-    // (삭제됨) 단일 보스 트림 평균 투력 조회
-
-    // 전체 보스에 대해: 솔플이고 그 주 최난이도 보스로 해당 보스를 선택한 캐릭터들의 직업별 트림 평균 투력
+    // 전체 보스에 대해: 솔플이고 그 주 최난이도 보스로 해당 보스를 선택한 캐릭터들의 직업별 평균 투력
     @Query(value = "with ranked as (\n" +
             "  select wbr.*, \n" +
             "         row_number() over (partition by wbr.character_id, wbr.week_start_date order by wbr.difficulty_score desc) as rn\n" +
@@ -57,48 +55,6 @@ public interface AdminWeeklyBossRecordQueryRepository extends JpaRepository<Week
             nativeQuery = true)
     List<Map<String, Object>> summarizeBossKillCounts(@Param("from") LocalDate from,
                                                       @Param("to") LocalDate to);
-
-    // 보스 하드니스 요약: 총 대상 캐릭터 수
-    @Query(value = "with ranked as (\n" +
-            "  select wbr.*, \n" +
-            "         row_number() over (partition by wbr.character_id, wbr.week_start_date order by wbr.difficulty_score desc) as rn\n" +
-            "  from weekly_boss_records wbr\n" +
-            "  where wbr.party_size = 1\n" +
-            "    and (:from is null or wbr.week_start_date >= :from)\n" +
-            "    and (:to is null or wbr.week_start_date <= :to)\n" +
-            ")\n" +
-            "select count(1) as totalCount\n" +
-            "from ranked\n" +
-            "where rn = 1 and (:bossId is null or boss_id = :bossId)",
-            nativeQuery = true)
-    Map<String, Object> summarizeBossHardnessTotal(@Param("bossId") Long bossId,
-                                                   @Param("from") LocalDate from,
-                                                   @Param("to") LocalDate to);
-
-    // 보스 하드니스 요약: 직업별 카운트와 트림 평균 투력
-    @Query(value = "with ranked as (\n" +
-            "  select wbr.*, \n" +
-            "         row_number() over (partition by wbr.character_id, wbr.week_start_date order by wbr.difficulty_score desc) as rn\n" +
-            "  from weekly_boss_records wbr\n" +
-            "  where wbr.party_size = 1\n" +
-            "    and (:from is null or wbr.week_start_date >= :from)\n" +
-            "    and (:to is null or wbr.week_start_date <= :to)\n" +
-            ")\n" +
-            ", filtered as (\n" +
-            "  select * from ranked where rn = 1 and (:bossId is null or boss_id = :bossId)\n" +
-            ")\n" +
-            ", job_ranked as (\n" +
-            "  select character_class, combat_power,\n" +
-            "         ntile(10) over (partition by character_class order by combat_power) as tile\n" +
-            "  from filtered\n" +
-            ")\n" +
-            "select character_class as job, count(1) as count, avg(case when tile between 2 and 9 then combat_power end) as avg_power\n" +
-            "from job_ranked\n" +
-            "group by character_class",
-            nativeQuery = true)
-    List<Map<String, Object>> summarizeBossHardnessByJob(@Param("bossId") Long bossId,
-                                                         @Param("from") LocalDate from,
-                                                         @Param("to") LocalDate to);
 
     // 보스 솔로/파티 비율 요약
     @Query(value = "select\n" +

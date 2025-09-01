@@ -25,33 +25,74 @@ jobs:
         chmod +x ./gradlew
         ./gradlew build -x test
         
-    - name: Build Docker images
-      run: |
-        docker build -t happymapleday-admin:latest ./admin-service/
-        docker build -t happymapleday-boss:latest ./boss-service/
-        docker build -t happymapleday-character:latest ./character-service/
-        docker build -t happymapleday-gateway:latest ./gateway/
-
-        docker build -t happymapleday-recommendation:latest ./recommendation-service/
-        docker build -t happymapleday-settlement:latest ./settlement-service/
-        docker build -t happymapleday-user:latest ./user-service/
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to OCI Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ secrets.OCI_REGISTRY }}
+        username: ${{ secrets.OCI_USERNAME }}
+        password: ${{ secrets.OCI_AUTH_TOKEN }}
         
-    - name: Deploy to OCI
+    - name: Build and push Docker images
+      run: |
+        # ARM64 플랫폼으로 빌드 (QEMU를 통한 에뮬레이션)
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-admin:latest ./admin-service/ --push
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-boss:latest ./boss-service/ --push
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-character:latest ./character-service/ --push
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-gateway:latest ./gateway/ --push
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-recommendation:latest ./recommendation-service/ --push
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-settlement:latest ./settlement-service/ --push
+        docker buildx build --platform linux/arm64 -t ${{ secrets.OCI_REGISTRY }}/happymapleday-user:latest ./user-service/ --push
+        
+    - name: Setup SSH
       if: github.ref == 'refs/heads/main'
       run: |
-        # OCI CLI 설치 및 설정
-        curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh
-        chmod +x install.sh
-        ./install.sh --accept-all-defaults
+        mkdir -p ~/.ssh
+        echo "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.OCI_APP_IP }} >> ~/.ssh/known_hosts
         
-        # OCI 인증 설정 (환경변수로 설정 필요)
-        echo $OCI_CONFIG | base64 -d > ~/.oci/config
-        echo $OCI_KEY | base64 -d > ~/.oci/oci_api_key.pem
-        chmod 600 ~/.oci/oci_api_key.pem
-        
-        # 애플리케이션 서버에 배포
-        oci compute instance action --instance-id $OCI_APP_INSTANCE_ID --action SOFTRESET
-        
-        # Docker 이미지 전송 및 실행
-        # (실제 구현에서는 OCI Container Registry 사용 권장)
+    - name: Deploy to OCI via SSH
+      if: github.ref == 'refs/heads/main'
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.OCI_SSH_USER }}@${{ secrets.OCI_APP_IP }} << EOF
+          # 애플리케이션 디렉토리로 이동
+          cd /app
+          
+          # 최신 코드 가져오기 (설정 파일만)
+          git pull origin main
+          
+          # 기존 컨테이너 중지
+          docker-compose down
+          
+          # 레지스트리에서 최신 이미지 다운로드
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-admin:latest
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-boss:latest
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-character:latest
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-gateway:latest
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-recommendation:latest
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-settlement:latest
+          docker pull ${{ secrets.OCI_REGISTRY }}/happymapleday-user:latest
+          
+          # 이미지 태그 변경 (docker-compose.yml과 일치시키기)
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-admin:latest happymapleday-admin:latest
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-boss:latest happymapleday-boss:latest
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-character:latest happymapleday-character:latest
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-gateway:latest happymapleday-gateway:latest
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-recommendation:latest happymapleday-recommendation:latest
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-settlement:latest happymapleday-settlement:latest
+          docker tag ${{ secrets.OCI_REGISTRY }}/happymapleday-user:latest happymapleday-user:latest
+          
+          # 컨테이너 시작
+          docker-compose up -d
+          
+          # 배포 상태 확인
+          docker-compose ps
+          echo "Deployment completed successfully!"
+        EOF
 

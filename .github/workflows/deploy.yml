@@ -64,9 +64,6 @@ jobs:
           # 애플리케이션 디렉토리로 이동
           cd /app
           
-          # 최신 코드 가져오기 (설정 파일만)
-          git pull origin main
-          
           # 기존 컨테이너 중지
           docker-compose down
           

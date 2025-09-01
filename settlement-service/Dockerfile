@@ -1,11 +1,11 @@
-# Multi-stage build optimized for micro instances
-FROM eclipse-temurin:17-jdk-alpine AS builder
+# Multi-stage build optimized for micro instances (ARM64 compatible)
+FROM --platform=linux/arm64 eclipse-temurin:17-jdk-alpine AS builder
 
 # Set working directory
 WORKDIR /workspace
 
 # Install necessary packages
-RUN apk add --no-cache bash
+RUN apk add --no-cache bash curl
 
 # Copy only necessary files for build
 COPY gradlew ./
@@ -36,10 +36,13 @@ RUN ./gradlew :settlement-service:bootJar -x test --no-daemon --stacktrace \
     && sh -c 'JAR_FILE=$(ls settlement-service/build/libs | grep -v plain | head -n1) && cp settlement-service/build/libs/$JAR_FILE app.jar'
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM --platform=linux/arm64 eclipse-temurin:17-jre-alpine
 
 # Set timezone
 ENV TZ=Asia/Seoul
+
+# Install curl for health check
+RUN apk add --no-cache curl
 
 # Create app user for security
 RUN addgroup -g 1001 -S appgroup && \
@@ -60,9 +63,9 @@ USER appuser
 # Expose port
 EXPOSE 8084
 
-# Health check
+# Health check (ARM64 compatible)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1
+    CMD curl -f http://localhost:8084/actuator/health || exit 1
 
 # Run the application with memory constraints
 ENTRYPOINT ["sh", "-c", "java -Xmx256m -Xms128m -XX:MaxMetaspaceSize=128m -jar app.jar"]

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# OCI Micro Instance용 최적화된 Docker 빌드 스크립트
+# OCI Micro Instance용 최적화된 Docker 빌드 스크립트 (ARM64 호환)
 # 메모리 부족 문제를 해결하기 위한 설정
 
-echo "🚀 OCI Micro Instance용 최적화 Docker 빌드 시작"
+echo "🚀 OCI Micro Instance용 최적화 Docker 빌드 시작 (ARM64)"
 
 # Docker 빌드 시 메모리 제한 설정
 export DOCKER_BUILDKIT=1
@@ -12,6 +12,11 @@ export BUILDKIT_PROGRESS=plain
 # 시스템 메모리 확인
 echo "📊 시스템 메모리 상태 확인..."
 free -h
+echo ""
+
+# 시스템 아키텍처 확인
+echo "🏗️  시스템 아키텍처 확인..."
+uname -m
 echo ""
 
 # Docker 데몬 메모리 제한 설정
@@ -24,13 +29,13 @@ sleep 5
 SERVICES=("boss-service" "user-service" "character-service" "settlement-service" "recommendation-service" "admin-service" "gateway")
 
 for service in "${SERVICES[@]}"; do
-    echo "🏗️  $service 빌드 시작..."
+    echo "🏗️  $service 빌드 시작 (ARM64)..."
     
     # 빌드 전 메모리 정리
     docker system prune -f
     
-    # 빌드 시도
-    if docker build -t "happymapleday-${service}:latest" -f "./${service}/Dockerfile" . --memory=512m --memory-swap=1g; then
+    # 빌드 시도 (ARM64 플랫폼 명시)
+    if docker build --platform linux/arm64 -t "happymapleday-${service}:latest" -f "./${service}/Dockerfile" . --memory=512m --memory-swap=1g; then
         echo "✅ $service 빌드 성공!"
     else
         echo "❌ $service 빌드 실패. 재시도..."
@@ -39,7 +44,7 @@ for service in "${SERVICES[@]}"; do
         docker system prune -af
         docker volume prune -f
         
-        if docker build -t "happymapleday-${service}:latest" -f "./${service}/Dockerfile" . --memory=512m --memory-swap=1g; then
+        if docker build --platform linux/arm64 -t "happymapleday-${service}:latest" -f "./${service}/Dockerfile" . --memory=512m --memory-swap=1g; then
             echo "✅ $service 빌드 재시도 성공!"
         else
             echo "❌ $service 빌드 최종 실패"

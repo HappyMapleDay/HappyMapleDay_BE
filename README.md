@@ -109,26 +109,32 @@ happy-maple-day/                     # 루트 프로젝트
 
 ## 🐳 OCI Micro Instance Docker 최적화
 
-OCI micro 인스턴스(1GB RAM)에서 Docker 빌드 시 메모리 부족 문제를 해결하기 위한 최적화가 적용되어 있습니다.
+OCI micro 인스턴스(6GB RAM, ARM64 아키텍처)에서 Docker 빌드 시 메모리 부족 문제를 해결하기 위한 최적화가 적용되어 있습니다.
 
 ### 주요 최적화 내용
 
-#### 1. Dockerfile 최적화
+#### 1. ARM64 아키텍처 호환성
+- **플랫폼 명시**: `--platform=linux/arm64` 설정
+- **ARM64 이미지**: `eclipse-temurin:17-jdk-alpine` ARM64 버전 사용
+- **Health Check**: `wget` 대신 `curl` 사용 (ARM64 호환성)
+- **모든 서비스**: ARM64 플랫폼으로 빌드 및 실행
+
+#### 2. Dockerfile 최적화
 - **메모리 제한**: JVM 힙 메모리를 512MB로 제한
 - **빌드 최적화**: `--max-workers=1`, `--parallel=false` 설정
 - **레이어 최소화**: 불필요한 패키지 설치 제거
 - **멀티스테이지 빌드**: 최종 이미지 크기 최소화
 
-#### 2. 빌드 스크립트 사용
+#### 3. 빌드 스크립트 사용
 ```bash
-# 최적화된 빌드 스크립트 실행
+# 최적화된 빌드 스크립트 실행 (ARM64 호환)
 ./build-optimized.sh
 
 # 또는 개별 서비스 빌드
-docker build -t happymapleday-boss:latest -f ./boss-service/Dockerfile . --memory=512m --memory-swap=1g
+docker build --platform linux/arm64 -t happymapleday-boss:latest -f ./boss-service/Dockerfile . --memory=512m --memory-swap=1g
 ```
 
-#### 3. 시스템 최적화
+#### 4. 시스템 최적화
 ```bash
 # Docker 데몬 메모리 제한
 sudo dockerd --storage-driver=overlay2 --max-concurrent-downloads=1 --max-concurrent-uploads=1
@@ -138,7 +144,7 @@ docker system prune -f
 docker volume prune -f
 ```
 
-#### 4. 환경변수 설정
+#### 5. 환경변수 설정
 ```bash
 # Gradle 메모리 제한
 export GRADLE_OPTS="-Xmx512m -Xms256m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC"
@@ -149,19 +155,19 @@ export BUILDKIT_PROGRESS=plain
 ```
 
 ### 빌드 순서 권장사항
-1. **common** (공통 라이브러리)
-2. **boss-service** (의존성 최소)
-3. **user-service**
-4. **character-service**
-5. **settlement-service**
-6. **recommendation-service**
-7. **admin-service**
-8. **gateway** (의존성 최대)
+1. **boss-service** (의존성 최소)
+2. **user-service**
+3. **character-service**
+4. **settlement-service**
+5. **recommendation-service**
+6. **admin-service**
+7. **gateway** (의존성 최대)
 
 ### 문제 해결
 - **빌드 실패 시**: `docker system prune -af`로 전체 정리 후 재시도
 - **메모리 부족 시**: 다른 서비스 중지 후 빌드
 - **타임아웃 시**: `--timeout 600` 옵션 추가
+- **ARM64 호환성**: 모든 이미지가 ARM64 플랫폼으로 빌드되는지 확인
 
 ## 🛠️ 개발 가이드
 

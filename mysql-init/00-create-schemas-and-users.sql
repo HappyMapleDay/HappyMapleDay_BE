@@ -2,5 +2,4 @@
 CREATE DATABASE IF NOT EXISTS happy_maple_day_boss CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS happy_maple_day_character CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS happy_maple_day_settlement CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS happy_maple_day_history CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS happy_maple_day_admin CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

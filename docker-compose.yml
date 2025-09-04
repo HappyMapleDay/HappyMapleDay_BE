@@ -95,24 +95,24 @@ services:
       - "8085:8085"
     restart: unless-stopped
 
-  admin-service:
-    image: happymapleday-admin:latest
-    platform: linux/arm64
-    container_name: admin-service
-    environment:
-      - TZ=Asia/Seoul
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}admin?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${ADMIN_DB_PASSWORD}
-      - SERVICES_USER_SERVICE_URL=http://user-service:8082
-      - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
-      - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
-      - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
-      - SERVICES_RECOMMENDATION_SERVICE_URL=http://recommendation-service:8085
-    ports:
-      - "8087:8087"
-    restart: unless-stopped
+  # admin-service:
+  #   image: happymapleday-admin:latest
+  #   platform: linux/arm64
+  #   container_name: admin-service
+  #   environment:
+  #     - TZ=Asia/Seoul
+  #     - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+  #     - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}admin?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+  #     - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+  #     - SPRING_DATASOURCE_PASSWORD=${ADMIN_DB_PASSWORD}
+  #     - SERVICES_USER_SERVICE_URL=http://user-service:8082
+  #     - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
+  #     - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
+  #     - SERVICES_SETTLEMENT_SERVICE_URL=http://settlement-service:8084
+  #     - SERVICES_RECOMMENDATION_SERVICE_URL=http://recommendation-service:8085
+  #   ports:
+  #     - "8087:8087"
+  #   restart: unless-stopped
 
   gateway:
     image: happymapleday-gateway:latest
@@ -124,7 +124,7 @@ services:
       - boss-service
       - settlement-service
       - recommendation-service
-      - admin-service
+      # - admin-service
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}

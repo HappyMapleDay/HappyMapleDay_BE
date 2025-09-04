@@ -12,7 +12,7 @@ spring:
           routes:
             # User Service 라우팅
             - id: user-service
-              uri: http://localhost:8082
+              uri: http://user-service:8082
               predicates:
                 - Path=/api/auth/**, /api/user/**
               filters:
@@ -20,7 +20,7 @@ spring:
             
             # Character Service 라우팅
             - id: character-service
-              uri: http://localhost:8083
+              uri: http://character-service:8083
               predicates:
                 - Path=/api/character/**
               filters:
@@ -28,7 +28,7 @@ spring:
             
             # Boss Service 라우팅
             - id: boss-service
-              uri: http://localhost:8081
+              uri: http://boss-service:8081
               predicates:
                 - Path=/api/boss/**
               filters:
@@ -36,7 +36,7 @@ spring:
             
             # Settlement Service 라우팅
             - id: settlement-service
-              uri: http://localhost:8084
+              uri: http://settlement-service:8084
               predicates:
                 - Path=/api/settlement/**
               filters:
@@ -44,23 +44,17 @@ spring:
             
             # Recommendation Service 라우팅
             - id: recommendation-service
-              uri: http://localhost:8085
+              uri: http://recommendation-service:8085
               predicates:
                 - Path=/api/recommendation/**
               filters:
                 - StripPrefix=0
             
-            # History Service 라우팅
-            - id: history-service
-              uri: http://localhost:8086
-              predicates:
-                - Path=/api/history/**
-              filters:
-                - StripPrefix=0
+
             
             # Admin Service 라우팅
             - id: admin-service
-              uri: http://localhost:8087
+              uri: http://admin-service:8087
               predicates:
                 - Path=/api/admin/**
               filters:

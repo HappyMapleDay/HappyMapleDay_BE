@@ -82,6 +82,9 @@ jobs:
           # 애플리케이션 디렉토리로 이동
           cd /app
           
+          # GitHub Container Registry 로그인
+          echo "${{ secrets.GITHUB_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
           # docker-compose.yml 다운로드
           curl -o docker-compose.yml https://raw.githubusercontent.com/HappyMapleDay/HappyMapleDay_BE/dev/docker-compose.yml
           

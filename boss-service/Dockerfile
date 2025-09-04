@@ -35,13 +35,13 @@ RUN ./gradlew :boss-service:bootJar -x test --no-daemon --stacktrace \
     --configure-on-demand=false
 
 # Runtime stage
-FROM --platform=linux/arm64 eclipse-temurin:17-jre-alpine
+FROM --platform=linux/arm64 eclipse-temurin:17-jre
 
 # Set timezone
 ENV TZ=Asia/Seoul
 
 # Install curl for health check
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app

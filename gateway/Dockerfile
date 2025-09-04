@@ -36,17 +36,17 @@ RUN ./gradlew :gateway:bootJar -x test --no-daemon --stacktrace \
     && sh -c 'JAR_FILE=$(ls gateway/build/libs | grep -v plain | head -n1) && cp gateway/build/libs/$JAR_FILE app.jar'
 
 # Runtime stage
-FROM --platform=linux/arm64 eclipse-temurin:17-jre-alpine
+FROM --platform=linux/arm64 eclipse-temurin:17-jre
 
 # Set timezone
 ENV TZ=Asia/Seoul
 
 # Install curl for health check
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Create app user for security
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -m appuser
 
 # Set working directory
 WORKDIR /app

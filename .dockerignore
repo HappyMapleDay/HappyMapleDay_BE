@@ -1,4 +1,4 @@
-# Gradle
+# Only exclude build artifacts
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar

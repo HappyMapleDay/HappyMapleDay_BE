@@ -28,6 +28,7 @@ public class DesireItemProcessor {
                     .weeklyBossRecordId(bossRecordId)
                     .characterId(characterId)
                     .desireItemId(desireRequest.getDesireItemId())
+                    .sourceBoxItemId(desireRequest.getSourceBoxItemId())
                     .salePrice(desireRequest.getSalePrice())
                     .build();
             

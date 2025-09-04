@@ -3,7 +3,6 @@ package com.happymapleday.user.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.List;
 
 public class SignupRequestDto {
     
@@ -13,8 +12,6 @@ public class SignupRequestDto {
     @NotBlank(message = "메인 캐릭터명은 필수입니다.")
     @Size(max = 50, message = "메인 캐릭터명은 50자 이하여야 합니다.")
     private String mainCharacterName;
-    
-    private List<String> subCharacterNames;
     
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
@@ -30,11 +27,10 @@ public class SignupRequestDto {
     public SignupRequestDto() {}
     
     // 생성자
-    public SignupRequestDto(String nexonApiKey, String mainCharacterName, List<String> subCharacterNames, 
+    public SignupRequestDto(String nexonApiKey, String mainCharacterName, 
                           String password, String passwordConfirm, Boolean dataCollectionAgreed) {
         this.nexonApiKey = nexonApiKey;
         this.mainCharacterName = mainCharacterName;
-        this.subCharacterNames = subCharacterNames;
         this.password = password;
         this.passwordConfirm = passwordConfirm;
         this.dataCollectionAgreed = dataCollectionAgreed;
@@ -47,10 +43,6 @@ public class SignupRequestDto {
     
     public String getMainCharacterName() {
         return mainCharacterName;
-    }
-    
-    public List<String> getSubCharacterNames() {
-        return subCharacterNames;
     }
     
     public String getPassword() {
@@ -72,10 +64,6 @@ public class SignupRequestDto {
     
     public void setMainCharacterName(String mainCharacterName) {
         this.mainCharacterName = mainCharacterName;
-    }
-    
-    public void setSubCharacterNames(List<String> subCharacterNames) {
-        this.subCharacterNames = subCharacterNames;
     }
     
     public void setPassword(String password) {

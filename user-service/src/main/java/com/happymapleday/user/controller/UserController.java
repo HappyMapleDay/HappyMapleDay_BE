@@ -1,6 +1,8 @@
 package com.happymapleday.user.controller;
 
 import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.user.dto.ApiKeyValidationRequestDto;
+import com.happymapleday.user.dto.ApiKeyValidationResponseDto;
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
@@ -16,6 +18,8 @@ import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
 import com.happymapleday.user.dto.UserSettingsResponseDto;
 import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
 import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
+import com.happymapleday.user.dto.PasswordChangeRequestDto;
+import com.happymapleday.user.dto.PasswordChangeResponseDto;
 import com.happymapleday.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,6 +118,24 @@ public class UserController {
         }
     }
     
+    // Nexon API Key 검증
+    @PostMapping("/validate-api-key")
+    public ResponseEntity<ApiResponse<ApiKeyValidationResponseDto>> validateApiKey(@Valid @RequestBody ApiKeyValidationRequestDto request) {
+        try {
+            ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+            
+            if (response.isValid()) {
+                return ResponseEntity.ok(ApiResponse.success(response));
+            } else {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.success(response));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("API Key 검증 처리 중 오류가 발생했습니다."));
+        }
+    }
+    
     // 비밀번호 재설정
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<PasswordResetResponseDto>> resetPassword(@Valid @RequestBody PasswordResetRequestDto request) {
@@ -171,6 +193,21 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("개인정보 설정 수정 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // 비밀번호 변경
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse<PasswordChangeResponseDto>> changePassword(@Valid @RequestBody PasswordChangeRequestDto request) {
+        try {
+            PasswordChangeResponseDto response = userService.changePassword(request);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("비밀번호 변경 처리 중 오류가 발생했습니다."));
         }
     }
     

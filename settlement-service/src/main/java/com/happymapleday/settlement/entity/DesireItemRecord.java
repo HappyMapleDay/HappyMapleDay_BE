@@ -13,7 +13,11 @@ import java.math.BigInteger;
 @Table(name = "desire_item_records",
        indexes = {
            @Index(name = "idx_weekly_boss_record", columnList = "weekly_boss_record_id"),
-           @Index(name = "idx_character", columnList = "character_id")
+           @Index(name = "idx_character", columnList = "character_id"),
+           @Index(name = "idx_desire_item", columnList = "desire_item_id"),
+           @Index(name = "idx_source_box", columnList = "source_box_item_id"),
+           @Index(name = "idx_wbr_item", columnList = "weekly_boss_record_id, desire_item_id"),
+           @Index(name = "idx_wbr_source_box", columnList = "weekly_boss_record_id, source_box_item_id")
        })
 @Getter
 @Builder
@@ -37,6 +41,10 @@ public class DesireItemRecord {
     @Column(name = "desire_item_id", nullable = false)
     private Long desireItemId;
     
+    // 랜덤박스 출처 아이템 ID(랜덤박스에서 나온 결과를 기록할 때, 원본 박스 ID)
+    @Column(name = "source_box_item_id")
+    private Long sourceBoxItemId;
+
     @NotNull
     @Column(name = "sale_price", nullable = false)
     private BigInteger salePrice;

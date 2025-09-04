@@ -1,11 +1,13 @@
 package com.happymapleday.common.client;
 
 import com.happymapleday.common.dto.ApiResponse;
+import com.happymapleday.common.dto.CharacterBasicResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,4 +22,7 @@ public interface CharacterServiceClient {
     
     @PostMapping("/api/character/sync")
     ApiResponse<Object> syncCharacter(@RequestBody Object syncRequest);
+
+    @GetMapping("/api/character/details")
+    ApiResponse<List<CharacterBasicResponse>> getCharacterDetailsByIds(@RequestParam("ids") List<Long> ids);
 } 

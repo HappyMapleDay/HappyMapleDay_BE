@@ -22,7 +22,12 @@ import java.util.stream.Collectors;
        indexes = {
            @Index(name = "idx_settlement", columnList = "settlement_id"),
            @Index(name = "idx_user_week", columnList = "user_id, week_start_date"),
-           @Index(name = "idx_character_week", columnList = "character_id, week_start_date")
+           @Index(name = "idx_character_week", columnList = "character_id, week_start_date"),
+           @Index(name = "idx_boss_week", columnList = "boss_id, week_start_date"),
+           @Index(name = "idx_party_week", columnList = "party_size, week_start_date"),
+           @Index(name = "idx_week_start_date", columnList = "week_start_date"),
+           @Index(name = "idx_boss_job_power", columnList = "boss_id, character_class, combat_power"),
+           @Index(name = "idx_character_week_difficulty", columnList = "character_id, week_start_date, difficulty_score")
        })
 @Getter
 @NoArgsConstructor
@@ -71,6 +76,19 @@ public class WeeklyBossRecord {
     @NotNull
     @Column(name = "total_income", nullable = false)
     private BigInteger totalIncome;
+    
+    // Nexon Open API 스냅샷 필드
+    // 직업
+    @Column(name = "character_class", length = 50)
+    private String characterClass;
+    
+    // 전투력
+    @Column(name = "combat_power")
+    private Long combatPower;
+
+    // 난이도 점수(결정석 × 가중치)
+    @Column(name = "difficulty_score", precision = 20, scale = 4)
+    private java.math.BigDecimal difficultyScore;
     
     // 연관관계
     @ManyToOne(fetch = FetchType.LAZY)

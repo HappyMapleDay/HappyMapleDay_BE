@@ -3,9 +3,12 @@ package com.happymapleday.settlement.service.processor;
 import com.happymapleday.settlement.dto.request.BossRecordRequest;
 import com.happymapleday.settlement.entity.WeeklyBossRecord;
 import com.happymapleday.settlement.repository.WeeklyBossRecordRepository;
+import com.happymapleday.settlement.service.util.BossWeightProvider;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,6 +20,7 @@ public class BossRecordProcessor {
     
     private final WeeklyBossRecordRepository weeklyBossRecordRepository;
     private final DesireItemProcessor desireItemProcessor;
+    private final BossWeightProvider bossWeightProvider;
     
     // 보스 기록 생성 (중복 검증 포함)
     public List<WeeklyBossRecord> createBossRecords(Long userId, LocalDate weekStartDate, 
@@ -28,7 +32,7 @@ public class BossRecordProcessor {
             validateBossRecordNotExists(bossRequest.getCharacterId(), bossRequest.getBossId(), weekStartDate);
             
             // 보스 기록 생성
-            WeeklyBossRecord bossRecord = createBossRecord(userId, weekStartDate, bossRequest, null);
+            WeeklyBossRecord bossRecord = createBossRecord(userId, weekStartDate, bossRequest);
             bossRecords.add(bossRecord);
         }
         
@@ -79,11 +83,13 @@ public class BossRecordProcessor {
         weeklyBossRecordRepository.deleteBySettlementId(settlementId);
     }
     
-    // 보스 기록 생성 헬퍼 메서드
+    // 보스 기록 생성 헬퍼 메서드 (임시 객체: settlementId 미설정)
     private WeeklyBossRecord createBossRecord(Long userId, LocalDate weekStartDate, 
-                                              BossRecordRequest bossRequest, Long settlementId) {
+                                              BossRecordRequest bossRequest) {
+        BigDecimal weight = bossWeightProvider.getWeightOrDefault(bossRequest.getBossId(), BigDecimal.ONE);
+        BigDecimal difficultyScore = new BigDecimal(bossRequest.getCrystalIncome()).multiply(weight);
+
         return WeeklyBossRecord.builder()
-                .settlementId(settlementId)
                 .userId(userId)
                 .characterId(bossRequest.getCharacterId())
                 .bossId(bossRequest.getBossId())
@@ -92,6 +98,9 @@ public class BossRecordProcessor {
                 .partySize(bossRequest.getPartySize() != null ? bossRequest.getPartySize() : 1)
                 .desireItemIncome(BigInteger.ZERO)
                 .totalIncome(bossRequest.getCrystalIncome())
+                .characterClass(bossRequest.getCharacter_class())
+                .combatPower(bossRequest.getCombat_power())
+                .difficultyScore(difficultyScore)
                 .build();
     }
     
@@ -110,6 +119,9 @@ public class BossRecordProcessor {
                 .partySize(bossRecord.getPartySize())
                 .desireItemIncome(desireItemIncome)
                 .totalIncome(totalIncome)
+                .characterClass(bossRecord.getCharacterClass())
+                .combatPower(bossRecord.getCombatPower())
+                .difficultyScore(bossRecord.getDifficultyScore())
                 .build();
     }
     

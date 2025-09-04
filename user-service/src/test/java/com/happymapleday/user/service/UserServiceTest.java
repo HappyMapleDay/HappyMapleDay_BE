@@ -1,5 +1,7 @@
 package com.happymapleday.user.service;
 
+import com.happymapleday.user.dto.ApiKeyValidationRequestDto;
+import com.happymapleday.user.dto.ApiKeyValidationResponseDto;
 import com.happymapleday.user.dto.LoginRequestDto;
 import com.happymapleday.user.dto.LoginResponseDto;
 import com.happymapleday.user.dto.LogoutRequestDto;
@@ -15,6 +17,8 @@ import com.happymapleday.user.dto.MainCharacterUpdateResponseDto;
 import com.happymapleday.user.dto.UserSettingsResponseDto;
 import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
 import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
+import com.happymapleday.user.dto.PasswordChangeRequestDto;
+import com.happymapleday.user.dto.PasswordChangeResponseDto;
 import com.happymapleday.user.entity.User;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
@@ -46,23 +50,26 @@ import static org.mockito.Mockito.times;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-    @Mock
+        @Mock
     private UserRepository userRepository;
-
+    
     @Mock
     private UserSettingsRepository userSettingsRepository;
-
+    
     @Mock
     private PasswordEncoder passwordEncoder;
-
+    
     @Mock
     private EncryptionService encryptionService;
-
+    
     @Mock
     private JwtService jwtService;
-
+    
     @Mock
     private SecureRefreshTokenService secureRefreshTokenService;
+    
+    @Mock
+    private NexonApiService nexonApiService;
 
     @InjectMocks
     private UserService userService;
@@ -72,6 +79,7 @@ class UserServiceTest {
     private RefreshTokenRequestDto refreshTokenRequest;
     private LogoutRequestDto logoutRequest;
     private PasswordResetRequestDto passwordResetRequest;
+    private PasswordChangeRequestDto passwordChangeRequest;
     private User savedUser;
 
     @BeforeEach
@@ -79,7 +87,6 @@ class UserServiceTest {
         signupRequest = new SignupRequestDto(
             "test-api-key",
             "testCharacter",
-            null,
             "password123",
             "password123",
             true
@@ -88,7 +95,8 @@ class UserServiceTest {
         loginRequest = new LoginRequestDto("testCharacter", "password123");
         refreshTokenRequest = new RefreshTokenRequestDto("valid-refresh-token");
         logoutRequest = new LogoutRequestDto("valid-refresh-token");
-        passwordResetRequest = new PasswordResetRequestDto("testCharacter");
+        passwordResetRequest = new PasswordResetRequestDto("testCharacter", "test_api_key_12345");
+        passwordChangeRequest = new PasswordChangeRequestDto("testCharacter", "newPassword123");
 
         savedUser = new User("testCharacter", "encodedPassword", "encryptedApiKey");
         // 리플렉션을 사용하여 ID와 생성시간 설정
@@ -514,7 +522,10 @@ class UserServiceTest {
     @DisplayName("비밀번호 재설정 성공")
     void resetPassword_Success() {
         // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
         given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("test_api_key_12345")).willReturn(apiResult);
+        given(encryptionService.decrypt("encryptedApiKey")).willReturn("test_api_key_12345");
         given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
 
@@ -535,6 +546,8 @@ class UserServiceTest {
         assertThat(tempPassword).matches(".*[!@#$%^&*].*"); // 특수문자 포함
 
         verify(userRepository).findByMainCharacterName("testCharacter");
+        verify(nexonApiService).validateApiKey("test_api_key_12345");
+        verify(encryptionService).decrypt("encryptedApiKey");
         verify(passwordEncoder).encode(anyString());
         verify(userRepository).save(savedUser);
         verify(secureRefreshTokenService).invalidateAllTokens(1L);
@@ -546,7 +559,7 @@ class UserServiceTest {
         // given
         given(userRepository.findByMainCharacterName("nonExistentUser")).willReturn(Optional.empty());
         
-        PasswordResetRequestDto nonExistentUserRequest = new PasswordResetRequestDto("nonExistentUser");
+        PasswordResetRequestDto nonExistentUserRequest = new PasswordResetRequestDto("nonExistentUser", "test_api_key_12345");
 
         // when & then
         assertThatThrownBy(() -> userService.resetPassword(nonExistentUserRequest))
@@ -557,10 +570,53 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("비밀번호 재설정 실패 - 유효하지 않은 API Key")
+    void resetPassword_InvalidApiKey_ThrowsException() {
+        // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(false, 0, "유효하지 않은 API Key입니다.");
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("invalid_api_key")).willReturn(apiResult);
+        
+        PasswordResetRequestDto invalidApiKeyRequest = new PasswordResetRequestDto("testCharacter", "invalid_api_key");
+
+        // when & then
+        assertThatThrownBy(() -> userService.resetPassword(invalidApiKeyRequest))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("유효하지 않은 Nexon API Key입니다.");
+
+        verify(userRepository).findByMainCharacterName("testCharacter");
+        verify(nexonApiService).validateApiKey("invalid_api_key");
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 실패 - API Key 불일치")
+    void resetPassword_ApiKeyMismatch_ThrowsException() {
+        // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
+        given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("different_api_key")).willReturn(apiResult);
+        given(encryptionService.decrypt("encryptedApiKey")).willReturn("test_api_key_12345");
+        
+        PasswordResetRequestDto mismatchApiKeyRequest = new PasswordResetRequestDto("testCharacter", "different_api_key");
+
+        // when & then
+        assertThatThrownBy(() -> userService.resetPassword(mismatchApiKeyRequest))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("일치하는 사용자 정보를 찾을 수 없습니다.");
+
+        verify(userRepository).findByMainCharacterName("testCharacter");
+        verify(nexonApiService).validateApiKey("different_api_key");
+        verify(encryptionService).decrypt("encryptedApiKey");
+    }
+
+    @Test
     @DisplayName("비밀번호 재설정 - 임시 비밀번호 생성 확인")
     void resetPassword_TemporaryPasswordGeneration() {
         // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
         given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("test_api_key_12345")).willReturn(apiResult);
+        given(encryptionService.decrypt("encryptedApiKey")).willReturn("test_api_key_12345");
         given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
 
@@ -580,7 +636,10 @@ class UserServiceTest {
     @DisplayName("비밀번호 재설정 - 비밀번호 암호화 확인")
     void resetPassword_PasswordEncryption() {
         // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
         given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("test_api_key_12345")).willReturn(apiResult);
+        given(encryptionService.decrypt("encryptedApiKey")).willReturn("test_api_key_12345");
         given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
 
@@ -596,7 +655,10 @@ class UserServiceTest {
     @DisplayName("비밀번호 재설정 - Refresh Token 무효화 확인")
     void resetPassword_RefreshTokenInvalidation() {
         // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
         given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("test_api_key_12345")).willReturn(apiResult);
+        given(encryptionService.decrypt("encryptedApiKey")).willReturn("test_api_key_12345");
         given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
 
@@ -611,7 +673,10 @@ class UserServiceTest {
     @DisplayName("비밀번호 재설정 실패 - 데이터베이스 저장 실패")
     void resetPassword_DatabaseSaveError_ThrowsException() {
         // given
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
         given(userRepository.findByMainCharacterName("testCharacter")).willReturn(Optional.of(savedUser));
+        given(nexonApiService.validateApiKey("test_api_key_12345")).willReturn(apiResult);
+        given(encryptionService.decrypt("encryptedApiKey")).willReturn("test_api_key_12345");
         given(passwordEncoder.encode(anyString())).willReturn("encodedTemporaryPassword");
         given(userRepository.save(any(User.class))).willThrow(new RuntimeException("데이터베이스 연결 실패"));
 
@@ -621,6 +686,8 @@ class UserServiceTest {
             .hasMessage("데이터베이스 연결 실패");
 
         verify(userRepository).findByMainCharacterName("testCharacter");
+        verify(nexonApiService).validateApiKey("test_api_key_12345");
+        verify(encryptionService).decrypt("encryptedApiKey");
         verify(passwordEncoder).encode(anyString());
         verify(userRepository).save(savedUser);
     }
@@ -887,6 +954,260 @@ class UserServiceTest {
                 .hasMessage("사용자 설정을 찾을 수 없습니다.");
             
             verify(userSettingsRepository).findByUserId(userId);
+        }
+    }
+
+    @Test
+    @DisplayName("API Key 검증 성공")
+    void validateApiKey_Success() {
+        // given
+        String validApiKey = "valid-api-key-12345";
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(validApiKey);
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 15, null);
+        given(nexonApiService.validateApiKey(validApiKey)).willReturn(apiResult);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isTrue();
+        assertThat(response.getCharacterCount()).isEqualTo(15);
+        assertThat(response.getMessage()).isNull();
+        
+        verify(nexonApiService).validateApiKey(validApiKey);
+    }
+
+    @Test
+    @DisplayName("API Key 검증 실패 - 빈 API Key")
+    void validateApiKey_EmptyApiKey_ReturnsFailure() {
+        // given
+        String emptyApiKey = "";
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(emptyApiKey);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.getCharacterCount()).isNull();
+        assertThat(response.getMessage()).isEqualTo("API Key가 비어있습니다.");
+    }
+
+    @Test
+    @DisplayName("API Key 검증 실패 - 공백으로만 구성된 API Key")
+    void validateApiKey_WhitespaceApiKey_ReturnsFailure() {
+        // given
+        String whitespaceApiKey = "   ";
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(whitespaceApiKey);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.getCharacterCount()).isNull();
+        assertThat(response.getMessage()).isEqualTo("API Key가 비어있습니다.");
+    }
+
+    @Test
+    @DisplayName("API Key 검증 실패 - null API Key")
+    void validateApiKey_NullApiKey_ReturnsFailure() {
+        // given
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(null);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.getCharacterCount()).isNull();
+        assertThat(response.getMessage()).isEqualTo("API Key가 비어있습니다.");
+    }
+
+    @Test
+    @DisplayName("API Key 검증 실패 - 너무 짧은 API Key")
+    void validateApiKey_ShortApiKey_ReturnsFailure() {
+        // given
+        String shortApiKey = "short";
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(shortApiKey);
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(false, 0, "유효하지 않은 API Key입니다.");
+        given(nexonApiService.validateApiKey(shortApiKey)).willReturn(apiResult);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.getCharacterCount()).isNull();
+        assertThat(response.getMessage()).isEqualTo("유효하지 않은 API Key입니다.");
+        
+        verify(nexonApiService).validateApiKey(shortApiKey);
+    }
+
+    @Test
+    @DisplayName("API Key 검증 실패 - 경계값 테스트 (9자리)")
+    void validateApiKey_BoundaryLength_ReturnsFailure() {
+        // given
+        String boundaryApiKey = "123456789"; // 9자리 (10자리 미만)
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(boundaryApiKey);
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(false, 0, "인증에 실패했습니다. API Key를 확인해주세요.");
+        given(nexonApiService.validateApiKey(boundaryApiKey)).willReturn(apiResult);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.getCharacterCount()).isNull();
+        assertThat(response.getMessage()).isEqualTo("인증에 실패했습니다. API Key를 확인해주세요.");
+        
+        verify(nexonApiService).validateApiKey(boundaryApiKey);
+    }
+
+    @Test
+    @DisplayName("API Key 검증 성공 - 경계값 테스트 (10자리)")
+    void validateApiKey_BoundaryLengthValid_ReturnsSuccess() {
+        // given
+        String boundaryApiKey = "1234567890"; // 10자리 (최소 길이)
+        ApiKeyValidationRequestDto request = new ApiKeyValidationRequestDto(boundaryApiKey);
+        NexonApiService.ApiKeyValidationResult apiResult = new NexonApiService.ApiKeyValidationResult(true, 12, null);
+        given(nexonApiService.validateApiKey(boundaryApiKey)).willReturn(apiResult);
+        
+        // when
+        ApiKeyValidationResponseDto response = userService.validateApiKey(request);
+        
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.isValid()).isTrue();
+        assertThat(response.getCharacterCount()).isEqualTo(12);
+        assertThat(response.getMessage()).isNull();
+        
+        verify(nexonApiService).validateApiKey(boundaryApiKey);
+    }
+
+    // ==================== 비밀번호 변경 API 테스트 ====================
+
+    @Test
+    @DisplayName("비밀번호 변경 성공")
+    void changePassword_Success() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            // when
+            PasswordChangeResponseDto response = userService.changePassword(passwordChangeRequest);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMessage()).isEqualTo("비밀번호가 성공적으로 변경되었습니다.");
+
+            verify(userRepository).findById(1L);
+            verify(passwordEncoder).encode("newPassword123");
+            verify(userRepository).save(savedUser);
+            verify(secureRefreshTokenService).invalidateAllTokens(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 사용자를 찾을 수 없음")
+    void changePassword_UserNotFound_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> userService.changePassword(passwordChangeRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용자를 찾을 수 없습니다.");
+
+            verify(userRepository).findById(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 본캐명 불일치")
+    void changePassword_MainCharacterNameMismatch_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+
+            PasswordChangeRequestDto mismatchRequest = new PasswordChangeRequestDto("differentCharacter", "newPassword123");
+
+            // when & then
+            assertThatThrownBy(() -> userService.changePassword(mismatchRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("본캐명이 일치하지 않습니다.");
+
+            verify(userRepository).findById(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 - 비밀번호 암호화 확인")
+    void changePassword_PasswordEncryption() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            // when
+            userService.changePassword(passwordChangeRequest);
+
+            // then - 새 비밀번호가 암호화되어 저장되는지 확인
+            verify(passwordEncoder).encode("newPassword123");
+            verify(userRepository).save(savedUser);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 - Refresh Token 무효화 확인")
+    void changePassword_RefreshTokenInvalidation() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            // when
+            userService.changePassword(passwordChangeRequest);
+
+            // then - 보안상 해당 사용자의 모든 토큰이 무효화되어야 함
+            verify(secureRefreshTokenService).invalidateAllTokens(1L);
+        }
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 데이터베이스 저장 실패")
+    void changePassword_DatabaseSaveError_ThrowsException() {
+        // given
+        try (var mockedSecurityUtil = mockStatic(SecurityUtil.class)) {
+            mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(1L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(savedUser));
+            given(passwordEncoder.encode("newPassword123")).willReturn("encodedNewPassword");
+            given(userRepository.save(any(User.class))).willThrow(new RuntimeException("데이터베이스 연결 실패"));
+
+            // when & then
+            assertThatThrownBy(() -> userService.changePassword(passwordChangeRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("데이터베이스 연결 실패");
+
+            verify(userRepository).findById(1L);
+            verify(passwordEncoder).encode("newPassword123");
+            verify(userRepository).save(savedUser);
         }
     }
 

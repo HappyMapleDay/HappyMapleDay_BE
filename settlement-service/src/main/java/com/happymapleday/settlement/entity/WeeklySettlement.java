@@ -19,7 +19,8 @@ import java.util.Map;
                            columnNames = {"user_id", "world_name", "week_start_date"})
        },
        indexes = {
-           @Index(name = "idx_user_week", columnList = "user_id, week_start_date")
+           @Index(name = "idx_user_week", columnList = "user_id, week_start_date"),
+           @Index(name = "idx_week_start_date", columnList = "week_start_date")
        })
 @Getter
 @Builder
@@ -61,6 +62,10 @@ public class WeeklySettlement {
     @Enumerated(EnumType.STRING)
     @Column(name = "settlement_status", nullable = false)
     private SettlementStatus status;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
     
     // 연관관계
     @OneToMany(mappedBy = "weeklySettlement", cascade = CascadeType.ALL, orphanRemoval = true)

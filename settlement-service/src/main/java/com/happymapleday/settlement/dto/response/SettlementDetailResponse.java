@@ -23,6 +23,7 @@ public class SettlementDetailResponse {
     private final Integer totalBossCount;
     private final Integer characterCount;
     private final Map<Long, Integer> characterCrystalCounts;
+    private final Long version;
     
     // 상세 정보
     private final List<BossRecordDetailResponse> bossRecords;
@@ -39,6 +40,7 @@ public class SettlementDetailResponse {
                 .totalBossCount(settlement.getTotalBossCount())
                 .characterCount(settlement.getCharacterCount())
                 .characterCrystalCounts(settlement.getCharacterCrystalCounts())
+                .version(settlement.getVersion())
                 .bossRecords(bossRecords)
                 .build();
     }

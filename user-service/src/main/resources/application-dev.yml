@@ -32,3 +32,7 @@ logging:
     com.happymapleday: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG 
+
+nexon:
+  api:
+    master-key: test_api_key_9x7k2m4n8p1q5w 

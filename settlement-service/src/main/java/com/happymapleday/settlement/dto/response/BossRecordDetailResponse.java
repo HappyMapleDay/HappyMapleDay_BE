@@ -23,20 +23,23 @@ public class BossRecordDetailResponse {
     private final BigInteger totalIncome;
     private final List<DesireItemDetailResponse> desireItems;
     
-    public static BossRecordDetailResponse from(WeeklyBossRecord record) {
-        List<DesireItemDetailResponse> desireItems = record.getDesireItemRecords() != null 
-            ? record.getDesireItemRecords().stream()
+    public static BossRecordDetailResponse from(WeeklyBossRecord record,
+                                                String characterName,
+                                                String bossName,
+                                                String difficulty) {
+        List<DesireItemDetailResponse> desireItems = record.getDesireItemRecords() != null
+                ? record.getDesireItemRecords().stream()
                 .map(DesireItemDetailResponse::from)
                 .collect(Collectors.toList())
-            : List.of();
-            
+                : List.of();
+
         return BossRecordDetailResponse.builder()
                 .bossRecordId(record.getId())
                 .characterId(record.getCharacterId())
-                .characterName("캐릭터" + record.getCharacterId()) // 실제로는 Character Service에서 가져와야 함
+                .characterName(characterName)
                 .bossId(record.getBossId())
-                .bossName("보스" + record.getBossId()) // 실제로는 Boss Service에서 가져와야 함
-                .difficulty("하드") // 실제로는 Boss Service에서 가져와야 함
+                .bossName(bossName)
+                .difficulty(difficulty)
                 .partySize(record.getPartySize())
                 .crystalIncome(record.getCrystalIncome())
                 .desireItemIncome(record.getDesireItemIncome())

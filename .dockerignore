@@ -19,7 +19,6 @@ Thumbs.db
 .gitignore
 
 # Docker
-Dockerfile*
 docker-compose*
 .dockerignore
 
@@ -33,3 +32,6 @@ docker-compose*
 # Temporary files
 *.tmp
 *.temp
+
+# GitHub Actions
+.github/

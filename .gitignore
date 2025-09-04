@@ -194,6 +194,7 @@ replay_pid*
 
 # Multi-module specific
 **/build/
+!gradle/wrapper/gradle-wrapper.jar
 **/out/
 **/.gradle/ 
 

@@ -35,6 +35,9 @@ services:
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}user?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${USER_DB_PASSWORD}
       - SERVICES_BOSS_SERVICE_URL=http://boss-service:8081
       - SERVICES_CHARACTER_SERVICE_URL=http://character-service:8083
     ports:

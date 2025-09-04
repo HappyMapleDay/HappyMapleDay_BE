@@ -41,13 +41,13 @@ jobs:
         # ARM64 플랫폼으로 빌드 (QEMU를 통한 에뮬레이션)
         # 소문자로 변환하여 Docker 태그 규칙 준수
         REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:latest ./admin-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:latest ./boss-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:latest ./character-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:latest ./gateway/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest ./recommendation-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:latest ./settlement-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:latest ./user-service/ --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:latest -f ./admin-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:latest -f ./boss-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:latest -f ./character-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:latest -f ./gateway/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest -f ./recommendation-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:latest -f ./settlement-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:latest -f ./user-service/Dockerfile . --push
         
     - name: Setup SSH (Prod)
       run: |

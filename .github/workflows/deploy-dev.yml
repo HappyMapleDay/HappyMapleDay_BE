@@ -41,13 +41,13 @@ jobs:
         # ARM64 플랫폼으로 빌드 (QEMU를 통한 에뮬레이션)
         # 소문자로 변환하여 Docker 태그 규칙 준수
         REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:dev ./admin-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev ./boss-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev ./character-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:dev ./gateway/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev ./recommendation-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:dev ./settlement-service/ --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:dev ./user-service/ --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:dev -f ./admin-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:dev -f ./gateway/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev -f ./recommendation-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:dev -f ./settlement-service/Dockerfile . --push
+        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:dev -f ./user-service/Dockerfile . --push
         
     - name: Setup SSH (Dev)
       run: |

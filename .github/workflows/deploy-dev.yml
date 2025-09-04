@@ -39,9 +39,8 @@ jobs:
     - name: Build and push Docker images (Dev)
       run: |
         # ARM64 플랫폼으로 빌드 (QEMU를 통한 에뮬레이션)
-        # 소문자로 변환하여 Docker 태그 규칙 준수
+        # 소문자로 변환하여 Docker tag 규칙 준수
         REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        echo "Building Docker images for organization: ${REPO_NAME}"
         # docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:dev -f ./admin-service/Dockerfile . --push
         docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --push
         docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --push
@@ -59,6 +58,10 @@ jobs:
         
     - name: Deploy to OCI via SSH (Dev)
       run: |
+        # 소문자로 변환하여 Docker 태그 규칙 준수
+        REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "Repository name: ${REPO_NAME}"
+        
         ssh -o StrictHostKeyChecking=no ${{ secrets.OCI_SSH_USER_DEV }}@${{ secrets.OCI_APP_IP_DEV }} << EOF
           # 애플리케이션 디렉토리로 이동
           cd /app
@@ -71,23 +74,26 @@ jobs:
           
           # GitHub Container Registry에서 최신 이미지 다운로드 (dev 태그)
           # 소문자로 변환하여 Docker 태그 규칙 준수
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          # docker pull ghcr.io/${REPO_NAME}/happymapleday-admin:dev
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-boss:dev
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-character:dev
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-gateway:dev
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-settlement:dev
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-user:dev
+          REPO_NAME_LOWER="${{ github.repository }}"
+          REPO_NAME_LOWER=\$(echo "\${REPO_NAME_LOWER}" | tr '[:upper:]' '[:lower:]')
+          echo "Repository name: \${REPO_NAME_LOWER}"
+          
+          # docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:dev
+          docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:dev
+          docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:dev
+          docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:dev
+          docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:dev
+          docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:dev
+          docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:dev
           
           # 이미지 태그 변경 (docker-compose.yml과 일치시키기)
-          # docker tag ghcr.io/${REPO_NAME}/happymapleday-admin:dev happymapleday-admin:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-boss:dev happymapleday-boss:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-character:dev happymapleday-character:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-gateway:dev happymapleday-gateway:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev happymapleday-recommendation:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-settlement:dev happymapleday-settlement:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-user:dev happymapleday-user:latest
+          # docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:dev happymapleday-admin:latest
+          docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:dev happymapleday-boss:latest
+          docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:dev happymapleday-character:latest
+          docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:dev happymapleday-gateway:latest
+          docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:dev happymapleday-recommendation:latest
+          docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:dev happymapleday-settlement:latest
+          docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:dev happymapleday-user:latest
           
           # 컨테이너 시작
           docker-compose up -d

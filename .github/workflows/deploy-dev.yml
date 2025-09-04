@@ -41,6 +41,7 @@ jobs:
         # ARM64 플랫폼으로 빌드 (QEMU를 통한 에뮬레이션)
         # 소문자로 변환하여 Docker 태그 규칙 준수
         REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "Building Docker images for organization: ${REPO_NAME}"
         # docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:dev -f ./admin-service/Dockerfile . --push
         docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --push
         docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --push

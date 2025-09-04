@@ -1,11 +1,11 @@
 # Multi-stage build optimized for micro instances (ARM64 compatible)
-FROM --platform=linux/arm64 eclipse-temurin:17-jdk-alpine AS builder
+FROM --platform=linux/arm64 eclipse-temurin:17-jdk AS builder
 
 # Set working directory
 WORKDIR /workspace
 
 # Install necessary packages
-RUN apk add --no-cache bash curl
+RUN apt-get update && apt-get install -y bash curl && rm -rf /var/lib/apt/lists/*
 
 # Copy only essential files first
 COPY gradlew ./

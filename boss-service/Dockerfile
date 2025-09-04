@@ -28,11 +28,11 @@ RUN ./gradlew :boss-service:dependencies --no-daemon --stacktrace
 # Copy source code
 COPY boss-service/src/ ./boss-service/src/
 
-# Build with memory optimization
-RUN ./gradlew :boss-service:bootJar -x test --no-daemon --stacktrace \
-    --max-workers=1 \
-    --parallel=false \
-    --configure-on-demand=false
+    # Build with memory optimization
+    RUN ./gradlew :boss-service:bootJar -x test --no-daemon --stacktrace \
+        --max-workers=1 \
+        --no-parallel \
+        --no-configure-on-demand
 
 # Runtime stage
 FROM --platform=linux/arm64 eclipse-temurin:17-jre

@@ -28,11 +28,11 @@ RUN ./gradlew :user-service:dependencies --no-daemon --stacktrace
 # Copy source code
 COPY user-service/src/ ./user-service/src/
 
-# Build with memory optimization
-RUN ./gradlew :user-service:bootJar -x test --no-daemon --stacktrace \
-    --max-workers=1 \
-    --parallel=false \
-    --configure-on-demand=false \
+    # Build with memory optimization
+    RUN ./gradlew :user-service:bootJar -x test --no-daemon --stacktrace \
+        --max-workers=1 \
+        --no-parallel \
+        --no-configure-on-demand \
     && sh -c 'JAR_FILE=$(ls user-service/build/libs | grep -v plain | head -n1) && cp user-service/build/libs/$JAR_FILE app.jar'
 
 # Runtime stage

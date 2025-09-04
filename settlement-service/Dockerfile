@@ -28,11 +28,11 @@ RUN ./gradlew :settlement-service:dependencies --no-daemon --stacktrace
 # Copy source code
 COPY settlement-service/src/ ./settlement-service/src/
 
-# Build with memory optimization
-RUN ./gradlew :settlement-service:bootJar -x test --no-daemon --stacktrace \
-    --max-workers=1 \
-    --parallel=false \
-    --configure-on-demand=false \
+    # Build with memory optimization
+    RUN ./gradlew :settlement-service:bootJar -x test --no-daemon --stacktrace \
+        --max-workers=1 \
+        --no-parallel \
+        --no-configure-on-demand \
     && sh -c 'JAR_FILE=$(ls settlement-service/build/libs | grep -v plain | head -n1) && cp settlement-service/build/libs/$JAR_FILE app.jar'
 
 # Runtime stage

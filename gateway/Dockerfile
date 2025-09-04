@@ -28,11 +28,11 @@ RUN ./gradlew :gateway:dependencies --no-daemon --stacktrace
 # Copy source code
 COPY gateway/src/ ./gateway/src/
 
-# Build with memory optimization
-RUN ./gradlew :gateway:bootJar -x test --no-daemon --stacktrace \
-    --max-workers=1 \
-    --parallel=false \
-    --configure-on-demand=false \
+    # Build with memory optimization
+    RUN ./gradlew :gateway:bootJar -x test --no-daemon --stacktrace \
+        --max-workers=1 \
+        --no-parallel \
+        --no-configure-on-demand \
     && sh -c 'JAR_FILE=$(ls gateway/build/libs | grep -v plain | head -n1) && cp gateway/build/libs/$JAR_FILE app.jar'
 
 # Runtime stage

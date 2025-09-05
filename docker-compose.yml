@@ -21,6 +21,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}boss?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${BOSS_DB_PASSWORD}
+      - SQL_INIT_MODE=${SQL_INIT_MODE:-never}
     ports:
       - "8081:8081"
     restart: unless-stopped

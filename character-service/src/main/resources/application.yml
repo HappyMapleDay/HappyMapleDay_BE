@@ -26,11 +26,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-  
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:data.sql
 
 # 넥슨 API 설정
 nexon:

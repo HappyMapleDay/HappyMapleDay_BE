@@ -102,10 +102,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,metrics,gateway,prometheus
   endpoint:
     health:
       show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
 
 # 로깅 설정
 logging:

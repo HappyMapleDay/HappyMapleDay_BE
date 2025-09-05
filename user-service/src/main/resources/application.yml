@@ -5,6 +5,23 @@ spring:
   application:
     name: user-service
   
+  # 데이터베이스 설정
+  datasource:
+    url: jdbc:mysql://${DB_HOST:172.16.2.136}:${DB_PORT:3306}/${DB_NAME_PREFIX:happy_maple_day_dev_}user?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:appuser}
+    password: ${USER_DB_PASSWORD:happymapleday!0619}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  
   # 캐시 설정
   cache:
     type: caffeine
@@ -14,7 +31,7 @@ spring:
 # JWT 설정
 jwt:
   secret: happy-maple-day-jwt-secret-key-for-user-service-authentication
-  expiration: 86400000 # 24시간
+  expiration: ${JWT_EXPIRATION:86400000} # 24시간 (환경변수로 오버라이드 가능)
 
 # 암호화 설정
 encryption:
@@ -25,4 +42,11 @@ services:
   boss-service:
     url: http://localhost:8081
   character-service:
-    url: http://localhost:8083 
+    url: http://localhost:8083
+
+# 로깅 설정
+logging:
+  level:
+    com.happymapleday: ${LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN} 

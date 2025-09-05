@@ -28,6 +28,5 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     
     // 데이터베이스
-    runtimeOnly 'com.mysql:mysql-connector-j'  // 운영환경용
-    runtimeOnly 'com.h2database:h2'  // 개발/테스트환경용
+    runtimeOnly 'com.mysql:mysql-connector-j'  // MySQL 드라이버
 } 

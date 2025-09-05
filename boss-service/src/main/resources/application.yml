@@ -13,29 +13,17 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-        jdbc:
-          lob:
-            non_contextual_creation: true
-    defer-datasource-initialization: true
-
-# Flyway 설정
-flyway:
-  enabled: true
-  baseline-on-migrate: true
-  validate-on-migrate: false
-  locations: classpath:db/migration
-  sql-migration-prefix: V
-  sql-migration-separator: __
-  sql-migration-suffixes: .sql
-  cloud:
-    compatibility-verifier:
-      enabled: false  # Spring Cloud 호환성 체크 비활성화
+  
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
 
 server:
   port: 8081
@@ -78,7 +66,6 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
-    defer-datasource-initialization: false
   sql:
     init:
       mode: always

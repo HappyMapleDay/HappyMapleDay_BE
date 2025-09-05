@@ -15,5 +15,8 @@ dependencies {
     // OpenFeign (다른 서비스 호출)
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
     
+    // Spring Boot Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
     runtimeOnly 'com.mysql:mysql-connector-j'
 } 

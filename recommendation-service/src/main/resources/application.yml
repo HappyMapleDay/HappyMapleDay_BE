@@ -13,6 +13,16 @@ algorithm:
   cache:
     result-ttl: 3600  # 1시간
 
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 # 다른 서비스 URL 설정
 services:
   boss-service:

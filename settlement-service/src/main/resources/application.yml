@@ -31,6 +31,16 @@ scheduling:
   weekly-settlement:
     cron: "0 0 0 * * THU"  # 매주 목요일 자정
 
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 # 다른 서비스 URL 설정
 services:
   boss-service:

@@ -12,11 +12,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    # 변경된 파일 목록 가져오기
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v44
+      
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
+
+    # Gradle 의존성 캐시 추가
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
         
     - name: Build with Gradle
       run: |
@@ -29,6 +45,15 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
+    # Docker 빌드 캐시 설정
+    - name: Set up Docker Build Cache
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.ref }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+      
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -39,15 +64,69 @@ jobs:
     - name: Build and push Docker images (Prod)
       run: |
         # ARM64 플랫폼으로 빌드 (QEMU를 통한 에뮬레이션)
-        # 소문자로 변환하여 Docker 태그 규칙 준수
+        # 소문자로 변환하여 Docker tag 규칙 준수
         REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:latest -f ./admin-service/Dockerfile . --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:latest -f ./boss-service/Dockerfile . --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:latest -f ./character-service/Dockerfile . --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:latest -f ./gateway/Dockerfile . --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest -f ./recommendation-service/Dockerfile . --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:latest -f ./settlement-service/Dockerfile . --push
-        docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:latest -f ./user-service/Dockerfile . --push
+        
+        # admin-service에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "admin-service/") -gt 0 ]]; then
+          echo "Building admin-service..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:latest -f ./admin-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # boss-service에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "boss-service/") -gt 0 ]]; then
+          echo "Building boss-service..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:latest -f ./boss-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # character-service에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "character-service/") -gt 0 ]]; then
+          echo "Building character-service..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:latest -f ./character-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # gateway에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "gateway/") -gt 0 ]]; then
+          echo "Building gateway..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:latest -f ./gateway/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # recommendation-service에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "recommendation-service/") -gt 0 ]]; then
+          echo "Building recommendation-service..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest -f ./recommendation-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # settlement-service에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "settlement-service/") -gt 0 ]]; then
+          echo "Building settlement-service..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:latest -f ./settlement-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # user-service에 변경이 있을 때만 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "user-service/") -gt 0 ]]; then
+          echo "Building user-service..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:latest -f ./user-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+
+        # common 모듈이나 설정 파일이 변경된 경우 모든 서비스 빌드
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -cE "^(common/|build.gradle|settings.gradle|docker-compose.yml|\.github/)") -gt 0 ]]; then
+          echo "Common files changed - building all services..."
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-admin:latest -f ./admin-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:latest -f ./boss-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:latest -f ./character-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:latest -f ./gateway/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest -f ./recommendation-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:latest -f ./settlement-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:latest -f ./user-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+        fi
+        
+        # 모든 빌드 완료 대기
+        wait
+        
+        # 캐시 정리
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
         
     - name: Setup SSH (Prod)
       run: |
@@ -58,40 +137,138 @@ jobs:
         
     - name: Deploy to OCI via SSH (Prod)
       run: |
+        # 소문자로 변환하여 Docker 태그 규칙 준수
+        REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "Repository name: ${REPO_NAME}"
+        
         ssh -o StrictHostKeyChecking=no ${{ secrets.OCI_SSH_USER_PROD }}@${{ secrets.OCI_APP_IP_PROD }} << EOF
           # 애플리케이션 디렉토리로 이동
           cd /app
           
+          # GitHub Container Registry 로그인
+          echo "${{ secrets.DOCKER_REGISTRY_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
           # docker-compose.yml 다운로드
           curl -o docker-compose.yml https://raw.githubusercontent.com/HappyMapleDay/HappyMapleDay_BE/main/docker-compose.yml
           
-          # 기존 컨테이너 중지
-          docker-compose down
-          
-          # GitHub Container Registry에서 최신 이미지 다운로드 (latest 태그)
           # 소문자로 변환하여 Docker 태그 규칙 준수
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-admin:latest
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-boss:latest
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-character:latest
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-gateway:latest
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-settlement:latest
-          docker pull ghcr.io/${REPO_NAME}/happymapleday-user:latest
+          REPO_NAME_LOWER="${{ github.repository }}"
+          REPO_NAME_LOWER=\$(echo "\${REPO_NAME_LOWER}" | tr '[:upper:]' '[:lower:]')
+          echo "Repository name: \${REPO_NAME_LOWER}"
           
-          # 이미지 태그 변경 (docker-compose.yml과 일치시키기)
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-admin:latest happymapleday-admin:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-boss:latest happymapleday-boss:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-character:latest happymapleday-character:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-gateway:latest happymapleday-gateway:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-recommendation:latest happymapleday-recommendation:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-settlement:latest happymapleday-settlement:latest
-          docker tag ghcr.io/${REPO_NAME}/happymapleday-user:latest happymapleday-user:latest
-          
-          # 컨테이너 시작
-          docker-compose up -d
+          # 변경된 서비스만 pull하고 재배포
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "admin-service/") -gt 0 ]]; then
+            echo "Pulling admin-service..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:latest happymapleday-admin:latest
+            docker-compose up -d admin-service
+          fi
+
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "boss-service/") -gt 0 ]]; then
+            echo "Pulling boss-service..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:latest happymapleday-boss:latest
+            docker-compose up -d boss-service
+          fi
+
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "character-service/") -gt 0 ]]; then
+            echo "Pulling character-service..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:latest happymapleday-character:latest
+            docker-compose up -d character-service
+          fi
+
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "gateway/") -gt 0 ]]; then
+            echo "Pulling gateway..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:latest happymapleday-gateway:latest
+            docker-compose up -d gateway
+          fi
+
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "recommendation-service/") -gt 0 ]]; then
+            echo "Pulling recommendation-service..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:latest happymapleday-recommendation:latest
+            docker-compose up -d recommendation-service
+          fi
+
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "settlement-service/") -gt 0 ]]; then
+            echo "Pulling settlement-service..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:latest happymapleday-settlement:latest
+            docker-compose up -d settlement-service
+          fi
+
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "user-service/") -gt 0 ]]; then
+            echo "Pulling user-service..."
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:latest happymapleday-user:latest
+            docker-compose up -d user-service
+          fi
+
+          # common 모듈이나 설정 파일이 변경된 경우 모든 서비스 재배포
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -cE "^(common/|build.gradle|settings.gradle|docker-compose.yml|\.github/)") -gt 0 ]]; then
+            echo "Common files changed - redeploying all services..."
+            docker-compose down
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:latest
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:latest
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:latest
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:latest
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:latest
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:latest
+            docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:latest
+            
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:latest happymapleday-admin:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:latest happymapleday-boss:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:latest happymapleday-character:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:latest happymapleday-gateway:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:latest happymapleday-recommendation:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:latest happymapleday-settlement:latest
+            docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:latest happymapleday-user:latest
+            
+            docker-compose up -d
+          fi
           
           # 배포 상태 확인
+          echo "=== 컨테이너 상태 확인 ==="
           docker-compose ps
+          
+          echo "=== 컨테이너 헬스체크 ==="
+          sleep 10
+          docker-compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+          
+          echo "=== 서비스별 로그 확인 (최근 10줄) ==="
+          echo "--- Boss Service ---"
+          docker-compose logs --tail=10 boss-service
+          echo "--- User Service ---"
+          docker-compose logs --tail=10 user-service
+          echo "--- Gateway ---"
+          docker-compose logs --tail=10 gateway
+          
+          echo "=== 포트 사용 현황 ==="
+          netstat -tlnp | grep -E ":(8080|8081|8082|8083|8084|8085|8086|8087)"
+          
+          echo "=== HTTP 헬스체크 ==="
+          # Gateway 헬스체크 (8080)
+          if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
+            echo "✅ Gateway (8080): 정상"
+          else
+            echo "❌ Gateway (8080): 응답 없음"
+          fi
+          
+          # Boss Service 헬스체크 (8081)
+          if curl -f http://localhost:8081/actuator/health 2>/dev/null; then
+            echo "✅ Boss Service (8081): 정상"
+          else
+            echo "❌ Boss Service (8081): 응답 없음"
+          fi
+          
+          # User Service 헬스체크 (8082)
+          if curl -f http://localhost:8082/actuator/health 2>/dev/null; then
+            echo "✅ User Service (8082): 정상"
+          else
+            echo "❌ User Service (8082): 응답 없음"
+          fi
+          
           echo "Production Deployment completed successfully!"
         EOF

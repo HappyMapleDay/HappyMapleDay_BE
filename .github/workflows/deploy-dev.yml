@@ -17,6 +17,17 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+
+    # Gradle 의존성 캐시 추가
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
         
     - name: Build with Gradle
       run: |
@@ -33,7 +44,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        key: ${{ runner.os }}-buildx-${{ github.ref }}
         restore-keys: |
           ${{ runner.os }}-buildx-
       

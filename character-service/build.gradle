@@ -19,6 +19,9 @@ dependencies {
     // Caffeine Cache
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
     
+    // Spring Boot Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
     // MySQL Database
     runtimeOnly 'com.mysql:mysql-connector-j'
 } 

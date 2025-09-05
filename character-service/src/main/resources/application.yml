@@ -33,6 +33,16 @@ nexon:
     base-url: https://open.api.nexon.com/maplestory/v1
     master-key: ${NEXON_API_MASTER_KEY:} # 환경변수에서 마스터키 가져오기 (기본값: 빈 문자열)
 
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
     com.happymapleday.character: DEBUG 

@@ -23,6 +23,9 @@ dependencies {
     // Caffeine 캐시
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
     
+    // Spring Boot Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

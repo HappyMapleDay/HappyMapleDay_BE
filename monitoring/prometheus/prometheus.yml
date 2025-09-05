@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: gateway
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['gateway:8080']
+
+  - job_name: boss-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['boss-service:8081']
+
+  - job_name: user-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['user-service:8082']
+
+  - job_name: character-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['character-service:8083']
+
+  - job_name: settlement-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['settlement-service:8084']
+
+  - job_name: recommendation-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['recommendation-service:8085']
+
+  - job_name: admin-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['admin-service:8087']
+

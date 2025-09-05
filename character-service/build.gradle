@@ -21,6 +21,7 @@ dependencies {
     
     // Spring Boot Actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
     
     // MySQL Database
     runtimeOnly 'com.mysql:mysql-connector-j'

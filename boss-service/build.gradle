@@ -14,6 +14,9 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
 	
+	// Flyway가 JPA보다 먼저 로드되도록 설정
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
   

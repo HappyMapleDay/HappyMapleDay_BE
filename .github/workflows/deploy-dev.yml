@@ -162,8 +162,8 @@ jobs:
           echo "USER_DB_PASSWORD=${{ secrets.USER_DB_PASSWORD }}" >> ./.env
           echo "CHAR_DB_PASSWORD=${{ secrets.CHAR_DB_PASSWORD }}" >> ./.env
           echo "SETTLE_DB_PASSWORD=${{ secrets.SETTLE_DB_PASSWORD }}" >> ./.env
-          echo "SETTLE_DB_PASSWORD=${{ secrets.REDIS_HOST }}" >> ./.env
-          echo "SETTLE_DB_PASSWORD=${{ secrets.REDIS_PORT }}" >> ./.env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> ./.env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> ./.env
 
           echo ".env file created successfully."
         

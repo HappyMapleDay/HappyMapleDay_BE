@@ -185,7 +185,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${PWD}/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -200,7 +200,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./monitoring/loki/config.yml:/etc/loki/config.yml:ro
+      - ${PWD}/monitoring/loki/config.yml:/etc/loki/config.yml:ro
       - loki_data:/loki
     command: -config.file=/etc/loki/config.yml
     restart: unless-stopped
@@ -210,7 +210,7 @@ services:
     platform: linux/arm64
     container_name: promtail
     volumes:
-      - ./monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
+      - ${PWD}/monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: -config.file=/etc/promtail/config.yml
@@ -229,7 +229,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=happymapleday!0619
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ${PWD}/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     depends_on:
       - prometheus
       - loki

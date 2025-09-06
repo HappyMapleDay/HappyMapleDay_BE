@@ -45,13 +45,13 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
-    - name: Set up Docker Build Cache
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.ref }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+#    - name: Set up Docker Build Cache
+#      uses: actions/cache@v3
+#      with:
+#        path: /tmp/.buildx-cache
+#        key: ${{ runner.os }}-buildx-${{ github.ref }}
+#        restore-keys: |
+#          ${{ runner.os }}-buildx-
       
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
@@ -69,56 +69,56 @@ jobs:
         # boss-service에 변경이 있을 때만 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "boss-service/") -gt 0 ]]; then
           echo "Building boss-service..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
 
         # character-service에 변경이 있을 때만 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "character-service/") -gt 0 ]]; then
           echo "Building character-service..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
 
         # gateway에 변경이 있을 때만 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "gateway/") -gt 0 ]]; then
           echo "Building gateway..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:dev -f ./gateway/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:dev -f ./gateway/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
 
         # recommendation-service에 변경이 있을 때만 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "recommendation-service/") -gt 0 ]]; then
           echo "Building recommendation-service..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev -f ./recommendation-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev -f ./recommendation-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
 
         # settlement-service에 변경이 있을 때만 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "settlement-service/") -gt 0 ]]; then
           echo "Building settlement-service..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:dev -f ./settlement-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:dev -f ./settlement-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
 
         # user-service에 변경이 있을 때만 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -c "user-service/") -gt 0 ]]; then
           echo "Building user-service..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:dev -f ./user-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:dev -f ./user-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
 
         # common 모듈이나 설정 파일이 변경된 경우 모든 서비스 빌드
         if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" && $(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -cE "^(common/|build.gradle|settings.gradle|docker-compose.yml|\.github/)") -gt 0 ]]; then
           echo "Common files changed - building all services..."
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:dev -f ./gateway/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev -f ./recommendation-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:dev -f ./settlement-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
-          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:dev -f ./user-service/Dockerfile . --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-boss:dev -f ./boss-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-character:dev -f ./character-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-gateway:dev -f ./gateway/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-recommendation:dev -f ./recommendation-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-settlement:dev -f ./settlement-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
+          docker buildx build --platform linux/arm64 -t ghcr.io/${REPO_NAME}/happymapleday-user:dev -f ./user-service/Dockerfile . --cache-from type=gha --cache-to type=gha,mode=max --push &
         fi
         
         # 모든 빌드 완료 대기
         wait
         
-        # 캐시 정리
-        rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+#        # 캐시 정리
+#        rm -rf /tmp/.buildx-cache
+#        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
         
     - name: Setup SSH (Dev)
       run: |

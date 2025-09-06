@@ -134,44 +134,45 @@ jobs:
         echo "Repository name: ${REPO_NAME}"
         
         ssh -o StrictHostKeyChecking=no ${{ secrets.OCI_SSH_USER_DEV }}@${{ secrets.OCI_APP_IP_DEV }} << EOF
-          # 애플리케이션 디렉토리로 이동
-          cd /app
-          
           # GitHub Container Registry 로그인
           echo "${{ secrets.DOCKER_REGISTRY_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          
-          # docker-compose.yml 다운로드
-          curl -o docker-compose.yml https://raw.githubusercontent.com/HappyMapleDay/HappyMapleDay_BE/dev/docker-compose.yml
-          
-          # 기존 컨테이너 중지
+        
+          # [핵심 수정] curl 대신 git으로 프로젝트 전체를 관리합니다.
+          # /app 디렉토리가 없으면 최초 clone을 수행합니다.
+          if [ ! -d "/app" ]; then
+            git clone https://github.com/${{ github.repository }}.git /app
+            cd /app
+          # 디렉토리가 이미 있으면 최신 dev 브랜치 코드를 pull 합니다.
+          else
+            cd /app
+            git pull origin dev
+          fi
+        
+          # 기존 컨테이너 중지 및 제거 (새로 배포하기 전 정리)
           docker-compose down
-          
-          # GitHub Container Registry에서 최신 이미지 다운로드 (dev 태그)
-          # 소문자로 변환하여 Docker 태그 규칙 준수
+        
+          # GitHub Container Registry에서 최신 이미지 다운로드 (이 부분은 기존과 동일)
           REPO_NAME_LOWER="${{ github.repository }}"
           REPO_NAME_LOWER=\$(echo "\${REPO_NAME_LOWER}" | tr '[:upper:]' '[:lower:]')
-          echo "Repository name: \${REPO_NAME_LOWER}"
-          
-          # docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:dev
+        
           docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:dev
           docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:dev
           docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:dev
           docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:dev
           docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:dev
           docker pull ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:dev
-          
-          # 이미지 태그 변경 (docker-compose.yml과 일치시키기)
-          # docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-admin:dev happymapleday-admin:latest
+        
+          # 이미지 태그 변경 (이 부분은 기존과 동일)
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-boss:dev happymapleday-boss:latest
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-character:dev happymapleday-character:latest
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-gateway:dev happymapleday-gateway:latest
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-recommendation:dev happymapleday-recommendation:latest
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:dev happymapleday-settlement:latest
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:dev happymapleday-user:latest
-          
-          # 컨테이너 시작
+        
+          # 컨테이너 시작 (이제 monitoring 디렉토리와 설정 파일이 모두 존재하므로 에러 없이 실행됩니다.)
           docker-compose up -d
-          
+        
           # 배포 상태 확인
           docker-compose ps
           echo "Dev Deployment completed successfully!"

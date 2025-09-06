@@ -144,7 +144,8 @@ jobs:
             # 혹시라도 남아있을 수 있는 비정상적인 /app 디렉토리를 먼저 삭제
             sudo rm -rf /app
             # 저장소를 새로 clone
-            git clone https://github.com/${{ github.repository }}.git /app
+            sudo git clone https://github.com/${{ github.repository }}.git /app
+            sudo chown -R ${{ secrets.OCI_SSH_USER_DEV }}:${{ secrets.OCI_SSH_USER_DEV }} /app
             cd /app
           else
             echo "/app is a valid git repository. Pulling latest changes..."

@@ -142,7 +142,7 @@ jobs:
          if [ ! -d "/app/.git" ]; then
             echo "/app is not a valid git repository or does not exist. Re-cloning..."
             # 혹시라도 남아있을 수 있는 비정상적인 /app 디렉토리를 먼저 삭제
-            rm -rf /app
+            sudo rm -rf /app
             # 저장소를 새로 clone
             git clone https://github.com/${{ github.repository }}.git /app
             cd /app

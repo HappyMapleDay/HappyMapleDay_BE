@@ -154,16 +154,14 @@ jobs:
           fi
         
           echo "Creating .env file on the server..."
-          cat << EOT > ./.env
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ secrets.DB_PORT }}
-          DB_NAME_PREFIX=${{ secrets.DB_NAME_PREFIX }}
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          BOSS_DB_PASSWORD=${{ secrets.BOSS_DB_PASSWORD }}
-          USER_DB_PASSWORD=${{ secrets.USER_DB_PASSWORD }}
-          CHAR_DB_PASSWORD=${{ secrets.CHAR_DB_PASSWORD }}
-          SETTLE_DB_PASSWORD=${{ secrets.SETTLE_DB_PASSWORD }}
-          EOT
+          echo "DB_HOST=${{ secrets.DB_HOST }}" > ./.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> ./.env
+          echo "DB_NAME_PREFIX=${{ secrets.DB_NAME_PREFIX }}" >> ./.env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> ./.env
+          echo "BOSS_DB_PASSWORD=${{ secrets.BOSS_DB_PASSWORD }}" >> ./.env
+          echo "USER_DB_PASSWORD=${{ secrets.USER_DB_PASSWORD }}" >> ./.env
+          echo "CHAR_DB_PASSWORD=${{ secrets.CHAR_DB_PASSWORD }}" >> ./.env
+          echo "SETTLE_DB_PASSWORD=${{ secrets.SETTLE_DB_PASSWORD }}" >> ./.env
 
           echo ".env file created successfully."
         

@@ -170,6 +170,13 @@ jobs:
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-settlement:dev happymapleday-settlement:latest
           docker tag ghcr.io/\${REPO_NAME_LOWER}/happymapleday-user:dev happymapleday-user:latest
         
+          # 현재 디렉토리와 파일 존재 확인
+          pwd
+          ls -la monitoring/
+          ls -la monitoring/prometheus/
+          ls -la monitoring/loki/
+          ls -la monitoring/promtail/
+          
           # 컨테이너 시작 (이제 monitoring 디렉토리와 설정 파일이 모두 존재하므로 에러 없이 실행됩니다.)
           docker-compose up -d
         

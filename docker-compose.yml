@@ -185,7 +185,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ${PWD}/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -200,7 +200,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ${PWD}/monitoring/loki/config.yml:/etc/loki/config.yml:ro
+      - ./monitoring/loki/config.yml:/etc/loki/config.yml:ro
       - loki_data:/loki
     command: -config.file=/etc/loki/config.yml
     restart: unless-stopped
@@ -210,7 +210,7 @@ services:
     platform: linux/arm64
     container_name: promtail
     volumes:
-      - ${PWD}/monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
+      - ./monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: -config.file=/etc/promtail/config.yml

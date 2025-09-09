@@ -66,10 +66,10 @@ public class CharacterService {
     }
     
     /**
-     * 캐릭터 삭제 (Soft Delete)
+     * 캐릭터 비활성화 (Soft Delete)
      */
     @Transactional
-    public void deleteCharacter(Long characterId) {
+    public void deactivateCharacter(Long characterId) {
         // 캐릭터 존재 여부 확인 (삭제되지 않은 캐릭터만)
         Character character = characterRepository.findByIdAndIsDeletedFalse(characterId)
                 .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
@@ -82,6 +82,43 @@ public class CharacterService {
         // 캐릭터 soft delete
         character.markAsDeleted();
         characterRepository.save(character);
+    }
+
+    /**
+     * 캐릭터 복원 (Soft Delete 취소)
+     */
+    @Transactional
+    public void restoreCharacter(Long characterId) {
+        // 삭제된 캐릭터 조회
+        Character character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
+        
+        // 이미 활성화된 캐릭터인지 확인
+        if (!character.getIsDeleted()) {
+            throw new IllegalArgumentException("이미 활성화된 캐릭터입니다.");
+        }
+        
+        // 캐릭터 복원
+        character.markAsUndeleted();
+        characterRepository.save(character);
+    }
+
+    /**
+     * 캐릭터 완전 삭제 (Hard Delete)
+     */
+    @Transactional
+    public void deleteCharacterPermanently(Long characterId) {
+        // 캐릭터 존재 여부 확인 (활성/비활성 상관없이)
+        Character character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
+        
+        // 본캐 삭제 방지 (활성화된 본캐만)
+        if (character.getIsMain() && !character.getIsDeleted()) {
+            throw new IllegalArgumentException("본캐는 삭제할 수 없습니다.");
+        }
+        
+        // 캐릭터 완전 삭제
+        characterRepository.delete(character);
     }
     
     /**

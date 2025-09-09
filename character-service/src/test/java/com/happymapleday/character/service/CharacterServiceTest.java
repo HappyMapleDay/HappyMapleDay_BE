@@ -227,15 +227,15 @@ class CharacterServiceTest {
     // ==================== 2.4 캐릭터 삭제 테스트 ====================
 
     @Test
-    @DisplayName("2.4 캐릭터 삭제 성공 (Soft Delete)")
-    void deleteCharacter_Success() {
+    @DisplayName("캐릭터 비활성화 성공 (Soft Delete)")
+    void deactivateCharacter_Success() {
         // given
         Long characterId = 2L;
         Character character = testCharacter2; // isMain = false인 캐릭터
         given(characterRepository.findByIdAndIsDeletedFalse(characterId)).willReturn(java.util.Optional.of(character));
 
         // when
-        characterService.deleteCharacter(characterId);
+        characterService.deactivateCharacter(characterId);
 
         // then
         verify(characterRepository).findByIdAndIsDeletedFalse(characterId);
@@ -244,32 +244,162 @@ class CharacterServiceTest {
     }
 
     @Test
-    @DisplayName("2.4 캐릭터 삭제 실패 - 본캐 삭제 시도")
-    void deleteCharacter_MainCharacter_ThrowsException() {
+    @DisplayName("캐릭터 비활성화 실패 - 본캐 삭제 시도")
+    void deactivateCharacter_MainCharacter_ThrowsException() {
         // given
         Long characterId = 1L;
         Character character = testCharacter1; // isMain = true인 캐릭터
         given(characterRepository.findByIdAndIsDeletedFalse(characterId)).willReturn(java.util.Optional.of(character));
 
         // when & then
-        assertThatThrownBy(() -> characterService.deleteCharacter(characterId))
+        assertThatThrownBy(() -> characterService.deactivateCharacter(characterId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("본캐는 삭제할 수 없습니다.");
         verify(characterRepository).findByIdAndIsDeletedFalse(characterId);
     }
 
     @Test
-    @DisplayName("2.4 캐릭터 삭제 실패 - 캐릭터를 찾을 수 없음")
-    void deleteCharacter_CharacterNotFound_ThrowsException() {
+    @DisplayName("캐릭터 비활성화 실패 - 캐릭터를 찾을 수 없음")
+    void deactivateCharacter_CharacterNotFound_ThrowsException() {
         // given
         Long characterId = 999L;
         given(characterRepository.findByIdAndIsDeletedFalse(characterId)).willReturn(java.util.Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> characterService.deleteCharacter(characterId))
+        assertThatThrownBy(() -> characterService.deactivateCharacter(characterId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("캐릭터를 찾을 수 없습니다.");
         verify(characterRepository).findByIdAndIsDeletedFalse(characterId);
+    }
+
+    // ==================== 캐릭터 복원 테스트 ====================
+
+    @Test
+    @DisplayName("캐릭터 복원 성공")
+    void restoreCharacter_Success() {
+        // given
+        Long characterId = 2L;
+        Character character = testCharacter2;
+        character.markAsDeleted(); // 삭제된 상태로 설정
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.of(character));
+
+        // when
+        characterService.restoreCharacter(characterId);
+
+        // then
+        verify(characterRepository).findById(characterId);
+        verify(characterRepository).save(character);
+        assertThat(character.getIsDeleted()).isFalse();
+    }
+
+    @Test
+    @DisplayName("캐릭터 복원 실패 - 이미 활성화된 캐릭터")
+    void restoreCharacter_AlreadyActive_ThrowsException() {
+        // given
+        Long characterId = 2L;
+        Character character = testCharacter2; // 이미 활성화된 캐릭터 (isDeleted = false)
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.of(character));
+
+        // when & then
+        assertThatThrownBy(() -> characterService.restoreCharacter(characterId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("이미 활성화된 캐릭터입니다.");
+        verify(characterRepository).findById(characterId);
+    }
+
+    @Test
+    @DisplayName("캐릭터 복원 실패 - 캐릭터를 찾을 수 없음")
+    void restoreCharacter_CharacterNotFound_ThrowsException() {
+        // given
+        Long characterId = 999L;
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> characterService.restoreCharacter(characterId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("캐릭터를 찾을 수 없습니다.");
+        verify(characterRepository).findById(characterId);
+    }
+
+    // ==================== 캐릭터 완전 삭제 테스트 ====================
+
+    @Test
+    @DisplayName("캐릭터 완전 삭제 성공 - 비활성화된 캐릭터")
+    void deleteCharacterPermanently_Success_DeactivatedCharacter() {
+        // given
+        Long characterId = 2L;
+        Character character = testCharacter2;
+        character.markAsDeleted(); // 비활성화된 상태
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.of(character));
+
+        // when
+        characterService.deleteCharacterPermanently(characterId);
+
+        // then
+        verify(characterRepository).findById(characterId);
+        verify(characterRepository).delete(character);
+    }
+
+    @Test
+    @DisplayName("캐릭터 완전 삭제 성공 - 일반 캐릭터")
+    void deleteCharacterPermanently_Success_NormalCharacter() {
+        // given
+        Long characterId = 2L;
+        Character character = testCharacter2; // isMain = false, isDeleted = false
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.of(character));
+
+        // when
+        characterService.deleteCharacterPermanently(characterId);
+
+        // then
+        verify(characterRepository).findById(characterId);
+        verify(characterRepository).delete(character);
+    }
+
+    @Test
+    @DisplayName("캐릭터 완전 삭제 실패 - 활성화된 본캐 삭제 시도")
+    void deleteCharacterPermanently_MainCharacter_ThrowsException() {
+        // given
+        Long characterId = 1L;
+        Character character = testCharacter1; // isMain = true, isDeleted = false
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.of(character));
+
+        // when & then
+        assertThatThrownBy(() -> characterService.deleteCharacterPermanently(characterId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("본캐는 삭제할 수 없습니다.");
+        verify(characterRepository).findById(characterId);
+    }
+
+    @Test
+    @DisplayName("캐릭터 완전 삭제 성공 - 비활성화된 본캐")
+    void deleteCharacterPermanently_Success_DeactivatedMainCharacter() {
+        // given
+        Long characterId = 1L;
+        Character character = testCharacter1;
+        character.markAsDeleted(); // 비활성화된 본캐
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.of(character));
+
+        // when
+        characterService.deleteCharacterPermanently(characterId);
+
+        // then
+        verify(characterRepository).findById(characterId);
+        verify(characterRepository).delete(character);
+    }
+
+    @Test
+    @DisplayName("캐릭터 완전 삭제 실패 - 캐릭터를 찾을 수 없음")
+    void deleteCharacterPermanently_CharacterNotFound_ThrowsException() {
+        // given
+        Long characterId = 999L;
+        given(characterRepository.findById(characterId)).willReturn(java.util.Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> characterService.deleteCharacterPermanently(characterId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("캐릭터를 찾을 수 없습니다.");
+        verify(characterRepository).findById(characterId);
     }
 
     // ==================== 2.6 본캐 설정 테스트 ====================

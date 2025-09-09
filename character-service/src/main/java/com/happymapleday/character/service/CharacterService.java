@@ -24,10 +24,10 @@ public class CharacterService {
     private final CharacterRepository characterRepository;
     
     /**
-     * 유저별 전체 캐릭터 목록 조회
+     * 유저별 전체 캐릭터 목록 조회 (삭제되지 않은 캐릭터만)
      */
     public List<CharacterResponse> getAllCharactersByUserId(Long userId) {
-        List<Character> characters = characterRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<Character> characters = characterRepository.findByUserIdAndIsDeletedFalseOrderByCreatedAtDesc(userId);
         
         if (characters.isEmpty()) {
             throw new IllegalArgumentException("등록된 캐릭터가 없습니다.");
@@ -48,8 +48,8 @@ public class CharacterService {
             throw new IllegalArgumentException("필수 정보가 누락되었습니다.");
         }
         
-        // 중복 캐릭터 검증 (OCID 기준 - 전역)
-        if (characterRepository.findByOcid(request.getOcid()).isPresent()) {
+        // 중복 캐릭터 검증 (OCID 기준 - 전역, 삭제되지 않은 캐릭터만)
+        if (characterRepository.findByOcidAndIsDeletedFalse(request.getOcid()).isPresent()) {
             throw new IllegalArgumentException("이미 등록된 캐릭터입니다.");
         }
         
@@ -66,12 +66,12 @@ public class CharacterService {
     }
     
     /**
-     * 캐릭터 삭제
+     * 캐릭터 삭제 (Soft Delete)
      */
     @Transactional
     public void deleteCharacter(Long characterId) {
-        // 캐릭터 존재 여부 확인
-        Character character = characterRepository.findById(characterId)
+        // 캐릭터 존재 여부 확인 (삭제되지 않은 캐릭터만)
+        Character character = characterRepository.findByIdAndIsDeletedFalse(characterId)
                 .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
         
         // 본캐 삭제 방지
@@ -79,8 +79,9 @@ public class CharacterService {
             throw new IllegalArgumentException("본캐는 삭제할 수 없습니다.");
         }
         
-        // 캐릭터 삭제
-        characterRepository.delete(character);
+        // 캐릭터 soft delete
+        character.markAsDeleted();
+        characterRepository.save(character);
     }
     
     /**
@@ -88,12 +89,12 @@ public class CharacterService {
      */
     @Transactional
     public MainCharacterSettingResponse setMainCharacter(Long characterId) {
-        // 캐릭터 존재 여부 확인
-        Character character = characterRepository.findById(characterId)
+        // 캐릭터 존재 여부 확인 (삭제되지 않은 캐릭터만)
+        Character character = characterRepository.findByIdAndIsDeletedFalse(characterId)
                 .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
         
-        // 현재 본캐 조회
-        Character previousMainCharacter = characterRepository.findByUserIdAndIsMainTrue(character.getUserId()).orElse(null);
+        // 현재 본캐 조회 (삭제되지 않은 캐릭터만)
+        Character previousMainCharacter = characterRepository.findByUserIdAndIsMainTrueAndIsDeletedFalse(character.getUserId()).orElse(null);
         
         // 기존 본캐가 있다면 해제
         if (previousMainCharacter != null && !previousMainCharacter.getId().equals(characterId)) {
@@ -109,11 +110,11 @@ public class CharacterService {
     }
 
     /**
-     * 2.7 본캐 조회
+     * 2.7 본캐 조회 (삭제되지 않은 캐릭터만)
      */
     @Transactional(readOnly = true)
     public MainCharacterResponse getMainCharacter(Long userId) {
-        Character mainCharacter = characterRepository.findByUserIdAndIsMainTrue(userId)
+        Character mainCharacter = characterRepository.findByUserIdAndIsMainTrueAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new IllegalArgumentException("본캐가 설정되지 않았습니다."));
         return MainCharacterResponse.from(mainCharacter);
     }
@@ -162,12 +163,12 @@ public class CharacterService {
                 .build();
     }
 
-     // 캐릭터 ID 목록으로 기본 정보 조회
+     // 캐릭터 ID 목록으로 기본 정보 조회 (삭제되지 않은 캐릭터만)
     public List<CharacterResponse> getCharactersByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return characterRepository.findAllById(ids).stream()
+        return characterRepository.findByIdInAndIsDeletedFalse(ids).stream()
                 .map(CharacterResponse::from)
                 .collect(Collectors.toList());
     }

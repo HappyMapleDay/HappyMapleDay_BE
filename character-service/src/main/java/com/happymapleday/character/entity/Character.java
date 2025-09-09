@@ -31,6 +31,9 @@ public class Character {
     @Column(name = "is_main", nullable = false)
     private Boolean isMain = false;
     
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
@@ -43,6 +46,7 @@ public class Character {
         this.characterName = characterName;
         this.ocid = ocid;
         this.isMain = isMain != null ? isMain : false;
+        this.isDeleted = false;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -61,6 +65,18 @@ public class Character {
     
     // 업데이트 시간 갱신
     public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // soft delete
+    public void markAsDeleted() {
+        this.isDeleted = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // soft delete 복원
+    public void markAsUndeleted() {
+        this.isDeleted = false;
         this.updatedAt = LocalDateTime.now();
     }
 } 

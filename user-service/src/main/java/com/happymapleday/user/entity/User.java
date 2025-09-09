@@ -25,6 +25,10 @@ public class User {
     @Column(name = "nexon_api_key", nullable = false)
     private String nexonApiKey; // 암호화된 API Key
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRole role = UserRole.NORMAL; // 사용자 권한 역할
+    
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -41,6 +45,7 @@ public class User {
         this.mainCharacterName = mainCharacterName;
         this.password = password;
         this.nexonApiKey = nexonApiKey;
+        this.role = UserRole.NORMAL; // 기본값은 일반 유저
     }
     
     // Getter 메서드들
@@ -68,6 +73,20 @@ public class User {
         return updatedAt;
     }
     
+    public UserRole getRole() {
+        return role;
+    }
+    
+    // 편의 메서드: 어드민 권한 체크
+    public boolean isAdmin() {
+        return role != null && role.isAdmin();
+    }
+    
+    // 편의 메서드: 일반 사용자 체크
+    public boolean isNormal() {
+        return role != null && role.isNormal();
+    }
+    
     // Setter 메서드들 (필요한 경우)
     public void updatePassword(String password) {
         this.password = password;
@@ -79,5 +98,9 @@ public class User {
     
     public void updateMainCharacterName(String mainCharacterName) {
         this.mainCharacterName = mainCharacterName;
+    }
+    
+    public void updateRole(UserRole role) {
+        this.role = role;
     }
 } 

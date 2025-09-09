@@ -70,14 +70,14 @@ public class CharacterController {
     }
     
     /**
-     * 2.4 캐릭터 삭제
+     * 2.4 캐릭터 비활성화 (Soft Delete)
      */
-    @DeleteMapping("/{characterId}")
-    public ResponseEntity<ApiResponse<String>> deleteCharacter(
+    @PatchMapping("/{characterId}/deactivate")
+    public ResponseEntity<ApiResponse<String>> deactivateCharacter(
             @PathVariable Long characterId) {
         try {
-            characterService.deleteCharacter(characterId);
-            return ResponseEntity.ok(ApiResponse.success("캐릭터가 삭제되었습니다."));
+            characterService.deactivateCharacter(characterId);
+            return ResponseEntity.ok(ApiResponse.success("캐릭터가 비활성화되었습니다."));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("본캐는 삭제할 수 없습니다")) {
                 return ResponseEntity.status(403)
@@ -91,7 +91,56 @@ public class CharacterController {
             }
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("캐릭터 삭제 중 오류가 발생했습니다."));
+                    .body(ApiResponse.error("캐릭터 비활성화 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 캐릭터 복원 (Soft Delete 취소)
+     */
+    @PatchMapping("/{characterId}/restore")
+    public ResponseEntity<ApiResponse<String>> restoreCharacter(
+            @PathVariable Long characterId) {
+        try {
+            characterService.restoreCharacter(characterId);
+            return ResponseEntity.ok(ApiResponse.success("캐릭터가 복원되었습니다."));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("캐릭터를 찾을 수 없습니다")) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("캐릭터 복원 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 캐릭터 완전 삭제 (Hard Delete)
+     */
+    @DeleteMapping("/{characterId}")
+    public ResponseEntity<ApiResponse<String>> deleteCharacterPermanently(
+            @PathVariable Long characterId) {
+        try {
+            characterService.deleteCharacterPermanently(characterId);
+            return ResponseEntity.ok(ApiResponse.success("캐릭터가 완전히 삭제되었습니다."));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("본캐는 삭제할 수 없습니다")) {
+                return ResponseEntity.status(403)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else if (e.getMessage().contains("캐릭터를 찾을 수 없습니다")) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error(e.getMessage()));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error(e.getMessage()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("캐릭터 완전 삭제 중 오류가 발생했습니다."));
         }
     }
     

@@ -11,8 +11,11 @@ import java.util.List;
 @Repository
 public interface CharacterSelectedBossRepository extends JpaRepository<CharacterSelectedBoss, Long> {
 
-    @Query("SELECT csb FROM CharacterSelectedBoss csb WHERE csb.characterId IN :characterIds")
+    @Query("SELECT csb FROM CharacterSelectedBoss csb WHERE csb.characterId IN :characterIds AND csb.isDeleted = false")
     List<CharacterSelectedBoss> findByCharacterIdIn(@Param("characterIds") List<Long> characterIds);
+    
+    // 삭제되지 않은 선택 보스들 조회
+    List<CharacterSelectedBoss> findByCharacterIdAndIsDeletedFalse(Long characterId);
 }
 
 

@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "character_selected_boss",
         uniqueConstraints = {
@@ -27,9 +29,38 @@ public class CharacterSelectedBoss {
     @Column(name = "boss_id", nullable = false)
     private Long bossId;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     public CharacterSelectedBoss(Long characterId, Long bossId) {
         this.characterId = characterId;
         this.bossId = bossId;
+        this.isDeleted = false;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // soft delete
+    public void markAsDeleted() {
+        this.isDeleted = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // soft delete 복원
+    public void markAsUndeleted() {
+        this.isDeleted = false;
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // 업데이트 시간 갱신
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
 

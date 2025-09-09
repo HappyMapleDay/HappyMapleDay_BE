@@ -121,7 +121,7 @@ public class CharacterController {
     /**
      * 캐릭터 완전 삭제 (Hard Delete)
      */
-    @DeleteMapping("/{characterId}/permanent")
+    @DeleteMapping("/{characterId}")
     public ResponseEntity<ApiResponse<String>> deleteCharacterPermanently(
             @PathVariable Long characterId) {
         try {

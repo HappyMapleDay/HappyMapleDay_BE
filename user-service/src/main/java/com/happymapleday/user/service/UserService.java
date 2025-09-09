@@ -19,7 +19,13 @@ import com.happymapleday.user.dto.PrivacySettingsUpdateRequestDto;
 import com.happymapleday.user.dto.WeeklyResetSettingsUpdateRequestDto;
 import com.happymapleday.user.dto.PasswordChangeRequestDto;
 import com.happymapleday.user.dto.PasswordChangeResponseDto;
+import com.happymapleday.user.dto.AdminUserListResponseDto;
+import com.happymapleday.user.dto.AdminRoleUpdateRequestDto;
+import com.happymapleday.user.dto.AdminRoleUpdateResponseDto;
+import com.happymapleday.user.dto.UserMetricsResponseDto;
+import com.happymapleday.user.dto.AdminVerificationResponseDto;
 import com.happymapleday.user.entity.User;
+import com.happymapleday.user.entity.UserRole;
 import com.happymapleday.user.entity.UserSettings;
 import com.happymapleday.user.repository.UserRepository;
 import com.happymapleday.user.repository.UserSettingsRepository;
@@ -32,6 +38,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -72,12 +84,12 @@ public class UserService {
             throw new BadCredentialsException("아이디 또는 비밀번호가 잘못되었습니다.");
         }
         
-        // Access Token과 Refresh Token 생성
-        String accessToken = jwtService.generateAccessToken(user.getId(), user.getMainCharacterName());
+        // Access Token과 Refresh Token 생성 (role 정보 포함)
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getMainCharacterName(), user.getRole());
         String refreshToken = jwtService.generateRefreshToken(user.getId());
         
-        // 응답 DTO 생성
-        return LoginResponseDto.of(accessToken, refreshToken, user.getId(), user.getMainCharacterName());
+        // 응답 DTO 생성 (role 정보 포함)
+        return LoginResponseDto.of(accessToken, refreshToken, user.getId(), user.getMainCharacterName(), user.getRole());
     }
     
     // 토큰 갱신 처리
@@ -102,8 +114,8 @@ public class UserService {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new BadCredentialsException("사용자를 찾을 수 없습니다."));
             
-            // 새로운 Access Token과 Refresh Token 생성
-            String newAccessToken = jwtService.generateAccessToken(user.getId(), user.getMainCharacterName());
+            // 새로운 Access Token과 Refresh Token 생성 (role 정보 포함)
+            String newAccessToken = jwtService.generateAccessToken(user.getId(), user.getMainCharacterName(), user.getRole());
             String newRefreshToken = jwtService.generateRefreshToken(user.getId());
             
             return RefreshTokenResponseDto.of(newAccessToken, newRefreshToken);
@@ -385,5 +397,242 @@ public class UserService {
         } catch (Exception e) {
             return ApiKeyValidationResponseDto.failure("API Key 검증 처리 중 오류가 발생했습니다.");
         }
+    }
+    
+    // ========== 어드민 관련 메서드들 ==========
+    
+    // 일반 권한 유저 목록 조회
+    public AdminUserListResponseDto getNormalUsers() {
+        List<User> normalUsers = userRepository.findNormalUsersOrderByCreatedAtDesc();
+        
+        List<AdminUserListResponseDto.UserSummary> userSummaries = normalUsers.stream()
+                .map(user -> new AdminUserListResponseDto.UserSummary(
+                        user.getId(),
+                        user.getMainCharacterName(),
+                        user.getRole(),
+                        user.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+        
+        return AdminUserListResponseDto.of(userSummaries);
+    }
+    
+    // 어드민 권한 유저 목록 조회
+    public AdminUserListResponseDto getAdminUsers() {
+        List<User> adminUsers = userRepository.findAdminUsersOrderByCreatedAtDesc();
+        
+        List<AdminUserListResponseDto.UserSummary> userSummaries = adminUsers.stream()
+                .map(user -> new AdminUserListResponseDto.UserSummary(
+                        user.getId(),
+                        user.getMainCharacterName(),
+                        user.getRole(),
+                        user.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+        
+        return AdminUserListResponseDto.of(userSummaries);
+    }
+    
+    // 모든 유저 목록 조회
+    public AdminUserListResponseDto getAllUsers() {
+        List<User> allUsers = userRepository.findAllByOrderByCreatedAtDesc();
+        
+        List<AdminUserListResponseDto.UserSummary> userSummaries = allUsers.stream()
+                .map(user -> new AdminUserListResponseDto.UserSummary(
+                        user.getId(),
+                        user.getMainCharacterName(),
+                        user.getRole(),
+                        user.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+        
+        return AdminUserListResponseDto.of(userSummaries);
+    }
+    
+    // 사용자 권한 변경
+    @Transactional
+    public AdminRoleUpdateResponseDto updateUserRole(AdminRoleUpdateRequestDto request) {
+        // 사용자 조회
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        
+        // 권한 업데이트
+        user.updateRole(request.getRole());
+        userRepository.save(user);
+        
+        // 보안상 해당 사용자의 모든 토큰 무효화 (권한 변경 시)
+        secureRefreshTokenService.invalidateAllTokens(user.getId());
+        
+        return AdminRoleUpdateResponseDto.success(
+                user.getId(),
+                user.getMainCharacterName(),
+                user.getRole()
+        );
+    }
+    
+    // 어드민 권한 검증
+    public boolean isUserAdmin(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::isAdmin)
+                .orElse(false);
+    }
+    
+    // 현재 사용자가 어드민인지 확인
+    public boolean isCurrentUserAdmin() {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            return isUserAdmin(currentUserId);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    // 강화된 어드민 권한 검증 (실시간 DB 조회 + 추가 보안 정보)
+    public AdminVerificationResponseDto verifyCurrentUserAdmin() {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            
+            // 실시간 DB 조회로 권한 확인
+            User user = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            
+            if (user.isAdmin()) {
+                // 토큰 만료 시간 계산 (예: 1시간 후)
+                long tokenValidUntil = System.currentTimeMillis() + (60 * 60 * 1000);
+                
+                // 어드민 레벨 결정 (향후 확장 가능)
+                String adminLevel = "ADMIN"; // 기본값
+                
+                return AdminVerificationResponseDto.admin(adminLevel, tokenValidUntil);
+            } else {
+                return AdminVerificationResponseDto.notAdmin();
+            }
+            
+        } catch (Exception e) {
+            return AdminVerificationResponseDto.notAdmin();
+        }
+    }
+    
+    // 유저 수 집계 (가입자 현황 추이)
+    public UserMetricsResponseDto getUserMetrics(String period, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime;
+        LocalDateTime endDateTime;
+        
+        // 기간별 처리
+        if (startDate != null && endDate != null) {
+            // 직접 검색인 경우
+            startDateTime = startDate.atStartOfDay();
+            endDateTime = endDate.atTime(LocalTime.MAX);
+            period = "custom";
+        } else {
+            // 미리 정의된 기간인 경우
+            LocalDate today = LocalDate.now();
+            endDateTime = today.atTime(LocalTime.MAX);
+            
+            switch (period.toLowerCase()) {
+                case "today":
+                    startDateTime = today.atStartOfDay();
+                    break;
+                case "1w":
+                    startDateTime = today.minusWeeks(1).atStartOfDay();
+                    break;
+                case "1m":
+                    startDateTime = today.minusMonths(1).atStartOfDay();
+                    break;
+                case "3m":
+                    startDateTime = today.minusMonths(3).atStartOfDay();
+                    break;
+                case "6m":
+                    startDateTime = today.minusMonths(6).atStartOfDay();
+                    break;
+                default:
+                    startDateTime = today.minusMonths(1).atStartOfDay();
+                    period = "1m";
+            }
+        }
+        
+        // 일별 가입자 수 조회
+        List<Object[]> dailyRegistrations = userRepository.getDailyUserRegistrations(startDateTime, endDateTime);
+        
+        List<UserMetricsResponseDto.UserCountByDate> userCounts = new ArrayList<>();
+        
+        // 누적 가입자 수 계산을 위한 시작점 조회
+        long baseCount = userRepository.countUsersByCreatedAtBefore(startDateTime);
+        long cumulativeCount = baseCount;
+        
+        for (Object[] row : dailyRegistrations) {
+            LocalDate date = ((java.sql.Date) row[0]).toLocalDate();
+            long dailyCount = ((Number) row[1]).longValue();
+            cumulativeCount += dailyCount;
+            
+            userCounts.add(new UserMetricsResponseDto.UserCountByDate(date, cumulativeCount, dailyCount));
+        }
+        
+        // 전체 활성 사용자 수
+        int totalActiveUsers = (int) userRepository.count();
+        
+        return UserMetricsResponseDto.of(userCounts, totalActiveUsers, period);
+    }
+    
+    // 일반 유저 수 집계 (어드민 제외)
+    public UserMetricsResponseDto getNormalUserMetrics(String period, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime;
+        LocalDateTime endDateTime;
+        
+        // 기간별 처리
+        if (startDate != null && endDate != null) {
+            // 직접 검색인 경우
+            startDateTime = startDate.atStartOfDay();
+            endDateTime = endDate.atTime(LocalTime.MAX);
+            period = "custom";
+        } else {
+            // 미리 정의된 기간인 경우
+            LocalDate today = LocalDate.now();
+            endDateTime = today.atTime(LocalTime.MAX);
+            
+            switch (period.toLowerCase()) {
+                case "today":
+                    startDateTime = today.atStartOfDay();
+                    break;
+                case "1w":
+                    startDateTime = today.minusWeeks(1).atStartOfDay();
+                    break;
+                case "1m":
+                    startDateTime = today.minusMonths(1).atStartOfDay();
+                    break;
+                case "3m":
+                    startDateTime = today.minusMonths(3).atStartOfDay();
+                    break;
+                case "6m":
+                    startDateTime = today.minusMonths(6).atStartOfDay();
+                    break;
+                default:
+                    startDateTime = today.minusMonths(1).atStartOfDay();
+                    period = "1m";
+            }
+        }
+        
+        // 일반 유저만 일별 가입자 수 조회 (어드민 제외)
+        List<Object[]> dailyRegistrations = userRepository.getDailyUserRegistrationsByRole(
+                startDateTime, endDateTime, UserRole.NORMAL);
+        
+        List<UserMetricsResponseDto.UserCountByDate> userCounts = new ArrayList<>();
+        
+        // 일반 유저만 누적 가입자 수 계산을 위한 시작점 조회 (어드민 제외)
+        long baseCount = userRepository.countUsersByCreatedAtBeforeAndRole(startDateTime, UserRole.NORMAL);
+        long cumulativeCount = baseCount;
+        
+        for (Object[] row : dailyRegistrations) {
+            LocalDate date = ((java.sql.Date) row[0]).toLocalDate();
+            long dailyCount = ((Number) row[1]).longValue();
+            cumulativeCount += dailyCount;
+            
+            userCounts.add(new UserMetricsResponseDto.UserCountByDate(date, cumulativeCount, dailyCount));
+        }
+        
+        // 전체 일반 유저 수 (어드민 제외)
+        int totalNormalUsers = (int) userRepository.countByRole(UserRole.NORMAL);
+        
+        return UserMetricsResponseDto.of(userCounts, totalNormalUsers, period);
     }
 } 

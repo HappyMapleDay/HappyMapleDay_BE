@@ -1,5 +1,6 @@
 package com.happymapleday.user.service;
 
+import com.happymapleday.user.entity.UserRole;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,19 +38,25 @@ public class JwtService {
     private final int ACCESS_TOKEN_HOURS = 1;    // Access Token: 1시간
     private final int REFRESH_TOKEN_DAYS = 30;   // Refresh Token: 30일
     
-    // Access Token 생성
-    public String generateAccessToken(Long userId, String mainCharacterName) {
+    // Access Token 생성 (role 정보 포함)
+    public String generateAccessToken(Long userId, String mainCharacterName, UserRole role) {
         Instant now = Instant.now();
         Instant expiration = now.plus(ACCESS_TOKEN_HOURS, ChronoUnit.HOURS);
         
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("characterName", mainCharacterName)
+                .claim("role", role.name()) // 권한 정보 포함
                 .claim("tokenType", "ACCESS")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
                 .signWith(getSigningKey())
                 .compact();
+    }
+    
+    // 기존 메서드 호환성 유지 (기본값: NORMAL)
+    public String generateAccessToken(Long userId, String mainCharacterName) {
+        return generateAccessToken(userId, mainCharacterName, UserRole.NORMAL);
     }
     
     // Refresh Token 생성
@@ -81,6 +88,22 @@ public class JwtService {
     public String getMainCharacterNameFromToken(String token) {
         Claims claims = validateAndGetClaims(token);
         return claims.get("characterName", String.class);
+    }
+    
+    // JWT 토큰에서 권한 정보 추출
+    public UserRole getRoleFromToken(String token) {
+        Claims claims = validateAndGetClaims(token);
+        String roleString = claims.get("role", String.class);
+        try {
+            return roleString != null ? UserRole.valueOf(roleString) : UserRole.NORMAL;
+        } catch (IllegalArgumentException e) {
+            return UserRole.NORMAL; // 잘못된 값인 경우 기본값
+        }
+    }
+    
+    // JWT 토큰에서 어드민 권한 확인
+    public boolean isAdminFromToken(String token) {
+        return getRoleFromToken(token).isAdmin();
     }
     
     // 토큰 타입 확인 (ACCESS/REFRESH)

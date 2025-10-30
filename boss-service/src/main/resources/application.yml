@@ -7,9 +7,9 @@ spring:
     caffeine:
       spec: maximumSize=2000,expireAfterWrite=24h
   datasource:
-    url: jdbc:mysql://${DB_HOST:172.16.2.136}:${DB_PORT:3306}/${DB_NAME_PREFIX:happy_maple_day_dev_}boss?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci
-    username: ${DB_USERNAME:appuser}
-    password: ${BOSS_DB_PASSWORD:happymapleday!0619}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}boss?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci
+    username: ${DB_USERNAME}
+    password: ${BOSS_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:

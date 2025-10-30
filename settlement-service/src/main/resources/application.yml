@@ -5,18 +5,21 @@ spring:
   application:
     name: settlement-service
   
+  # 데이터베이스 설정
   datasource:
-    url: jdbc:mysql://localhost:3306/happy_maple_day_settlement?createDatabaseIfNotExist=true
-    username: root
-    password: password
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}settlement?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${DB_USERNAME}
+    password: ${SETTLE_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   
+  # JPA 설정
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
   
   # Batch 설정
@@ -52,4 +55,24 @@ services:
   character-service:
     url: http://localhost:8083
   user-service:
-    url: http://localhost:8082 
+    url: http://localhost:8082
+
+# 로깅 설정
+logging:
+  level:
+    com.happymapleday.settlement: ${LOG_LEVEL:INFO}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+
+---
+# 로컬 개발용 설정
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_dev_settlement?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true 

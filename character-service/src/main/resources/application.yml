@@ -13,9 +13,9 @@ spring:
 
   # 데이터베이스 설정
   datasource:
-    url: jdbc:mysql://${DB_HOST:172.16.2.136}:${DB_PORT:3306}/${DB_NAME_PREFIX:happy_maple_day_dev_}character?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-    username: ${DB_USERNAME:appuser}
-    password: ${CHAR_DB_PASSWORD:happymapleday!0619}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME_PREFIX}character?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${DB_USERNAME}
+    password: ${CHAR_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   
   jpa:
@@ -49,4 +49,18 @@ management:
 
 logging:
   level:
-    com.happymapleday.character: DEBUG 
+    com.happymapleday.character: DEBUG
+
+---
+# 로컬 개발용 설정
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://localhost:3306/happy_maple_day_dev_character?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true 

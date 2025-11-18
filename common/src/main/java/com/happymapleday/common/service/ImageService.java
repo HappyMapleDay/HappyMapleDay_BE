@@ -32,6 +32,9 @@ public class ImageService {
     @Value("${oci.object-storage.endpoint}")
     private String endpoint;
 
+    @Value("${oci.object-storage.folder-prefix}")
+    private String folderPrefix;
+
     /**
      * 이미지를 OCI Object Storage에 업로드
      * 
@@ -47,7 +50,7 @@ public class ImageService {
                     ? originalFilename.substring(originalFilename.lastIndexOf("."))
                     : "";
             String fileName = UUID.randomUUID().toString() + extension;
-            String objectName = folder + "/" + fileName;
+            String objectName = folderPrefix + "/" + folder + "/" + fileName;
 
             log.info("이미지 업로드 시작 - Object Name: {}", objectName);
 

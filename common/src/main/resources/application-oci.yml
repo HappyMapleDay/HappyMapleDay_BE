@@ -4,6 +4,7 @@ oci:
     bucket-name: ${OCI_BUCKET_NAME}
     region: ${OCI_REGION}
     endpoint: https://objectstorage.${OCI_REGION}.oraclecloud.com
+    folder-prefix: ${OCI_FOLDER_PREFIX:dev}
   auth:
     user-ocid: ${OCI_USER_OCID}
     tenancy-ocid: ${OCI_TENANCY_OCID}

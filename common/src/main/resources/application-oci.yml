@@ -1,0 +1,13 @@
+oci:
+  object-storage:
+    namespace: ${OCI_NAMESPACE}
+    bucket-name: ${OCI_BUCKET_NAME}
+    region: ${OCI_REGION}
+    endpoint: https://objectstorage.${OCI_REGION}.oraclecloud.com
+  auth:
+    user-ocid: ${OCI_USER_OCID}
+    tenancy-ocid: ${OCI_TENANCY_OCID}
+    fingerprint: ${OCI_FINGERPRINT}
+    private-key-path: ${OCI_PRIVATE_KEY_PATH}
+
+

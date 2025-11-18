@@ -16,4 +16,8 @@ dependencies {
     
     // OpenFeign (서비스 간 통신)
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    
+    // OCI Object Storage SDK
+    implementation 'com.oracle.oci.sdk:oci-java-sdk-objectstorage:3.30.0'
+    implementation 'com.oracle.oci.sdk:oci-java-sdk-common:3.30.0'
 } 

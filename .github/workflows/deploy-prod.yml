@@ -151,6 +151,27 @@ jobs:
           # docker-compose.yml 다운로드
           curl -o docker-compose.yml https://raw.githubusercontent.com/HappyMapleDay/HappyMapleDay_BE/main/docker-compose.yml
           
+          # .env 파일 생성
+          echo "Creating .env file on the server..."
+          echo "DB_HOST=${{ secrets.DB_HOST_PROD }}" > ./.env
+          echo "DB_PORT=${{ secrets.DB_PORT_PROD }}" >> ./.env
+          echo "DB_NAME_PREFIX=${{ secrets.DB_NAME_PREFIX_PROD }}" >> ./.env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME_PROD }}" >> ./.env
+          echo "BOSS_DB_PASSWORD=${{ secrets.BOSS_DB_PASSWORD_PROD }}" >> ./.env
+          echo "USER_DB_PASSWORD=${{ secrets.USER_DB_PASSWORD_PROD }}" >> ./.env
+          echo "CHAR_DB_PASSWORD=${{ secrets.CHAR_DB_PASSWORD_PROD }}" >> ./.env
+          echo "SETTLE_DB_PASSWORD=${{ secrets.SETTLE_DB_PASSWORD_PROD }}" >> ./.env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST_PROD }}" >> ./.env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT_PROD }}" >> ./.env
+          echo "OCI_NAMESPACE=${{ secrets.OCI_NAMESPACE_PROD }}" >> ./.env
+          echo "OCI_BUCKET_NAME=${{ secrets.OCI_BUCKET_NAME_PROD }}" >> ./.env
+          echo "OCI_REGION=${{ secrets.OCI_REGION_PROD }}" >> ./.env
+          echo "OCI_USER_OCID=${{ secrets.OCI_USER_OCID_PROD }}" >> ./.env
+          echo "OCI_TENANCY_OCID=${{ secrets.OCI_TENANCY_OCID_PROD }}" >> ./.env
+          echo "OCI_FINGERPRINT=${{ secrets.OCI_FINGERPRINT_PROD }}" >> ./.env
+          echo "OCI_PRIVATE_KEY_PATH=${{ secrets.OCI_PRIVATE_KEY_PATH_PROD }}" >> ./.env
+          echo ".env file created successfully."
+          
           # 소문자로 변환하여 Docker 태그 규칙 준수
           REPO_NAME_LOWER="${{ github.repository }}"
           REPO_NAME_LOWER=\$(echo "\${REPO_NAME_LOWER}" | tr '[:upper:]' '[:lower:]')

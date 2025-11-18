@@ -164,6 +164,13 @@ jobs:
           echo "SETTLE_DB_PASSWORD=${{ secrets.SETTLE_DB_PASSWORD }}" >> ./.env
           echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> ./.env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> ./.env
+          echo "OCI_NAMESPACE=${{ secrets.OCI_NAMESPACE }}" >> ./.env
+          echo "OCI_BUCKET_NAME=${{ secrets.OCI_BUCKET_NAME }}" >> ./.env
+          echo "OCI_REGION=${{ secrets.OCI_REGION }}" >> ./.env
+          echo "OCI_USER_OCID=${{ secrets.OCI_USER_OCID }}" >> ./.env
+          echo "OCI_TENANCY_OCID=${{ secrets.OCI_TENANCY_OCID }}" >> ./.env
+          echo "OCI_FINGERPRINT=${{ secrets.OCI_FINGERPRINT }}" >> ./.env
+          echo "OCI_PRIVATE_KEY_PATH=${{ secrets.OCI_PRIVATE_KEY_PATH }}" >> ./.env
 
           echo ".env file created successfully."
         
